@@ -1,0 +1,44 @@
+﻿@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,300);
+
+body {
+    font-family:'Open Sans', 'Segoe UI','Helvetica Neue LT Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
+      margin:0;
+      background-color:black;
+}
+
+.bg-img {
+      /*position: relative;*/
+      min-height:920px;background-image:url('https://sistrategial1.blob.core.windows.net/wwwimages/68591345.jpeg');
+      background-repeat:no-repeat;
+      background-position-x:center;
+      background-position-y:bottom;
+      background-size:contain;
+      background-size:1920px;
+      /*background-position:center;*/      
+    }
+
+h1 {
+      color:white;
+      font-family:'Open Sans', 'Segoe UI','Helvetica Neue LT Pro',Helvetica,Arial,sans-serif;
+      font-size:63px;
+      font-weight:100;
+      text-align:center;
+      margin-top: 10px;
+    }
+
+
+ .panel-cover {
+      position: absolute;
+      /*bottom: 0;*/
+      padding: 35px 0;
+      /*background: rgba(0,0,0,.8);*/
+      background-color: rgba(0,0,0,.68);
+      /*background-color: rgba(0,0,0,.68);*/
+      /**/
+      width: 100%;
+      height:112px;
+      top: 50%;
+      /*margin-top:auto;
+      margin-bottom:auto;*/
+      /*bottom: 0;*/
+    }
