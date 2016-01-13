@@ -8,14 +8,35 @@ body {
 
 .bg-img {
       /*position: relative;*/
-      min-height:920px;background-image:url('https://sistrategial1.blob.core.windows.net/wwwimages/68591345.jpeg');
+      /*min-height:920px;*/
+      background-image:url('https://sistrategial1.blob.core.windows.net/wwwimages/68591345_1920w.jpg');
       background-repeat:no-repeat;
-      background-position-x:center;
+      /*background-position-x:center;
       background-position-y:bottom;
       background-size:contain;
-      background-size:1920px;
+      background-size:1920px;*/
       /*background-position:center;*/      
     }
+
+@media screen 
+  and (min-device-width: 1200px) 
+  and (max-device-width: 1600px) 
+  and (-webkit-min-device-pixel-ratio: 2)
+  and (min-resolution: 192dpi) { 
+
+    .bg-img {
+      /*position: relative;*/
+      /*min-height:920px;*/
+      background-image:url('https://sistrategial1.blob.core.windows.net/wwwimages/68591345_5120w.jpeg');
+      background-repeat:no-repeat;
+      /*background-position-x:center;
+      background-position-y:bottom;
+      background-size:contain;
+      background-size:1920px;*/
+      /*background-position:center;*/      
+    }
+
+}
 
 h1 {
       color:white;
@@ -36,7 +57,7 @@ h1 {
       /*background-color: rgba(0,0,0,.68);*/
       /**/
       width: 100%;
-      height:112px;
+      /*height:112px;*/
       top: 50%;
       /*margin-top:auto;
       margin-bottom:auto;*/
