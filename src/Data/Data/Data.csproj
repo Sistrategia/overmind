@@ -4,12 +4,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3358FFB8-D197-4ECA-824B-79712C7FCA99}</ProjectGuid>
+    <ProjectGuid>{CCCF8E03-D7A1-4CEE-B1E8-0F8EF6639323}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Sistrategia.Overmind</RootNamespace>
-    <AssemblyName>Sistrategia.Overmind</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <RootNamespace>Sistrategia.Overmind.Data</RootNamespace>
+    <AssemblyName>Sistrategia.Overmind.Data</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -47,15 +47,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BusinessManager.cs" />
-    <Compile Include="Owin\Extensions\AppBuilderExtensions.cs" />
-    <Compile Include="Owin\Extensions\OwinContextExtensions.cs" />
+    <Compile Include="DataFactoryMiddleware.cs" />
+    <Compile Include="DataFactoryOptions.cs" />
+    <Compile Include="DataFactoryProvider.cs" />
+    <Compile Include="DataManager.cs" />
+    <Compile Include="Extensions\AppBuilderExtensions.cs" />
+    <Compile Include="IDataFactoryProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Security\ISecurityUser.cs" />
-    <Compile Include="Security\ISecurityUserClaim.cs" />
-    <Compile Include="Security\SecurityUser.cs" />
-    <Compile Include="Security\SecurityUserClaim.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Business\Core\Core.csproj">
+      <Project>{3358ffb8-d197-4eca-824b-79712c7fca99}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>

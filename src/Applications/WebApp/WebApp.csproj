@@ -283,6 +283,7 @@
     </Content>
     <Content Include="Views\Web.config" />
     <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Views\Home\Welcome.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -301,11 +302,25 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="App_Start\Startup.Data.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Business\Core\Core.csproj">
+      <Project>{3358ffb8-d197-4eca-824b-79712c7fca99}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Data\Data\Data.csproj">
+      <Project>{cccf8e03-d7a1-4cee-b1e8-0f8ef6639323}</Project>
+      <Name>Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Data\EF6Client\EF6Client.csproj">
+      <Project>{cbd3e058-eb54-4f59-9e71-cec9966b4267}</Project>
+      <Name>EF6Client</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Kernel\Resources\Resources.csproj">
       <Project>{6f560552-8d7b-4abe-bd65-298822c8cbd3}</Project>
       <Name>Resources</Name>

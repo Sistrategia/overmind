@@ -4,12 +4,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3358FFB8-D197-4ECA-824B-79712C7FCA99}</ProjectGuid>
+    <ProjectGuid>{CBD3E058-EB54-4F59-9E71-CEC9966B4267}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Sistrategia.Overmind</RootNamespace>
-    <AssemblyName>Sistrategia.Overmind</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <RootNamespace>Sistrategia.Overmind.Data.EF6Client</RootNamespace>
+    <AssemblyName>Sistrategia.Overmind.Data.EF6Client</AssemblyName>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -30,15 +30,20 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Owin, Version=3.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Owin.3.0.1\lib\net45\Microsoft.Owin.dll</HintPath>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Identity.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Identity.Core.2.2.1\lib\net45\Microsoft.AspNet.Identity.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -47,16 +52,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BusinessManager.cs" />
-    <Compile Include="Owin\Extensions\AppBuilderExtensions.cs" />
-    <Compile Include="Owin\Extensions\OwinContextExtensions.cs" />
+    <Compile Include="AspNetIdentityProvider\IdentityRole.cs" />
+    <Compile Include="AspNetIdentityProvider\IdentityUser.cs" />
+    <Compile Include="AspNetIdentityProvider\IdentityUserClaim.cs" />
+    <Compile Include="AspNetIdentityProvider\IdentityUserLogin.cs" />
+    <Compile Include="AspNetIdentityProvider\IdentityUserRole.cs" />
+    <Compile Include="AspNetIdentityProvider\UserStoreAdapter.cs" />
+    <Compile Include="EntityFramework6Provider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Security\ISecurityUser.cs" />
-    <Compile Include="Security\ISecurityUserClaim.cs" />
-    <Compile Include="Security\SecurityUser.cs" />
-    <Compile Include="Security\SecurityUserClaim.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Business\Core\Core.csproj">
+      <Project>{3358ffb8-d197-4eca-824b-79712c7fca99}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Data\Data.csproj">
+      <Project>{cccf8e03-d7a1-4cee-b1e8-0f8ef6639323}</Project>
+      <Name>Data</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
