@@ -9,13 +9,19 @@ namespace Sistrategia.Overmind.Data
 {
     public class DataManager : IDisposable
     {
+        private ApplicationDbContext context;
         //public static Func<T> Create { get; set; }
         public static DataManager Create(DataFactoryOptions<DataManager> options, IOwinContext context) {
-            throw new NotImplementedException();
+            return new DataManager(new ApplicationDbContext());
+        }
+
+        internal DataManager(ApplicationDbContext context) {
+            this.context = context;
         }
 
         public void Dispose() {
-            throw new NotImplementedException();
+            if (this.context!=null)
+                this.context.Dispose();            
         }
     }
 }

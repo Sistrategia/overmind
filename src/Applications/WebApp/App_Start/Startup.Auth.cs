@@ -9,14 +9,14 @@ using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.AspNet.Identity.Owin;
 using Sistrategia.Overmind.Data.EF6Client.AspNetIdentityProvider;
+using Sistrategia.Overmind.Data;
 
 
 namespace Sistrategia.Overmind.WebApp
 {
     public partial class Startup
     {
-        public void ConfigureAuth(IAppBuilder app) {
-            //app.CreatePerOwinContext(ApplicationDbContext.Create);
+        public void ConfigureAuth(IAppBuilder app) {            
             app.CreatePerOwinContext<SecurityUserManager>(SecurityUserManager.Create);
             app.CreatePerOwinContext<SecuritySignInManager>(SecuritySignInManager.Create);
 
@@ -67,7 +67,8 @@ namespace Sistrategia.Overmind.WebApp
             //var manager = new SecurityUserManager(new UserStore<SecurityUser>(context.Get<ApplicationDbContext>()));
             //var manager = new SecurityUserManager(new UserStore<SecurityUser, SecurityRole, string, IdentityUserLogin, IdentityUserRole, IdentityUserClaim>(context.Get<ApplicationDbContext>()));
 
-            var store = new UserStoreAdapter(new Security.Data.SqlClient.SqlClientSecurityProvider("DefaultDatabase", 0)); //  IUserStore<IdentityUser, int> store
+            //var store = new UserStoreAdapter(new Security.Data.SqlClient.SqlClientSecurityProvider("DefaultDatabase", 0)); //  IUserStore<IdentityUser, int> store
+            var store = new UserStoreAdapter(context.GetDataManager<DataManager>());
             var manager = new SecurityUserManager(store);
 
             //var manager = new SecurityUserManager(new SecurityUserStore(context.Get<ApplicationDbContext>()));

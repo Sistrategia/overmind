@@ -41,6 +41,6 @@ namespace Sistrategia.Overmind.Owin
                 throw new ArgumentNullException("context");
             }
             return context.Get<T>(GetKey(typeof(T)));
-        }
+        }        
     }
 }

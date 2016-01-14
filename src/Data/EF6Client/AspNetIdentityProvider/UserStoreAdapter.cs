@@ -22,6 +22,12 @@ namespace Sistrategia.Overmind.Data.EF6Client.AspNetIdentityProvider
 
         // , IQueryableUserStore<IdentityUser, int>
     {
+        private DataManager dataManager = null;
+
+        public UserStoreAdapter(DataManager dataManager) {
+            this.dataManager = dataManager;
+        }
+
         public Task CreateAsync(IdentityUser user) {
             throw new NotImplementedException();
         }
@@ -43,7 +49,8 @@ namespace Sistrategia.Overmind.Data.EF6Client.AspNetIdentityProvider
         }
 
         public void Dispose() {
-            throw new NotImplementedException();
+            if (this.dataManager != null)
+                this.dataManager.Dispose();
         }
 
         public Task<string> GetPasswordHashAsync(IdentityUser user) {
