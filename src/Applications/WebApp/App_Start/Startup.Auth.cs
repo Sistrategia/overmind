@@ -4,12 +4,15 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using Owin;
 using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.AspNet.Identity.Owin;
-using Sistrategia.Overmind.Data.EF6Client.AspNetIdentityProvider;
+//using Sistrategia.Overmind.Data.EF6Client.AspNetIdentityProvider;
 using Sistrategia.Overmind.Data;
+using Sistrategia.Overmind.Security;
+using System.Data.Entity;
 
 
 namespace Sistrategia.Overmind.WebApp
@@ -24,9 +27,9 @@ namespace Sistrategia.Overmind.WebApp
                 AuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
                 LoginPath = new PathString("/Account/Login"),
                 Provider = new CookieAuthenticationProvider {
-                    OnValidateIdentity = SecurityStampValidator.OnValidateIdentity<SecurityUserManager, IdentityUser, int>(
+                    OnValidateIdentity = SecurityStampValidator.OnValidateIdentity<SecurityUserManager, SecurityUser, int>(
                         validateInterval: TimeSpan.FromMinutes(30), //  5
-                        regenerateIdentityCallback: (manager, user) => user.GenerateUserIdentityAsync(manager),
+                        regenerateIdentityCallback: (manager, user) => manager.GenerateUserIdentityAsync(manager, user),
                         getUserIdCallback: (id) => id.GetUserId<int>()
                     )
                 }
@@ -41,15 +44,22 @@ namespace Sistrategia.Overmind.WebApp
         }
     }
 
-    public class SecuritySignInManager : SignInManager<IdentityUser, int>
+    public class SecuritySignInManager : SignInManager<SecurityUser, int> // SignInManager<IdentityUser, int>
     {
         public SecuritySignInManager(SecurityUserManager userManager, IAuthenticationManager authenticationManager)
             : base(userManager, authenticationManager) {
         }
 
-        public override Task<ClaimsIdentity> CreateUserIdentityAsync(IdentityUser user) {
+        public override Task<ClaimsIdentity> CreateUserIdentityAsync(SecurityUser user) {  // IdentityUser user) {
             //return user.GenerateUserIdentityAsync((SecurityUserManager)UserManager);
-            return user.GenerateUserIdentityAsync((SecurityUserManager)UserManager);
+            return this.GenerateUserIdentityAsync((SecurityUserManager)UserManager, user);
+        }
+
+        public async Task<ClaimsIdentity> GenerateUserIdentityAsync(UserManager<SecurityUser, int> manager, SecurityUser user) {
+            // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
+            var userIdentity = await manager.CreateIdentityAsync(user, DefaultAuthenticationTypes.ApplicationCookie);
+            // Add custom user claims here
+            return userIdentity;
         }
 
         public static SecuritySignInManager Create(IdentityFactoryOptions<SecuritySignInManager> options, IOwinContext context) {
@@ -57,24 +67,34 @@ namespace Sistrategia.Overmind.WebApp
         }
     }
 
-    public class SecurityUserManager : Microsoft.AspNet.Identity.UserManager<IdentityUser, int>
+    public class SecurityUserManager : Microsoft.AspNet.Identity.UserManager<SecurityUser, int>  //IdentityUser, int>
     {
-        public SecurityUserManager(Microsoft.AspNet.Identity.IUserStore<IdentityUser, int> store)
+        public SecurityUserManager(Microsoft.AspNet.Identity.IUserStore<SecurityUser, int> store) //IdentityUser, int> store)
             : base(store) {
         }
 
+        public async Task<ClaimsIdentity> GenerateUserIdentityAsync(SecurityUserManager manager, SecurityUser user) {
+            // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
+            var userIdentity = await manager.CreateIdentityAsync(user, DefaultAuthenticationTypes.ApplicationCookie);
+            // Add custom user claims here
+            return userIdentity;
+        }
+
         public static SecurityUserManager Create(IdentityFactoryOptions<SecurityUserManager> options, IOwinContext context) {
+            //var manager = new SecurityUserManager(new UserStore<SecurityUser>(context.Get<ApplicationDbContext>()));            
             //var manager = new SecurityUserManager(new UserStore<SecurityUser>(context.Get<ApplicationDbContext>()));
             //var manager = new SecurityUserManager(new UserStore<SecurityUser, SecurityRole, string, IdentityUserLogin, IdentityUserRole, IdentityUserClaim>(context.Get<ApplicationDbContext>()));
 
             //var store = new UserStoreAdapter(new Security.Data.SqlClient.SqlClientSecurityProvider("DefaultDatabase", 0)); //  IUserStore<IdentityUser, int> store
-            var store = new UserStoreAdapter(context.GetDataManager<DataManager>());
-            var manager = new SecurityUserManager(store);
+            //var store = new UserStoreAdapter(context.GetDataManager<DataManager>());
+            //var manager = new SecurityUserManager(store);
 
             //var manager = new SecurityUserManager(new SecurityUserStore(context.Get<ApplicationDbContext>()));
 
+            var manager = new SecurityUserManager(new SecurityUserStore(context.GetDataManager<DataManager>().DbContext)); //  new SecurityUserStore(new DataManager().DbContext));// ApplicationDbContext()));
+
             // Configure validation logic for usernames
-            manager.UserValidator = new UserValidator<IdentityUser, int>(manager) {
+            manager.UserValidator = new UserValidator<SecurityUser, int>(manager) {
                 AllowOnlyAlphanumericUserNames = false,
                 RequireUniqueEmail = true
             };
@@ -109,12 +129,28 @@ namespace Sistrategia.Overmind.WebApp
             var dataProtectionProvider = options.DataProtectionProvider;
             if (dataProtectionProvider != null) {
                 manager.UserTokenProvider =
-                    new DataProtectorTokenProvider<IdentityUser, int>(dataProtectionProvider.Create("ASP.NET Identity")); // {
+                    new DataProtectorTokenProvider<SecurityUser, int>(dataProtectionProvider.Create("ASP.NET Identity")); // {
                 //  TokenLifespan = TimeSpan.FromHours(3)
                 //};
             }
 
             return manager;
         }
+
+       
     }
+
+    public class SecurityUserStore : UserStore<SecurityUser, SecurityRole, int, SecurityUserLogin, SecurityUserRole, SecurityUserClaim>
+    {
+        public SecurityUserStore(DbContext context)
+            : base(context) {
+        }
+    }
+
+    //public class SecurityUserStore : UserStore<SecurityUser, SecurityRole, int, SecurityUserLogin, SecurityUserRole, SecurityUserClaim>
+    //{
+    //    public SecurityUserStore(ApplicationDbContext context)
+    //        : base(context) {
+    //    }
+    //}
 }

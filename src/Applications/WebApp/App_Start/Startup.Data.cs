@@ -5,8 +5,8 @@ using Owin;
 using Microsoft.Owin;
 using Sistrategia.Overmind.Data;
 using Sistrategia.Overmind.Data.Owin;
-using Sistrategia.Overmind.Data.EF6Client;
-using Sistrategia.Overmind.Data.EF6Client.AspNetIdentityProvider;
+//using Sistrategia.Overmind.Data.EF6Client;
+//using Sistrategia.Overmind.Data.EF6Client.AspNetIdentityProvider;
 
 namespace Sistrategia.Overmind.WebApp
 {

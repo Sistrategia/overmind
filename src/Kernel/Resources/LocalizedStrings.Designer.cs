@@ -61,6 +61,60 @@ namespace Sistrategia.Overmind.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Forgot your password?.
+        /// </summary>
+        public static string Account_ForgotYourPassword {
+            get {
+                return ResourceManager.GetString("Account_ForgotYourPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Log in.
+        /// </summary>
+        public static string Account_LoginButton {
+            get {
+                return ResourceManager.GetString("Account_LoginButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Log In.
+        /// </summary>
+        public static string Account_LoginTitle {
+            get {
+                return ResourceManager.GetString("Account_LoginTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use a local account to log in.
+        /// </summary>
+        public static string Account_LoginUseLocalAccount {
+            get {
+                return ResourceManager.GetString("Account_LoginUseLocalAccount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Register as a new user.
+        /// </summary>
+        public static string Account_RegisterAsNewUser {
+            get {
+                return ResourceManager.GetString("Account_RegisterAsNewUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remember Me.
+        /// </summary>
+        public static string Account_RememberMe {
+            get {
+                return ResourceManager.GetString("Account_RememberMe", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Save.
         /// </summary>
         public static string ButtonSave {
@@ -75,6 +129,24 @@ namespace Sistrategia.Overmind.Resources {
         public static string CoverOvermindTitle {
             get {
                 return ResourceManager.GetString("CoverOvermindTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Email.
+        /// </summary>
+        public static string Email {
+            get {
+                return ResourceManager.GetString("Email", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Password.
+        /// </summary>
+        public static string Password {
+            get {
+                return ResourceManager.GetString("Password", resourceCulture);
             }
         }
     }

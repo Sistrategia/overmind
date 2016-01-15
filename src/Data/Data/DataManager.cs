@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Owin;
+using System.Data.Entity;
 
 namespace Sistrategia.Overmind.Data
 {
@@ -17,6 +18,10 @@ namespace Sistrategia.Overmind.Data
 
         internal DataManager(ApplicationDbContext context) {
             this.context = context;
+        }
+
+        public DbContext DbContext {
+            get { return this.context; }
         }
 
         public void Dispose() {

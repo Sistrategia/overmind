@@ -15,14 +15,15 @@
  ************************************************************************/
 
 using System;
+using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace Sistrategia.Overmind.Security
 {
-    public class SecurityUserClaim : ISecurityUserClaim
+    public class SecurityUserClaim : IdentityUserClaim<int>, ISecurityUserClaim
     {
-        public virtual int Id { get; set; }
-        public virtual int UserId { get; set; }
-        public virtual string ClaimType { get; set; }
-        public virtual string ClaimValue { get; set; }
+        //public virtual int Id { get; set; }
+        //public virtual int UserId { get; set; }
+        //public virtual string ClaimType { get; set; }
+        //public virtual string ClaimValue { get; set; }
     }
 }

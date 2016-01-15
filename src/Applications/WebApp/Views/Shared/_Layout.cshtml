@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+  string ControllerName = HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString();
+}
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -7,8 +10,15 @@
   <link href="~/Content/cover.css" rel="stylesheet" />
   <title>@ViewBag.Title - Overmind</title>
   <link rel="shortcut icon" href="https://sistrategiadrive.blob.core.windows.net/wwwroot/favicon.png">
+  @*@Styles.Render("~/Content/css")*@
+  @Scripts.Render("~/bundles/modernizr")
+  @RenderSection("HtmlHeader", required: false)
 </head>
-<body class="bg-img">
+<body>
   @RenderBody()
+
+  @Scripts.Render("~/bundles/jquery")
+  @Scripts.Render("~/bundles/bootstrap")
+  @RenderSection("scripts", required: false)
 </body>
 </html>

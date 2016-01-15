@@ -117,34 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Account_ForgotYourPassword" xml:space="preserve">
-    <value>Forgot your password?</value>
+  <data name="Target" xml:space="preserve">
+    <value>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</value>
   </data>
-  <data name="Account_LoginButton" xml:space="preserve">
-    <value>Log in</value>
-  </data>
-  <data name="Account_LoginTitle" xml:space="preserve">
-    <value>Log In</value>
-  </data>
-  <data name="Account_LoginUseLocalAccount" xml:space="preserve">
-    <value>Use a local account to log in</value>
-  </data>
-  <data name="Account_RegisterAsNewUser" xml:space="preserve">
-    <value>Register as a new user</value>
-  </data>
-  <data name="Account_RememberMe" xml:space="preserve">
-    <value>Remember Me</value>
-  </data>
-  <data name="ButtonSave" xml:space="preserve">
-    <value>Save</value>
-  </data>
-  <data name="CoverOvermindTitle" xml:space="preserve">
-    <value>Sistrategia's Overmind</value>
-  </data>
-  <data name="Email" xml:space="preserve">
-    <value>Email</value>
-  </data>
-  <data name="Password" xml:space="preserve">
-    <value>Password</value>
+  <data name="DefaultSchema" xml:space="preserve">
+    <value>dbo</value>
   </data>
 </root>
