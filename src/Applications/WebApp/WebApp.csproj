@@ -271,6 +271,13 @@
     <Content Include="Content\bootstrap\alerts.less" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="Content\bootstrap.less" />
+    <Content Include="Content\bootstrap.css">
+      <DependentUpon>bootstrap.less</DependentUpon>
+    </Content>
+    <Content Include="Content\bootstrap.css.map">
+      <DependentUpon>bootstrap.css</DependentUpon>
+    </Content>
     <None Include="Scripts\jquery-2.2.0.intellisense.js" />
     <Content Include="Scripts\jquery-2.2.0.js" />
     <Content Include="Scripts\jquery-2.2.0.min.js" />
@@ -353,7 +360,7 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

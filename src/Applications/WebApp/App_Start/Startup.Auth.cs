@@ -9,7 +9,6 @@ using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.AspNet.Identity.Owin;
-//using Sistrategia.Overmind.Data.EF6Client.AspNetIdentityProvider;
 using Sistrategia.Overmind.Data;
 using Sistrategia.Overmind.Security;
 using System.Data.Entity;
@@ -48,28 +47,16 @@ namespace Sistrategia.Overmind.WebApp
     {
         public SecuritySignInManager(SecurityUserManager userManager, IAuthenticationManager authenticationManager)
             : base(userManager, authenticationManager) {
-        }
-
-        public override Task<ClaimsIdentity> CreateUserIdentityAsync(SecurityUser user) {  // IdentityUser user) {
-            //return user.GenerateUserIdentityAsync((SecurityUserManager)UserManager);
-            return this.GenerateUserIdentityAsync((SecurityUserManager)UserManager, user);
-        }
-
-        public async Task<ClaimsIdentity> GenerateUserIdentityAsync(UserManager<SecurityUser, int> manager, SecurityUser user) {
-            // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
-            var userIdentity = await manager.CreateIdentityAsync(user, DefaultAuthenticationTypes.ApplicationCookie);
-            // Add custom user claims here
-            return userIdentity;
-        }
+        }        
 
         public static SecuritySignInManager Create(IdentityFactoryOptions<SecuritySignInManager> options, IOwinContext context) {
             return new SecuritySignInManager(context.GetUserManager<SecurityUserManager>(), context.Authentication);
         }
     }
 
-    public class SecurityUserManager : Microsoft.AspNet.Identity.UserManager<SecurityUser, int>  //IdentityUser, int>
+    public class SecurityUserManager : UserManager<SecurityUser, int>  //IdentityUser, int>
     {
-        public SecurityUserManager(Microsoft.AspNet.Identity.IUserStore<SecurityUser, int> store) //IdentityUser, int> store)
+        public SecurityUserManager(IUserStore<SecurityUser, int> store) //IdentityUser, int> store)
             : base(store) {
         }
 
