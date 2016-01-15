@@ -8136,4 +8136,9 @@ button.close {
     display: none !important;
   }
 }
+/* line 3, Content/bootstrap.less */
+body {
+  padding-top: 50px;
+  padding-bottom: 20px;
+}
 /*# sourceMappingURL=Content/bootstrap.css.map */

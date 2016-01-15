@@ -6,19 +6,60 @@
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="~/Content/cover.css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
   <title>@ViewBag.Title - Overmind</title>
   <link rel="shortcut icon" href="https://sistrategiadrive.blob.core.windows.net/wwwroot/favicon.png">
-  @*@Styles.Render("~/Content/css")*@
+  @Styles.Render("~/Content/css")
   @Scripts.Render("~/bundles/modernizr")
   @RenderSection("HtmlHeader", required: false)
 </head>
 <body>
-  @RenderBody()
 
-  @Scripts.Render("~/bundles/jquery")
-  @Scripts.Render("~/bundles/bootstrap")
-  @RenderSection("scripts", required: false)
+  <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand sistrategiaLogo" href="@Url.Content("~/")"><img src="https://sistrategiadrive.blob.core.windows.net/wwwroot/logo_header_white.png" class="img-responsive" /></a>
+      </div>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav"></ul>
+        @*@Html.Partial("_LoginPartial")*@
+        <ul class="nav navbar-nav navbar-right">
+
+          <li><a class="navbar-icon" href="@Url.Content("~/Account")"><span class="glyphicon glyphicon-user"></span></a></li>
+          @if (HttpContext.Current.User.IsInRole("Developer")) {
+          <li @if (ControllerName.Equals("Dev")) { @Html.Raw("class='active'")   ; } else { @Html.Raw("")   ; }>
+            <a class="navbar-icon" href="@Url.Content("~/Dev")"><span class="glyphicon glyphicon-cog"></span></a>
+          </li>
+          }
+          <li><a class="navbar-icon" href="@Url.Content("~/Account/LogOff")"><span class="glyphicon glyphicon-off"></span></a></li>
+        </ul>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="container body-content">
+    @RenderBody()
+    <hr />
+    <footer>
+      <p class="pull-left">&copy; @DateTime.Now.Year - Sistrategia</p>
+      @*<div class="pull-right hidden-xs">
+        <ul class="list-inline">
+          <li>@Html.ActionLink("English (US)", "ChangeLang", "Locale", new { Lang = "en-US", ReturnUrl = Url.Encode(Request.RawUrl) }, new { @class = " footer-lang-bar", @style = "font-size:11px;" })</li>
+          <li>@Html.ActionLink("Español (México)", "ChangeLang", "Locale", new { Lang = "es-MX", ReturnUrl = Url.Encode(Request.RawUrl) }, new { @class = "footer-lang-bar", @style = "font-size:11px;" })</li>
+        </ul>
+      </div>*@
+
+    </footer>
+  </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
 </body>
 </html>
