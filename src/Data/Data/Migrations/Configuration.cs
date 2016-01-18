@@ -1,6 +1,7 @@
 namespace Sistrategia.Overmind.Data.Migrations
 {
     using Sistrategia.Overmind.Security;
+    using Sistrategia.Overmind.Storage;
     using System;
     using System.Data.Entity;
     using System.Data.Entity.Migrations;
@@ -40,6 +41,18 @@ namespace Sistrategia.Overmind.Data.Migrations
                 new SecurityRole { Id = 3, Name = "Backstage" },
                 new SecurityRole { Id = 4, Name = "Developer" }
             );
+           //  context.SaveChanges();
+
+            var azure = new CloudStorageProvider { CloudStorageProviderId = "Azure", Name = "Microsoft Azure Storage Provider", Description = "Microsoft Azure Storage Provider." };
+
+            context.CloudStorageProviders.AddOrUpdate(p => p.CloudStorageProviderId,
+                azure,
+                new CloudStorageProvider { CloudStorageProviderId = "Amazon", Name = "Amazon S3 Provider", Description = "Microsoft Simple Storage Provider." },
+                new CloudStorageProvider { CloudStorageProviderId = "Rackspace", Name = "Rackspace CloudFiles Provider", Description = "Rackspace Cloud Files Provider." }
+                );
+
+
+
             context.SaveChanges();
         }
     }

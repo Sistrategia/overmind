@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Identity.EntityFramework;
+using Sistrategia.Overmind.Storage;
 
 namespace Sistrategia.Overmind.Security
 {
@@ -50,5 +51,7 @@ namespace Sistrategia.Overmind.Security
 
         //[MaxLength(256)]
         public string FullName { get; set; }
+
+        public virtual IList<CloudStorageAccount> CloudStorageAccounts { get; set; }
     }
 }

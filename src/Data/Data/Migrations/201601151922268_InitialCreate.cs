@@ -37,7 +37,6 @@ namespace Sistrategia.Overmind.Data.Migrations
                         user_id = c.Int(nullable: false, identity: true),
                         user_name = c.String(nullable: false, maxLength: 256),
                         public_key = c.Guid(nullable: false),
-                        UserId = c.Int(nullable: false),
                         LoginName = c.String(),
                         full_name = c.String(maxLength: 256),
                         email = c.String(maxLength: 256),

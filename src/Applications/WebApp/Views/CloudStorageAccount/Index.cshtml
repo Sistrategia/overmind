@@ -1,0 +1,40 @@
+﻿@model CloudStorageAccountIndexViewModel
+@{
+  ViewBag.Title = "Storage Accounts";
+}
+
+<h1>@ViewBag.Title</h1>
+
+<hr />
+
+@Html.ActionLink(LocalizedStrings.ButtonAdd, "Create", "CloudStorageAccount", new { }, new { @class = "btn btn-default", @role = "button" })
+<table class="table table-hover">
+  @*<caption>Test caption</caption>*@
+  <thead>
+    <tr>
+      <th>Alias</th>
+      <th>Name</th>
+
+      @*<th>@LocalizedStrings.Alias</th>
+      <th>@LocalizedStrings.Name</th>*@
+      @*<th>@LocalizedStrings.Modified</th>*@
+      @*<th>@LocalizedStrings.ProviderName</th>
+      <th>@LocalizedStrings.Description</th>*@
+      @*<th>@LocalizedStrings.Shared</th>*@
+
+      <th>ProviderName</th>
+      <th>Description</th>
+
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (var account in @Model.CloudStorageAccounts) {
+      <tr>
+        <td>@Html.ActionLink(@account.Alias, "Details", new { Id = account.PublicKey.ToString("N") })</td>
+        <td>@account.AccountName</td>
+        <td>@account.CloudStorageProvider.Name</td>
+        <td>@account.Description</td>
+      </tr>
+    }
+  </tbody>
+</table>

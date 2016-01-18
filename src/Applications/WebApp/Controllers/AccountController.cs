@@ -16,6 +16,7 @@ namespace Sistrategia.Overmind.WebApp.Controllers
     [Authorize]
     public class AccountController : Controller
     {
+      
         private SecuritySignInManager signInManager;
         private SecurityUserManager userManager;
 

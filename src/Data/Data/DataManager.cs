@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Owin;
 using System.Data.Entity;
+using Sistrategia.Overmind.Storage;
 
 namespace Sistrategia.Overmind.Data
 {
@@ -23,6 +24,9 @@ namespace Sistrategia.Overmind.Data
         public DbContext DbContext {
             get { return this.context; }
         }
+
+        public IDbSet<CloudStorageProvider> CloudStorageProviders { get { return this.context.CloudStorageProviders; } }
+        // public IDbSet<CloudStorageAccount> CloudStorageAccounts { get { return this.context.CloudStorageAccounts; } }
 
         public void Dispose() {
             if (this.context!=null)

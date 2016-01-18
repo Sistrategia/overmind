@@ -8,6 +8,7 @@ using Sistrategia.Overmind.Security;
 using Microsoft.AspNet.Identity.EntityFramework;
 using System.Data.Entity.Infrastructure.Annotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Sistrategia.Overmind.Storage;
 
 namespace Sistrategia.Overmind.Data
 {
@@ -23,11 +24,15 @@ namespace Sistrategia.Overmind.Data
             return new ApplicationDbContext();
         }
 
+        public virtual DbSet<CloudStorageProvider> CloudStorageProviders { get; set; }
+        //public virtual DbSet<CloudStorageAccount> CloudStorageAccounts { get; set; }
+
         protected override void OnModelCreating(System.Data.Entity.DbModelBuilder modelBuilder) {
             var user = modelBuilder.Entity<SecurityUser>()
                 .ToTable("security_user");
             user.Property(u => u.Id).HasColumnName("user_id")
                 .HasColumnOrder(1);
+            user.Ignore(u => u.UserId);            
             //user.HasMany(u => u.Roles).WithRequired().HasForeignKey(ur => ur.UserId);
             user.HasMany(u => u.Claims).WithRequired().HasForeignKey(uc => uc.UserId);
             user.HasMany(u => u.Logins).WithRequired().HasForeignKey(ul => ul.UserId);
@@ -104,6 +109,67 @@ namespace Sistrategia.Overmind.Data
             userClaim.Property(pr2 => pr2.UserId).HasColumnName("user_id");
             userClaim.Property(pr3 => pr3.ClaimType).HasColumnName("claim_type");
             userClaim.Property(pr4 => pr4.ClaimValue).HasColumnName("claim_value");
+
+
+
+
+            var cloudStorageProvider = modelBuilder.Entity<CloudStorageProvider>()
+                .ToTable("cloud_storage_provider");
+            cloudStorageProvider.Property(p => p.CloudStorageProviderId)
+                .HasColumnName("cloud_storage_provider_id");
+            cloudStorageProvider.Property(p => p.Name)
+                .HasColumnName("name");
+            cloudStorageProvider.Property(p => p.Description)
+                .HasColumnName("description");
+
+            var cloudStorageAccount = modelBuilder.Entity<CloudStorageAccount>()
+                .ToTable("cloud_storage_account");
+            cloudStorageAccount.Property(p => p.CloudStorageAccountId)
+                .HasColumnName("cloud_storage_account_id")
+                //.HasColumnOrder(1)
+                ;
+
+            cloudStorageAccount.Property(p => p.CloudStorageProviderId)
+                .HasColumnName("cloud_storage_provider_id")
+                ;
+            //cloudStorageAccount.HasRequired<CloudStorageProvider>(a => a.CloudStorageProvider)
+            //    .WithMany().Map(p => p.MapKey("cloud_storage_provider_id"));
+
+            // If you want to control all mapping here without DataAnnotations on Model Classes use this:
+            //cloudStorageAccount.Property(p => p.CloudStorageProviderId)
+            //    .HasColumnName("cloud_storage_provider_id")//.HasColumnOrder(2)                
+            //    ;
+            //cloudStorageAccount.HasRequired<CloudStorageProvider>(a => a.CloudStorageProvider)
+            //    .WithMany().HasForeignKey(f => f.CloudStorageProviderId).WillCascadeOnDelete(false);
+
+            cloudStorageAccount.Property(p => p.PublicKey)
+                .HasColumnName("public_key")
+                .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute()));
+
+            cloudStorageAccount.Property(p => p.ProviderKey)
+                .HasColumnName("provider_key");
+
+            cloudStorageAccount.Property(p => p.AccountName)
+                .HasColumnName("account_name");
+
+            cloudStorageAccount.Property(p => p.Alias)
+                .HasColumnName("alias");
+            cloudStorageAccount.Property(p => p.Description)
+                .HasColumnName("description");
+
+            cloudStorageAccount.Property(p => p.AccountKey)
+                .HasColumnName("account_key");
+
+
+            modelBuilder.Entity<SecurityUser>()
+                .HasMany(u => u.CloudStorageAccounts)
+                .WithMany()               
+                .Map(t => t.MapLeftKey("user_id") // security_user_id
+                .MapRightKey("cloud_storage_account_id")
+                .ToTable("security_user_cloud_storage_account"))
+                ;
+
+
         }
     }
 }

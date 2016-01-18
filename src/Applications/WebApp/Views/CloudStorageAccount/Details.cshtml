@@ -1,0 +1,31 @@
+﻿@model CloudStorageAccountDetailViewModel
+@{
+  ViewBag.Title = "Cloud Storage Account Details";
+}
+
+<h1>@ViewBag.Title</h1>
+@*<h4>@LocalizedStrings.Account_IndexSubtitle</h4>*@
+<hr />
+
+@Html.ActionLink("Agregar", "Create", "CloudStorageContainer", new { Id = Model.CloudStorageAccount.PublicKey.ToString("N") }, new { @class = "btn btn-default", @role = "button" })
+@Html.ActionLink("Sincronizar", "Sync", "CloudStorageAccount", new { id = Model.CloudStorageAccount.PublicKey.ToString("N") }, new { @class = "btn btn-default", @role = "button" })
+<table class="table table-hover">
+  @*<caption>Test caption</caption>*@
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Modified</th>
+      <th>Shared</th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (var container in @Model.CloudStorageAccount.CloudStorageContainers.OrderBy(a => a.Name)) { // a.ContainerName)) {
+      <tr>
+        @*<td>@Html.ActionLink(@container.Alias, "Details", "CloudStorageContainer", new { Id = @container.PublicKey.ToString("N") }, null)</td>*@
+        <td>@Html.ActionLink(@container.Name, "Details", "CloudStorageContainer", new { Id = @container.Name, account = @Model.CloudStorageAccount.PublicKey.ToString("N") }, null)</td>
+        <td>@container.Name</td>
+        <td>@container.Uri</td>
+      </tr>
+    }
+  </tbody>
+</table>

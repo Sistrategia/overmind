@@ -135,6 +135,12 @@
   <data name="Account_RememberMe" xml:space="preserve">
     <value>Remember Me</value>
   </data>
+  <data name="ButtonAdd" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="ButtonCreate" xml:space="preserve">
+    <value>Create</value>
+  </data>
   <data name="ButtonSave" xml:space="preserve">
     <value>Save</value>
   </data>

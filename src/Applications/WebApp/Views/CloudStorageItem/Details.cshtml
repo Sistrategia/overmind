@@ -1,0 +1,26 @@
+﻿@model CloudStorageItemDetailsViewModel
+@{
+    ViewBag.Title = "Details";
+}
+
+<h1>Details: @Model.CloudStorageItem.Name</h1>
+
+@*@Html.ActionLink("Edit", "Edit", "CloudStorageItem", new { name = @Model.CloudStorageItem.Name, container = @Model.ContainerName, account = @Model.AccountId }, null)*@
+
+@Html.ActionLink("Edit", "Edit", "CloudStorageItem", new { name = @Model.CloudStorageItem.Name, container = @Model.ContainerName, account = @Model.AccountId }, null)
+
+<ul>
+ 
+    <li>
+      <span class="strong">ContentType :</span>@Model.CloudStorageItem.Properties.ContentType
+    </li>
+
+</ul>
+
+<ul>
+  @foreach (var item in @Model.CloudStorageItem.Metadata) { 
+  <li>
+    <span class="strong">@item.Key :</span>@item.Value
+  </li>
+  }
+</ul>

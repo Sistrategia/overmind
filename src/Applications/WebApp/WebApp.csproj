@@ -294,6 +294,11 @@
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Home\Welcome.cshtml" />
     <Content Include="Views\Account\Login.cshtml" />
+    <Content Include="Views\CloudStorageAccount\Index.cshtml" />
+    <Content Include="Views\CloudStorageAccount\Details.cshtml" />
+    <Content Include="Views\CloudStorageContainer\Details.cshtml" />
+    <Content Include="Views\CloudStorageItem\Details.cshtml" />
+    <Content Include="Views\CloudStorageItem\Edit.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -316,8 +321,15 @@
     <Compile Include="App_Start\Startup.Auth.cs" />
     <Compile Include="App_Start\Startup.Data.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\BaseController.cs" />
+    <Compile Include="Controllers\CloudStorageAccountController.cs" />
+    <Compile Include="Controllers\CloudStorageContainerController.cs" />
+    <Compile Include="Controllers\CloudStorageItemController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\CloudStorageAccountViewModels.cs" />
+    <Compile Include="Models\CloudStorageContainerViewModels.cs" />
+    <Compile Include="Models\CloudStorageItemViewModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
@@ -337,6 +349,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\Base\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
