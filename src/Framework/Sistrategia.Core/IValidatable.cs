@@ -1,0 +1,11 @@
+// Copyright (c) Jose Ernesto Ocampo Cicero / JEOCSI SA DE CV (Sistrategia). All rights reserved.
+// Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
+
+namespace Sistrategia;
+
+public interface IValidatable
+{
+    DateTime? Validated { get; set; }
+    //ISecurityUserInfo? ValidatedBy { get; set; }
+    bool IsValidated { get; }
+}
