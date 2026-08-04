@@ -123,7 +123,7 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         // DropProcedureIfExists("contacts", "address_insert");
         // DropProcedureIfExists("contacts", "ensure_address_location_upsert");
 
-        // DropProcedureIfExists("contacts", "contact_insert");
+        DropProcedureIfExists("contacts", "contact_insert");
 
 
     }
