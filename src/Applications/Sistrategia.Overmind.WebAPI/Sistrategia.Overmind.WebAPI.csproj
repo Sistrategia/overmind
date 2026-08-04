@@ -16,7 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Data\Sistrategia.Overmind.Data.SqlClient\Sistrategia.Overmind.Data.SqlClient.csproj" />
     <ProjectReference Include="..\..\Framework\Sistrategia.Core\Sistrategia.Core.csproj" />
+    <ProjectReference Include="..\..\Framework\Sistrategia.Data.SqlClient\Sistrategia.Data.SqlClient.csproj" />
   </ItemGroup>
 
 </Project>

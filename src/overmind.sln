@@ -13,6 +13,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sistrategia.Core", "Framewo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sistrategia.Data.SqlClient", "Framework\Sistrategia.Data.SqlClient\Sistrategia.Data.SqlClient.csproj", "{6BAE86D7-4143-9987-3775-B0F77BDEFE73}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Domain", "Domain", "{E403DAED-719F-49F3-AD9F-7ADD1894E45C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{7BFF6BDC-3921-42E8-819B-21E5B47E869A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sistrategia.Overmind.Data.SqlClient", "Data\Sistrategia.Overmind.Data.SqlClient\Sistrategia.Overmind.Data.SqlClient.csproj", "{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +37,10 @@ Global
 		{6BAE86D7-4143-9987-3775-B0F77BDEFE73}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BAE86D7-4143-9987-3775-B0F77BDEFE73}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BAE86D7-4143-9987-3775-B0F77BDEFE73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -39,5 +49,6 @@ Global
 		{17EFDDE0-67F0-ACB7-1DDB-82459A18A6AD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{18B291E9-0DD9-4088-46A7-ABB1A6596B3B} = {45E0FA85-F265-4DBB-919F-F9133A371676}
 		{6BAE86D7-4143-9987-3775-B0F77BDEFE73} = {45E0FA85-F265-4DBB-919F-F9133A371676}
+		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD} = {7BFF6BDC-3921-42E8-819B-21E5B47E869A}
 	EndGlobalSection
 EndGlobal

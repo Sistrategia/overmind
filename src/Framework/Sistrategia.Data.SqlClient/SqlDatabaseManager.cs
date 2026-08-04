@@ -16,9 +16,9 @@ public class SqlDatabaseManager : DatabaseManager
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         SchemaBuilders = new List<IDatabaseSchemaBuilder> {
             new DataDatabaseSchemaBuilder(ConnectionString, logger)
-            // ,new EntitiesDatabaseSchemaBuilder(ConnectionString, logger)
-            // ,new ContactsDatabaseSchemaBuilder(ConnectionString, logger)
-            // ,new SecurityDatabaseSchemaBuilder(ConnectionString, logger)
+            ,new EntitiesDatabaseSchemaBuilder(ConnectionString, logger)
+            ,new ContactsDatabaseSchemaBuilder(ConnectionString, logger)
+            ,new SecurityDatabaseSchemaBuilder(ConnectionString, logger)
             // ,new DocumentsDatabaseSchemaBuilder(ConnectionString, logger)
         };
     }

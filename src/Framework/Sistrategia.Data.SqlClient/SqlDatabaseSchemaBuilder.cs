@@ -127,5 +127,23 @@ public abstract class SqlDatabaseSchemaBuilder : DatabaseSchemaBuilder
             $"IF ( TYPE_ID(N'[{schema}].[{name}]') IS NOT NULL ) DROP TYPE [{schema}].[{name}]");
 
     #endregion
+
+    #region Drop Sequences
+
+    protected virtual void DropSequence(string name) =>
+        SqlDatabase.ExecuteNonQuery($"DROP SEQUENCE [dbo].[{name}]");
+
+    protected virtual void DropSequence(string schema, string name) =>
+        SqlDatabase.ExecuteNonQuery($"DROP SEQUENCE [{schema}].[{name}]");
+
+    protected virtual void DropSequenceIfExists(string name) =>
+        SqlDatabase.ExecuteNonQuery(
+            $"IF ( OBJECT_ID(N'[dbo].[{name}]') IS NOT NULL ) DROP SEQUENCE [dbo].[{name}]");
+
+    protected virtual void DropSequenceIfExists(string schema, string name) =>
+        SqlDatabase.ExecuteNonQuery(
+            $"IF ( OBJECT_ID(N'[{schema}].[{name}]') IS NOT NULL ) DROP SEQUENCE [{schema}].[{name}]");
+
+    #endregion
     // protected abstract void RunLocalStoredCommands(string resourceName);
 }

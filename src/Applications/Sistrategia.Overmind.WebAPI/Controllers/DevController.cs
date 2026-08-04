@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-// using Sistrategia.Data;
+using Sistrategia.Data;
 // using Sistrategia.Overmind.Data.SqlClient.Migrations;
 // using Sistrategia.Overmind.WebAPI.Models;
 // using Sistrategia.Overmind.WebAPI.Services;
@@ -10,17 +10,19 @@ using Microsoft.AspNetCore.Mvc;
 namespace Sistrategia.Overmind.WebAPI.Controllers;
 
 [ApiController, Route("api/dev")]
-[Authorize(Roles = "Developer")]
+// [Authorize(Roles = "Developer")]
+[AllowAnonymous]
 public class DevController : ControllerBase
 {
+    private IDatabaseManager DatabaseManager { get; }
     private readonly ILogger<DevController> dbLogger;
 
     public DevController(
-        // IDatabaseManager databaseManager,
+        IDatabaseManager databaseManager,
         // IMigrationRunner migrationRunner,
         // IEmailNotificationService emailService, 
         ILogger<DevController> logger) {
-        // DatabaseManager = databaseManager;
+        DatabaseManager = databaseManager;
         // MigrationRunner = migrationRunner;
         // EmailService = emailService;
         dbLogger = logger;
@@ -29,7 +31,7 @@ public class DevController : ControllerBase
     [HttpPost("createdatabase")]
     public ActionResult CreateDatabase() {
         dbLogger.LogInformation("Creating a new database...");
-        // DatabaseManager.CreateDatabase();
+        DatabaseManager.CreateDatabase();
         dbLogger.LogInformation("New database created.");
         return Created();
     }
@@ -37,15 +39,15 @@ public class DevController : ControllerBase
     [HttpPost("createschema")]
     public ActionResult CreateSchema() {
         dbLogger.LogInformation("Creating the database schema...");
-        // DatabaseManager.CreateSchema();
+        DatabaseManager.CreateSchema();
         dbLogger.LogInformation("Database schema created.");
         return Created();
     }
 
     [HttpPost("dropschema")]
     public ActionResult DropSchema() {
-        dbLogger.LogInformation("Droping the database schema...");
-        // DatabaseManager.DropSchema();
+        dbLogger.LogInformation("Dropping the database schema...");
+        DatabaseManager.DropSchema();
         dbLogger.LogInformation("Database schema dropped.");
         return Ok();
     }

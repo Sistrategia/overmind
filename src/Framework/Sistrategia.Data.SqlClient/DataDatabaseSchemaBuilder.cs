@@ -64,19 +64,26 @@ internal class DataDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         // DropTableIfExists("data", "list_item");
         // DropTableIfExists("data", "list");
 
+        DropTableIfExists("data", "applied_migration");
+
+        DropTableIfExists("data", "schema_version");
         DropTableIfExists("data", "string_value");
         DropTableIfExists("data", "string");
-        DropTableIfExists("data", "language");
         DropTableIfExists("data", "sequence");
         DropTableIfExists("data", "sequence_type");
         DropTableIfExists("data", "dbrow_version");
         DropTableIfExists("data", "tenant");
+        DropTableIfExists("data", "module");
+        DropTableIfExists("data", "dboperation_type_localized");
         DropTableIfExists("data", "dboperation_type");
-        DropTableIfExists("data", "schema_version");
+        DropTableIfExists("data", "language");
     }
 
     public override void DropSchemaObjects() {
         // DropSchemaObjectIfExists("audit");
+
+        // DROP SEQUENCE [data].[dbrow_version_seq]
+        DropSequenceIfExists("data", "dbrow_version_seq");
         DropSchemaObjectIfExists("data");
     }
 
