@@ -77,11 +77,21 @@ CREATE TABLE [contacts].[address] (
     ,CONSTRAINT [fk_address_country] FOREIGN KEY([country_id]) REFERENCES [contacts].[country] ([country_id])
 );
 
+CREATE TABLE [contacts].[address_location] (
+     [location_id]    INT            NOT NULL IDENTITY(1,1)
+    ,[location_name]  NVARCHAR(100)  NOT NULL
+    ,CONSTRAINT [pk_address_location] PRIMARY KEY CLUSTERED ([location_id])
+    ,CONSTRAINT [uq_address_location_name] UNIQUE ([location_name])
+);
+-- SET IDENTITY_INSERT [contacts].[address_location] ON;
+-- INSERT INTO [contacts].[address_location] ([location_id],[location_name]) VALUES (0, N'(erased by official request)');
+-- SET IDENTITY_INSERT [contacts].[address_location] OFF;
+
 CREATE TABLE [contacts].[contact_address] (
      [contact_id]       INT             NOT NULL
     ,[ordinal]          INT             NOT NULL
     ,[address_id]       INT             NOT NULL
-    ,[location_name]    NVARCHAR(25)        NULL
+    ,[location_id]      INT                 NULL
     ,[is_public]        BIT             NOT NULL CONSTRAINT [df_contact_address_is_public] DEFAULT 0  -- spec 10: show in public directory
     ,CONSTRAINT [pk_contact_address] PRIMARY KEY CLUSTERED				( [contact_id] ASC, [ordinal] ASC )
 );
@@ -90,6 +100,9 @@ ALTER TABLE [contacts].[contact_address]  WITH NOCHECK ADD  CONSTRAINT [fk_conta
 REFERENCES [contacts].[contact] ([contact_id])
 ALTER TABLE [contacts].[contact_address]  WITH NOCHECK ADD  CONSTRAINT [fk_contact_address_address] FOREIGN KEY([address_id])
 REFERENCES [contacts].[address] ([address_id])
+ALTER TABLE [contacts].[contact_address]  WITH NOCHECK ADD  CONSTRAINT [fk_contact_address_address_location] FOREIGN KEY([location_id])
+REFERENCES [contacts].[address_location] ([location_id])
 
 ALTER TABLE [contacts].[contact_address] NOCHECK CONSTRAINT [fk_contact_address_contact]
 ALTER TABLE [contacts].[contact_address] NOCHECK CONSTRAINT [fk_contact_address_address]
+ALTER TABLE [contacts].[contact_address] NOCHECK CONSTRAINT [fk_contact_address_address_location]

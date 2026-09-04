@@ -33,12 +33,12 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
 
     public override void CreateSchemaViews() {
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.Role.create_security_role_view_schema.sql");
-        // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_view_schema.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_view_schema.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.Activity.create_security_online_users_view.sql");
     }
 
     public override void CreateSchemaFunctions() {
-        // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_insert.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_insert.sql");
         // // //RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_create.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_update_password.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_update_lockout.sql");
@@ -54,6 +54,8 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void InsertMinimalData() {
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.insert_minimal_data.sql");
+
         InsertSystemUser("908E5A8C-0372-4EDC-ADDF-011E059091ED", "Default tenant",
             new DateTime(2022, 1, 4, 20, 0, 0, DateTimeKind.Utc));
         // // InsertSystemUser("46BE0A72-4301-4F02-9EBD-6EEBA985B746", "Digitex LTD"

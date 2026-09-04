@@ -26,7 +26,7 @@ internal class EntitiesDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void CreateSchemaViews() {
-        // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_view_schema.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_view_schema.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.Events.create_event_view.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_history_view_schema.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_identifier_view_schema.sql");
@@ -47,7 +47,7 @@ internal class EntitiesDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void InsertMinimalData() {
-        // //RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.insert_minimal_data.sql");        
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.insert_minimal_data.sql");
     }
 
     public override void DropSchemaTypes() {

@@ -25,9 +25,6 @@ CREATE TABLE [entities].[entity_type] (
     ,CONSTRAINT [uq_entity_type_code] UNIQUE ([code_name])
 );
 
-INSERT INTO [entities].[entity_type] ([entity_type_id],[code_name],[database_schema],[database_table],[database_view]) 
-VALUES (0, 'tenant', 'data', 'tenant', 'tenant_view');
-
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [entities].[entity_type_property]
 -- -----------------------------------------------------------------------------------------------------------
@@ -193,42 +190,6 @@ CREATE TABLE [entities].[entity_identifiers] (
     ,CONSTRAINT [px_entities_entity_identifiers] PRIMARY KEY CLUSTERED ( [entity_id] ASC, [identifier_type_id] ASC, [identifier_id] ASC, [from_date] ASC)
 );
 
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('vatid', 'VATID')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('rfc', 'RFC')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('curp', 'CURP')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('studentid', 'Matrícula')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('cedula.numero', 'Cédula Profesional')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('nss', 'NSS')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('npie', 'NPIE')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('folio', 'Folio')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('operacion', 'Operación')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('repse', 'REPSE')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('repse.folio', 'REPSE Folio')
--- INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('repse.actividad', 'Proveedor REPSE Actividad')
-
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('supplierid', 'ID del Proveedor')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('contract.id', 'Contrato')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('contactoname', 'Contacto')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('contactoemail', 'Correo')
-
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('razonsocial','Razón Social')
-
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('customer.name', 'Cliente')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('customer.rfc', 'Cliente RFC')
-
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('supplier.name', 'Proveedor')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('supplier.rfc', 'Proveedor RFC')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('supplier.npie', 'Proveedor NPIE')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('supplier.repse', 'Proveedor REPSE')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('supplier.repse.folio', 'Proveedor REPSE Folio')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('supplier.repse.actividad', 'Proveedor REPSE Actividad')
-
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('vigencia.inicio', 'Inicio Vigencia')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('vigencia.fin', 'Fin Vigencia')
-
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('ods', 'ODS')
-INSERT INTO [entities].[identifier_type] ([identifier_key], [identifier_name]) VALUES ('uuid', 'UUID')
-
 
 
 -- -----------------------------------------------------------------------------------------------------------
@@ -276,36 +237,6 @@ CREATE TABLE [entities].[point_in_time_value] (
 );
 
 -- FK
-
-
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('created','Created','Fecha de creación')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('modified','Modified','Fecha de modificación')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('validated','Validated','Fecha de validación')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('locked','Locked','Fecha de Bloqueo')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('deleted','Deleted','Fecha de Eliminación')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('generated','Generated','Fecha de Generación')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('uploaded','Uploaded','Fecha de Carga')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('initial','Initial','Fecha de Inicio')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('final','Final','Fecha de Fin')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('initial_validity','Inital Validity','Inicio de Vigencia')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('final_validity','Final Validity','Fin de Vigencia')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('contract_signed','Contract Signed','Firma de Contrato')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('transaction_date','Transaction Date','Fecha de Transacción')
-INSERT INTO [entities].[point_in_time] ([code_name],[display_name],[display_name_es])
-VALUES ('operation_date','Operation Date','Fecha de Operación')
 
 
 -- -----------------------------------------------------------------------------------------------------------

@@ -38,7 +38,7 @@ internal class DataDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void InsertMinimalData() {
-        // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Data.insert_minimal_data.sql");        
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Data.insert_minimal_data.sql");
     }
 
     public override void DropSchemaTypes() {
@@ -71,6 +71,9 @@ internal class DataDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         DropTableIfExists("data", "string");
         DropTableIfExists("data", "sequence");
         DropTableIfExists("data", "sequence_type");
+        // DROP SEQUENCE [data].[dbrow_version_seq]
+        // DropTableIfExists("data", "dbrow_version_seq");
+        DropSequenceIfExists("data", "dbrow_version_seq");
         DropTableIfExists("data", "dbrow_version");
         DropTableIfExists("data", "tenant");
         DropTableIfExists("data", "module");
@@ -82,8 +85,8 @@ internal class DataDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     public override void DropSchemaObjects() {
         // DropSchemaObjectIfExists("audit");
 
-        // DROP SEQUENCE [data].[dbrow_version_seq]
-        DropSequenceIfExists("data", "dbrow_version_seq");
+
+        // DropSequenceIfExists("data", "dbrow_version_seq");
         DropSchemaObjectIfExists("data");
     }
 

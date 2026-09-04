@@ -12,9 +12,6 @@
 -- IF SCHEMA_ID(N'contacts') IS NULL EXEC (N'CREATE SCHEMA [contacts]');
 -- GO
 
-INSERT INTO [entities].[entity_type] ([entity_type_id],[code_name],[database_schema],[database_table],[database_view]) 
-VALUES (1, 'contact', 'contacts', 'contact', 'contact_view');
-
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [contacts].[contact_type]
 -- -----------------------------------------------------------------------------------------------------------
@@ -24,14 +21,6 @@ CREATE TABLE [contacts].[contact_type] (
     ,CONSTRAINT [px_contacts_contact_type] PRIMARY KEY CLUSTERED ( [contact_type_id] ASC )
     ,CONSTRAINT [uq_contact_type_code] UNIQUE ([code_name])
 );
-
-INSERT INTO [contacts].[contact_type] ([contact_type_id],[code_name]) VALUES (1, 'person');
-INSERT INTO [contacts].[contact_type] ([contact_type_id],[code_name]) VALUES (2, 'organization');
-INSERT INTO [contacts].[contact_type] ([contact_type_id],[code_name]) VALUES (3, 'group');
-
--- INSERT INTO [contacts].[contact_type] ([contact_type_id],[code_name],[singular_name],[plural_name],[singular_name_es],[plural_name_es]) VALUES (1, 'person', 'Person', 'People', 'Persona', 'Personas');
--- INSERT INTO [contacts].[contact_type] ([contact_type_id],[code_name],[singular_name],[plural_name],[singular_name_es],[plural_name_es]) VALUES (2, 'organization', 'Organization', 'Organizations', 'Organización', 'Organizaciones');
--- INSERT INTO [contacts].[contact_type] ([contact_type_id],[code_name],[singular_name],[plural_name],[singular_name_es],[plural_name_es]) VALUES (3, 'group', 'Group', 'Groups', 'Grupo', 'Grupos');
 
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [contacts].[contact_type_localized]
@@ -48,15 +37,6 @@ CREATE TABLE [contacts].[contact_type_localized] (
         REFERENCES [data].[language]([language_id]) ON DELETE CASCADE
 );
 
-MERGE [contacts].[contact_type_localized] AS t
-USING (VALUES
-     (1,1,N'Person',N'People'),(1,2,N'Persona',N'Personas')
-    ,(2,1,N'Organization',N'Organizations'),(2,2,N'Organización',N'Organizaciones')
-    ,(3,1,N'Group',N'Groups'),(3,2,N'Grupo',N'Grupos')
-) AS s([id],[lang],[sn],[pn])
-ON t.[contact_type_id] = s.[id] AND t.[language_id] = s.[lang]
-WHEN NOT MATCHED THEN INSERT VALUES (s.[id],s.[lang],s.[sn],s.[pn]);
-
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [contacts].[person_name_type]
 -- -----------------------------------------------------------------------------------------------------------
@@ -66,24 +46,8 @@ CREATE TABLE [contacts].[person_name_type] (
     -- ,[display_name]             NVARCHAR(50)        NOT NULL
     -- ,[display_name_es]          NVARCHAR(50)        NOT NULL
     ,CONSTRAINT [px_person_name_type] PRIMARY KEY CLUSTERED ( [person_name_type_id] ASC )
+    ,CONSTRAINT [uq_person_name_type_code] UNIQUE ([code_name])
 );
-
--- INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name],[display_name],[display_name_es]) VALUES (1, 'person_title', 'Title', 'Título');
--- INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name],[display_name],[display_name_es]) VALUES (2, 'person_first_name', 'First Name', 'Nombre(s)');
--- INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name],[display_name],[display_name_es]) VALUES (3, 'person_last_name', 'Last Name', 'Apellidos');
--- INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name],[display_name],[display_name_es]) VALUES (4, 'person_last_name1', 'Last Name', 'Apellido Paterno');
--- INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name],[display_name],[display_name_es]) VALUES (5, 'person_last_name2', 'Mother''s Maiden Name', 'Apellido Materno');
--- INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name],[display_name],[display_name_es]) VALUES (6, 'person_suffix', 'Suffix', 'Sufijo');
--- INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name],[display_name],[display_name_es]) VALUES (7, 'person_alias', 'Alias', 'Alias');
-
-INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name]) VALUES (1, 'person_title');
-INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name]) VALUES (2, 'person_first_name');
-INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name]) VALUES (3, 'person_last_name');
-INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name]) VALUES (4, 'person_last_name1');
-INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name]) VALUES (5, 'person_last_name2');
-INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name]) VALUES (6, 'person_suffix');
-INSERT INTO [contacts].[person_name_type] ([person_name_type_id],[code_name]) VALUES (7, 'person_alias');
-
 
 CREATE TABLE [contacts].[person_name_type_localized] (
      [person_name_type_id]  INT            NOT NULL
@@ -95,22 +59,6 @@ CREATE TABLE [contacts].[person_name_type_localized] (
     ,CONSTRAINT [fk_pntl_language] FOREIGN KEY ([language_id])
         REFERENCES [data].[language]([language_id]) ON DELETE CASCADE
 );
-
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (1,1,N'Title');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (2,1,N'First Name');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (3,1,N'Last Name');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (4,1,N'Last Name 1');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (5,1,N'Last Name 2');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (6,1,N'Suffix');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (7,1,N'Alias');
-
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (1,2,N'Título');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (2,2,N'Nombre(s)');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (3,2,N'Apellidos');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (4,2,N'Apellido Paterno');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (5,2,N'Apellido Materno');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (6,2,N'Sufijo');
-INSERT INTO [contacts].[person_name_type_localized] ([person_name_type_id],[language_id],[display_name]) VALUES (7,2,N'Alias');
 
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [contacts].[person_name]
@@ -281,11 +229,6 @@ CREATE TABLE [contacts].[contact_relationship_type] (
     ,CONSTRAINT [px_contact_relationship_type] PRIMARY KEY CLUSTERED ( [contact_relationship_type_id] ASC )
 );
 
---INSERT INTO [contacts].[contact_relationship_type] ([contact_relationship_type_id],[code_name],[display_name],[display_name_es]) VALUES (1, 'person_title', 'Title', 'Título');
-INSERT INTO [contacts].[contact_relationship_type] ([code_name],[display_name],[display_name_es]) VALUES ('memberof', 'member of', 'miembro de');
-INSERT INTO [contacts].[contact_relationship_type] ([code_name],[display_name],[display_name_es]) VALUES ('worksfor', 'works for', 'trabaja para');
-INSERT INTO [contacts].[contact_relationship_type] ([code_name],[display_name],[display_name_es]) VALUES ('supplierof','supplier of','proveedor de');
-INSERT INTO [contacts].[contact_relationship_type] ([code_name],[display_name],[display_name_es]) VALUES ('ownerof', 'owner of', N'dueño de');
 
 CREATE TABLE [contacts].[contact_relationship] (
      [contact_relationship_type_id]     INT     NOT NULL 
@@ -297,17 +240,3 @@ CREATE TABLE [contacts].[contact_relationship] (
     ,CONSTRAINT [pk_contact_relationship] PRIMARY KEY CLUSTERED ( [from_contact_id] ASC, [contact_relationship_type_id] ASC, [to_contact_id] ASC )	
 );
 
-
--- IF (EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'entities' AND TABLE_NAME = 'event_type'))
--- BEGIN
--- 	INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.contact.new', 'contacts.contact.new', 'Event generated by adding a contact in the system.');
---     INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.contact.edit', 'contacts.contact.edit', 'Event generated by updating a contact in the system.');
---     INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.contact.delete', 'contacts.contact.delete', 'Event generated by deleting a contact in the system.');
--- 	INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.phone.new', 'contacts.phone.new', 'Event generated by adding a phone in the system.');
---     INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.phone.edit', 'contacts.phone.edit', 'Event generated by updating a phone in the system.');
---     INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.phone.delete', 'contacts.phone.delete', 'Event generated by deleting a phone in the system.');
---     INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.email.new', 'contacts.email.new', 'Event generated by adding an email in the system.');
---     INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.email.edit', 'contacts.email.edit', 'Event generated by updating an email in the system.');
---     INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.email.delete', 'contacts.email.delete', 'Event generated by deleting an email in the system.');
---     INSERT INTO [entities].[event_type] ([code_name],[display_name],[description]) VALUES ('contacts.address.new', 'contacts.address.new', 'Event generated by adding an address in the system.');
--- END

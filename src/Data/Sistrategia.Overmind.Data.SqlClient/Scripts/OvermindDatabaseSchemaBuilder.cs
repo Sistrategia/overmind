@@ -39,6 +39,7 @@ internal class OvermindDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void InsertMinimalData() {
+        RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.insert_minimal_data.sql");
         // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Locations.insert_countries.sql");
         // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Locations.insert_states.sql");
         // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Locations.insert_cities.sql");
@@ -47,7 +48,7 @@ internal class OvermindDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public void InsertSistrategiaData() {
-        // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_ernesto_sample_data.sql");
+        RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_ernesto_sample_data.sql");
         // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_sistrategia_organization.sql");
         // // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_jocelyn_data.sql");
         // // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_ciceromae.sql");

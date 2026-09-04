@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sistrategia.Data;
+using Sistrategia.Overmind.WebAPI.Models;
 // using Sistrategia.Overmind.Data.SqlClient.Migrations;
-// using Sistrategia.Overmind.WebAPI.Models;
 // using Sistrategia.Overmind.WebAPI.Services;
 // using Sistrategia.Overmind.WebAPI.Utils;
 // using Sistrategia.Security;
@@ -26,6 +26,18 @@ public class DevController : ControllerBase
         // MigrationRunner = migrationRunner;
         // EmailService = emailService;
         dbLogger = logger;
+    }
+
+    [HttpGet("")]
+    public DevModel GetDevModel() {
+        var model = new DevModel {
+            DataSource = DatabaseManager.DataSource,
+            InitialCatalog = DatabaseManager.InitialCatalog,
+            DatabaseServerVersion = DatabaseManager.DatabaseServerVersion,
+            DatabaseSchemaVersion = DatabaseManager.GetDatabaseSchemaVersion(),
+            NetCoreVersion = Environment.Version.ToString()
+        };
+        return model;
     }
 
     [HttpPost("createdatabase")]
