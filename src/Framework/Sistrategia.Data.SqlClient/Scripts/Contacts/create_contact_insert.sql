@@ -107,13 +107,12 @@ BEGIN
         IF @public_key IS NULL SET @public_key = NEWID()
         
         IF @dbrow_version IS NULL
-        BEGIN
-            SET @dbrow_version = COALESCE((SELECT MAX(dbrow_version) + 1 FROM [data].[dbrow_version] WHERE [tenant_id] = @tenant_id), 1)
+        BEGIN            
+            SET @dbrow_version = NEXT VALUE FOR [data].[dbrow_version_seq];
             INSERT INTO [data].[dbrow_version] ([tenant_id], [dbrow_version], [dboperation_type_id], [modified], [modified_by]) 
             VALUES (@tenant_id, @dbrow_version
             , 1
             , @created, COALESCE( (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @created_by), 1) )
-            --SET @dbrow_version = SCOPE_IDENTITY()
         END
 
         DECLARE @RC INT

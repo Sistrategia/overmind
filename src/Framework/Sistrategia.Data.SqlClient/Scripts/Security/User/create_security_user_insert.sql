@@ -130,7 +130,8 @@ BEGIN
 
         IF @dbrow_version IS NULL
         BEGIN
-            SET @dbrow_version = COALESCE((SELECT MAX(dbrow_version) + 1 FROM [data].[dbrow_version] WHERE [tenant_id] = @tenant_id), 1)
+            -- SET @dbrow_version = COALESCE((SELECT MAX(dbrow_version) + 1 FROM [data].[dbrow_version] WHERE [tenant_id] = @tenant_id), 1)
+            SET @dbrow_version = NEXT VALUE FOR [data].[dbrow_version_seq];
             INSERT INTO [data].[dbrow_version] ([tenant_id], [dbrow_version], [dboperation_type_id], [modified], [modified_by]) 
             VALUES (@tenant_id, @dbrow_version
             , 1
