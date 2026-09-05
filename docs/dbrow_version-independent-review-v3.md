@@ -5,21 +5,23 @@ Status: independent review of the whole `dbrow_version` / audit-trail thread; re
 
 Reviewed: [original analysis](dbrow_version-allocation-analysis.md), [analysis v2](dbrow_version-allocation-analysis_v2.md), [primary design](dbrow_version-allocation-design.md), [chained-history alternative](dbrow_version-allocation-design-immutable-chained-history.md), [session handoff](dbrow_version-design-session-handoff.md), [ADR 0001](adr/0001-dbrow-version-allocation-helper.md), `AGENTS.md`, the upstream spec `SistrategiaDataAnalysis/schema-analysis/05-design-recommendations.md` (§2, §5, §6, §7, §8, §10) and `06-research-audit-temporal.md`, and every SQL script, schema builder and test under `src/Framework/Sistrategia.Data.SqlClient` and `tests/sql`.
 
+> **Scope note (user clarification, 2026-09-05).** This repository is a **remake** of the platform, not the complete code of the previous products. It deliberately contains only the bare-minimum partial schemas and the three insert procedures needed to reach a first user insertion. The absence of update, delete, undelete and child-history procedures is therefore expected at this stage, not neglect. The purpose of this partial implementation is to settle the **mechanisms** (allocation, transaction ownership, locking, actor and tenant resolution, history shape) that will then be applied across all the code still to be migrated from the earlier generations. Every finding below should be read in that light: the value of fixing something here is that it is fixed once, before it is stamped into dozens of procedures.
+
 ---
 
 ## 1. Verdict in one page
 
 **The allocation decision is right and is now correctly implemented.** A database-local BIGINT sequence with gaps, one ledger row per business transaction, `entity_version` as the user-facing aggregate revision, and the `data.dbrow_version_ensure` helper are the correct kernel. Nothing in this review argues for reopening that.
 
-**The thread has drifted away from what makes the audit a differentiator.** Since analysis v2 the documents have grown toward distributed identity, revision graphs, CDC-based commit indexes and cryptographic anchoring. Meanwhile the repository has three INSERT procedures and **no UPDATE, soft-DELETE, UNDELETE or ERASE procedure**, child-association history is **not written even on insert**, and unknown actors are **silently attributed to the System User**. Customers love that they can see who changed what and can delete and undelete. Today the schema promises that; the write path does not yet deliver it. That gap, not distribution, is the risk to the differentiator.
+**The mechanisms still to settle are the ones the migrated code will copy.** Since analysis v2 the documents have grown toward distributed identity, revision graphs, CDC-based commit indexes and cryptographic anchoring. Those are legitimate future questions, but they are not what the migration will stamp into every procedure. What will be stamped is: how a mutating procedure locks its aggregate before allocating, how it resolves the actor and tenant, how it writes child history, and how delete and undelete work. Today the reference inserts still **silently attribute unknown actors to the System User**, fall back to the highest tenant, accept caller-supplied audit time, and write no child history rows. If those patterns are migrated as they stand, the audit that customers praise (who changed what, delete and undelete, reconstruction) would be weaker in the remake than in the products it replaces.
 
-**Recommendation:** re-center the next three or four sessions on finishing the audit kernel (§5 below), fix a short list of attribution and integrity defects first (§4), and shrink the distribution proposal to the two concrete workflows the user actually described (§6). Adopt SQL Server **Change Tracking**, not CDC, as the commit-order primitive for synchronization. Treat whole-tenant "as of" reconstruction as a backup/PITR feature, not a ledger feature.
+**Recommendation:** before migrating the bulk of the procedures, settle the canonical write mechanism on one reference family (§5), fix the short list of attribution and integrity defects in the existing inserts so they are not copied (§4), and shrink the distribution proposal to the two concrete workflows the user actually described (§6). Adopt SQL Server **Change Tracking**, not CDC, as the commit-order primitive for synchronization. Treat whole-tenant "as of" reconstruction as a backup/PITR feature, not a ledger feature.
 
 ---
 
 ## 2. What is true in the code today (evidence)
 
-Facts checked against the scripts on branch `dev` at commit `19fc2cb`.
+Facts checked against the scripts on branch `dev` at commit `19fc2cb`. Given the scope note above, the table separates two kinds of observation: **defects in the mechanisms already written** (which the migration would copy) and **coverage not yet migrated** (expected, listed so the migration checklist is complete).
 
 | Area | Observation | Consequence for audit |
 | --- | --- | --- |
@@ -29,8 +31,9 @@ Facts checked against the scripts on branch `dev` at commit `19fc2cb`.
 | Tenant | `user_insert`: `IF @tenant_id IS NULL SET @tenant_id = (SELECT MAX(tenant_id) FROM data.tenant)`. | A user can be created in the wrong tenant with no error. |
 | Bootstrap | `entity_insert` treats `@created_by = @public_key` as self-creation and makes the new entity its own actor. Any caller can trigger it with two fresh GUIDs. | Unauthenticated self-attribution path in the data layer. |
 | Reuse proof | Helper validates ledger existence, tenant and actor. ADR 0001 admits it cannot prove the row belongs to the *current* transaction. | A committed version can be reused in a later transaction, misrepresenting two commits as one. |
-| Child history | `contact_insert` writes `contact_email` and `contact_phone` but **no** `contact_email_history` / `contact_phone_history` rows. `contact_address`, `contact_person_name`, `contact_relationship`, `security.user`, `security.user_role` have **no history table at all**. `contact_phone` and `contact_address` lack `dbrow_version`. | Reconstruction of "contact as of version 1" (spec §2.2 step 3) cannot find any child. A name, address, company relationship or role change would leave no trace. |
-| Existing-contact user path | Inserts `security.user` with no history row and does not bump `entity_version` or write a spine row. | Converting a contact into a user is invisible to the aggregate's version history. |
+| Child history (coverage not yet migrated) | `contact_insert` writes `contact_email` and `contact_phone` but **no** `contact_email_history` / `contact_phone_history` rows. `contact_address`, `contact_person_name`, `contact_relationship`, `security.user`, `security.user_role` have **no history table yet**. `contact_phone` and `contact_address` lack `dbrow_version`. | Expected at this stage. Listed so the migration checklist covers it: reconstruction of "contact as of version 1" (spec §2.2 step 3) needs the op-1 child rows, and a name, address, company relationship or role change must leave a trace once those families are migrated. |
+| Existing-contact user path (mechanism) | Inserts `security.user` with no history row and does not bump `entity_version` or write a spine row. | Converting a contact into a user is invisible to the aggregate's version history. Settle the rule now (spec §6.3: one entity, one version, one spine) because every multi-level extension will copy it. |
+| Lifecycle procedures (coverage not yet migrated) | No update, soft-delete, undelete or erase procedure exists yet. | Expected. The point is that the first ones written become the template; §5 proposes writing them on one reference family before the bulk migration. |
 | FK enforcement | `contact_phone` and `contact_address` FKs are `WITH NOCHECK` + `NOCHECK CONSTRAINT`. Spec §8 forbids this. | Orphans possible; inherited defect #5 in spec §8.1 is still open. |
 | Column drift | `contact_phone_history.extension` is `NVARCHAR(10)` while `contact_phone.extension` is `NVARCHAR(25)`. `contact_history` has `line_of_business_id`; `contact` does not. | A 25-character extension will fail the history insert. The drift the research doc warns about is already present. |
 | Indexes | All history PKs lead with `dbrow_version`. No `(entity_id, dbrow_version)` index on `entity_history`, no `(contact_id, dbrow_version)` on `contact_history`. | Per-aggregate reconstruction scans. Fine now, painful at millions of rows. |
@@ -91,7 +94,9 @@ These are hours of work each and every one of them protects the "who / when / wh
 
 ---
 
-## 5. Tier 1 — finish the audit kernel (the differentiator)
+## 5. Tier 1 — settle the canonical write mechanism on one reference family before the bulk migration
+
+The remake will migrate many procedures from the earlier generations. The cheapest moment to get the audit mechanism right is before that migration starts, on one fully worked family that then serves as the template (spec §6.2 already proposes stamping procedures from a checked skeleton). Everything in this section is about that template.
 
 ### 5.1 The write protocol that makes numeric-bound reconstruction sound (ADR 0002)
 
@@ -117,16 +122,18 @@ EXEC [data].[dbrow_version_ensure] … @dbrow_version = @dbrow_version OUTPUT;
 
 Rules to record in the ADR: the affected aggregate set is discovered before step 2, never extended after step 3; multi-aggregate operations lock in deterministic order; a child change bumps only its owning aggregate (decide and document that a `contact_relationship` belongs to `from_contact_id`); repeated changes to one row inside one unit of work leave one history row.
 
-### 5.2 Ship the lifecycle the schema already promises
+### 5.2 Write the lifecycle once, as the template
 
 Implement, as reference code for the canonical template, on `entity` + `contact` + one child family (phone or email):
 
 - `*_update` with the optimistic token (op 2).
-- `entity_soft_delete` (op 3) and `entity_undelete` (op 5) exactly as spec §7.1–7.2 describe. This is the "delete and undelete" customers praise, and it has never shipped in four generations.
+- `entity_soft_delete` (op 3) and `entity_undelete` (op 5) exactly as spec §7.1–7.2 describe. This is the "delete and undelete" customers praise; the earlier generations carried the codes without a uniform implementation, and the remake is the chance to make it mechanical.
 - Child insert/update/delete with history written before the physical junction delete, ordinal allocated under `UPDLOCK, HOLDLOCK` on the contact's junction range (spec §5), no renumbering.
 - `entity_erase` (op 10) can follow once sentinel catalog rows exist; do not block delete/undelete on it.
 
-### 5.3 Close the history coverage gaps
+### 5.3 History coverage checklist for the migration
+
+These are not defects of the current partial code; they are the coverage the migration must bring in, listed so nothing is inherited silently a fourth time (spec §8.1).
 
 - Write `contact_email_history` and `contact_phone_history` rows (op 1) in `contact_insert`.
 - Add `dbrow_version` to `contact_phone` and `contact_address`; add `contact_address_history`.
@@ -207,4 +214,4 @@ A versioned JSON document per ledger transaction generated with `FOR JSON` from 
 5. Migration tool and evidence envelope.
 6. Revisit distribution and tamper evidence only against a named customer need.
 
-The thread's documents are good thinking. The product's advantage is realized in the procedures customers actually call, and those are the part still to be written.
+The thread's documents are good thinking. The product's advantage is realized in the procedures customers actually call. In a remake, the moment those procedures are migrated is the moment the mechanism becomes hard to change, so the mechanism deserves to be settled first, on the small reference set that exists today.

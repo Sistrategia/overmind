@@ -8,9 +8,16 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 ## Active design thread (RESUME HERE)
 
 **Independent review v3 (2026-09-05):** `docs/dbrow_version-independent-review-v3.md` reviews the whole thread
-against the actual code. Verdict: allocation is settled; re-center on finishing the audit kernel (update /
-soft-delete / undelete procs, root-lock-before-allocation, child history coverage, fail-fast actor/tenant),
-use Change Tracking instead of CDC for sync, defer DAG/crypto. Recommendations only; nothing implemented.
+against the actual code. Verdict: allocation is settled; settle the canonical write mechanism on one reference
+family before the bulk migration (root-lock-before-allocation, fail-fast actor/tenant, server-stamped time,
+update / soft-delete / undelete template, child history shape); use Change Tracking instead of CDC for sync;
+defer DAG/crypto. Recommendations only; nothing implemented.
+
+**Repository scope (user clarification, 2026-09-05):** this is a **remake**. It intentionally holds only the
+bare-minimum partial schemas and inserts needed for a first user insertion, as the place to work out the
+mechanisms that will be applied across all code still to be migrated. Missing update/delete/child-history
+procedures are expected scope, not defects. Do not report them as neglect; report mechanism issues that the
+migration would copy.
 
 **Latest implementation (2026-09-05):** allocation helper extracted with user authorization.
 Read `docs/adr/0001-dbrow-version-allocation-helper.md` for the decision, contracts, tests, and limitations.
