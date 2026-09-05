@@ -7,6 +7,11 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Independent review v3 (2026-09-05):** `docs/dbrow_version-independent-review-v3.md` reviews the whole thread
+against the actual code. Verdict: allocation is settled; re-center on finishing the audit kernel (update /
+soft-delete / undelete procs, root-lock-before-allocation, child history coverage, fail-fast actor/tenant),
+use Change Tracking instead of CDC for sync, defer DAG/crypto. Recommendations only; nothing implemented.
+
 **Latest implementation (2026-09-05):** allocation helper extracted with user authorization.
 Read `docs/adr/0001-dbrow-version-allocation-helper.md` for the decision, contracts, tests, and limitations.
 `data.dbrow_version_ensure` centralizes sequence allocation/ledger creation and tenant/actor reuse checks.
