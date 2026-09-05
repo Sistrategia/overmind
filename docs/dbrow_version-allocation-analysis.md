@@ -1,5 +1,9 @@
 # dbrow_version Allocation — Design Analysis & Session Notes
 
+> Historical record. See [analysis v2](dbrow_version-allocation-analysis_v2.md) for ordering corrections
+> and [ADR 0001](adr/0001-dbrow-version-allocation-helper.md) for the 2026-09-05 helper extraction.
+> The pending allocation checklist and XACT_ABORT leak claim below are superseded by that ADR.
+
 > **Status:** discussion captured, decision pending implementation.
 > **Context:** `src/Framework/Sistrategia.Data.SqlClient` — the 4-layer DB (data → entities → contacts → security).
 > **Reference spec:** `D:\Code\GitHub\Sistrategia\SistrategiaDataAnalysis\schema-analysis\05-design-recommendations.md` → §2 "The versioning spine — the load-bearing design".

@@ -9,7 +9,7 @@
 * Version:			6.0.6829.0
 *************************************************************************************************************/
 
-CREATE PROCEDURE [security].[user_insert] (	 
+CREATE OR ALTER PROCEDURE [security].[user_insert] (
      @public_key					UNIQUEIDENTIFIER = NULL	
     ,@tenant                        UNIQUEIDENTIFIER = NULL	
     ,@logical_key					NVARCHAR(256) = NULL
@@ -79,13 +79,17 @@ CREATE PROCEDURE [security].[user_insert] (
 
     ,@user_primary_role             NVARCHAR(100) = NULL
 
-	,@dbrow_version                 BIGINT = NULL 	
+	,@dbrow_version                 BIGINT = NULL OUTPUT
 
     ,@auto_create_person_company    BIT = 1	 
 )
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    -- NULL INOUT creates an audit entry; non-NULL joins the caller's SAME active transaction.
+    -- Supplied versions must match tenant/actor. Never reuse after commit or failure.
+    -- Only the transaction owner commits/rolls back; an ambient owner MUST roll back on error.
 
     DECLARE @tenant_id INT
 
@@ -118,26 +122,25 @@ BEGIN
     --IF @access_failed_count IS NULL SET @access_failed_count = 0
 
     BEGIN TRY
+        IF @dbrow_version IS NOT NULL AND @@TRANCOUNT = 0
+            THROW 51008, 'A supplied audit version requires the caller''s active transaction.', 1;
 
         IF( @@TRANCOUNT = 0 )
 		BEGIN
-			SET XACT_ABORT ON;
 			BEGIN TRANSACTION SecurityUserInsert
 			SET @TranStarted = 1
 		END
 		ELSE
     		SET @TranStarted = 0        
 
-        IF @dbrow_version IS NULL
-        BEGIN
-            -- SET @dbrow_version = COALESCE((SELECT MAX(dbrow_version) + 1 FROM [data].[dbrow_version] WHERE [tenant_id] = @tenant_id), 1)
-            SET @dbrow_version = NEXT VALUE FOR [data].[dbrow_version_seq];
-            INSERT INTO [data].[dbrow_version] ([tenant_id], [dbrow_version], [dboperation_type_id], [modified], [modified_by]) 
-            VALUES (@tenant_id, @dbrow_version
-            , 1
-            , @created, COALESCE( (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @created_by), 1) )
-            --SET @dbrow_version = SCOPE_IDENTITY()
-        END
+        DECLARE @audit_actor_id INT = COALESCE(
+            (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @created_by), 1);
+        EXEC [data].[dbrow_version_ensure]
+             @tenant_id = @tenant_id
+            ,@actor_entity_id = @audit_actor_id
+            ,@dboperation_type_id = 1
+            ,@modified = @created
+            ,@dbrow_version = @dbrow_version OUTPUT;
 
         DECLARE @entity_id INT
         DECLARE @contact_id INT
@@ -189,7 +192,7 @@ BEGIN
             @city = @city,
             @state = @state,
             @country = @country,
-            @dbrow_version = @dbrow_version,
+            @dbrow_version = @dbrow_version OUTPUT,
             @auto_create_person_company = @auto_create_person_company,
             @supress_event_message = 1
             
@@ -282,39 +285,18 @@ BEGIN
 
         IF( @TranStarted = 1 )
 		BEGIN
-			SET @TranStarted = 0
-			COMMIT TRANSACTION SecurityUserInsert
+			COMMIT TRANSACTION SecurityUserInsert;
+            SET @TranStarted = 0
 		END
 
     END TRY
 
     BEGIN CATCH
+        IF @TranStarted = 1 AND XACT_STATE() <> 0
+            ROLLBACK TRANSACTION SecurityUserInsert;
 
-        DECLARE @ErrorNo int,
-		@Severity tinyint,
-		@ErrorState smallint,
-		@LineNo int,
-		@Message nvarchar(4000);
-
-		SELECT
-			@ErrorNo = ERROR_NUMBER(),
-			@Severity = ERROR_SEVERITY(),
-			@ErrorState = ERROR_STATE(),
-			@LineNo = ERROR_LINE (),
-			@Message = ERROR_MESSAGE();
-
-		-- Rollback any active or uncommittable transactions before
-		-- inserting information in the ErrorLog
-		IF (@TranStarted = 1 AND @@TRANCOUNT > 0)
-		BEGIN
-			SET @TranStarted = 0
-			ROLLBACK TRANSACTION SecurityUserInsert
-		END
-
-		BEGIN
-			RAISERROR(@Message, 16, 1 );
-		END
-
+        -- OUTPUT is not a commit receipt. Callers discard all context on failure.
+        SET @dbrow_version = NULL;
+        THROW;
     END CATCH;
-
 END

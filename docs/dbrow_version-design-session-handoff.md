@@ -1,6 +1,19 @@
 # Audit foundation — session handoff
 
-Updated: 2026-09-04. Purpose: resume the discussion after closing the session.
+Updated: 2026-09-05. Purpose: resume the discussion after closing the session.
+
+## Subsequent implementation (2026-09-05)
+
+The user authorized helper extraction and an ADR after a review of Copilot's INOUT-delegation proposal.
+See [ADR 0001](adr/0001-dbrow-version-allocation-helper.md) for the full reasoning and implementation.
+`data.dbrow_version_ensure` now owns allocation/reuse checks; all three insert procedures expose optional
+INOUT versions and explicit owned/ambient transaction behavior. The existing-contact user path bypasses
+entity_insert, so exclusive delegation to entity_insert was rejected. Current-transaction ownership is
+still a trusted caller contract beyond ambient-transaction and tenant/actor checks.
+
+Both derived procedures already used sequences before this extraction; older pending MAX()+1 notes were stale.
+Earlier XACT_ABORT leak claims were also corrected: procedure SET scope restores the caller's setting.
+The historical work-state text below describes September 4; this focused implementation is now complete.
 
 ## Read next
 

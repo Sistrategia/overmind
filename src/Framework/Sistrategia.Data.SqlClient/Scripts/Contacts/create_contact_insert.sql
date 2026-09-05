@@ -9,7 +9,7 @@
 * Version:          6.0.6829.0
 *************************************************************************************************************/
 
-CREATE PROCEDURE [contacts].[contact_insert] (     
+CREATE OR ALTER PROCEDURE [contacts].[contact_insert] (
      @contact_type_id               INT = 1 -- person
     ,@public_key                    UNIQUEIDENTIFIER = NULL	
     ,@tenant                        UNIQUEIDENTIFIER = NULL	
@@ -61,7 +61,7 @@ CREATE PROCEDURE [contacts].[contact_insert] (
     ,@do_not_contact                BIT = 0
     ,@line_of_business              NVARCHAR(256) = NULL 
 
-    ,@dbrow_version                 BIGINT = NULL
+    ,@dbrow_version                 BIGINT = NULL OUTPUT
 
     ,@auto_create_person_company    BIT = 1	 
     ,@supress_event_message         BIT = 0	 
@@ -69,6 +69,10 @@ CREATE PROCEDURE [contacts].[contact_insert] (
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    -- NULL INOUT creates an audit entry; non-NULL joins the caller's SAME active transaction.
+    -- Supplied versions must match tenant/actor. Never reuse after commit or failure.
+    -- Only the transaction owner commits/rolls back; an ambient owner MUST roll back on error.
     
     DECLARE @contact_id INT
     DECLARE @tenant_id INT
@@ -92,10 +96,11 @@ BEGIN
 --  IF @custom_display_name IS NULL SET @custom_display_name = 0
 
     BEGIN TRY
+        IF @dbrow_version IS NOT NULL AND @@TRANCOUNT = 0
+            THROW 51008, 'A supplied audit version requires the caller''s active transaction.', 1;
     
         IF( @@TRANCOUNT = 0 )
         BEGIN
-            SET XACT_ABORT ON;
             BEGIN TRANSACTION ContactInsert
             SET @TranStarted = 1
         END
@@ -106,14 +111,14 @@ BEGIN
         
         IF @public_key IS NULL SET @public_key = NEWID()
         
-        IF @dbrow_version IS NULL
-        BEGIN            
-            SET @dbrow_version = NEXT VALUE FOR [data].[dbrow_version_seq];
-            INSERT INTO [data].[dbrow_version] ([tenant_id], [dbrow_version], [dboperation_type_id], [modified], [modified_by]) 
-            VALUES (@tenant_id, @dbrow_version
-            , 1
-            , @created, COALESCE( (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @created_by), 1) )
-        END
+        DECLARE @audit_actor_id INT = COALESCE(
+            (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @created_by), 1);
+        EXEC [data].[dbrow_version_ensure]
+             @tenant_id = @tenant_id
+            ,@actor_entity_id = @audit_actor_id
+            ,@dboperation_type_id = 1
+            ,@modified = @created
+            ,@dbrow_version = @dbrow_version OUTPUT;
 
         DECLARE @RC INT
         EXECUTE @RC = [entities].[entity_insert]
@@ -128,7 +133,7 @@ BEGIN
             ,@image_url      = @image_url
             ,@thumbnail_url  = @thumbnail_url
             ,@is_private     = @is_private
-            ,@dbrow_version  = @dbrow_version
+            ,@dbrow_version  = @dbrow_version OUTPUT
 
         SET @contact_id = (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @public_key)
 
@@ -395,7 +400,7 @@ BEGIN
                     ,@image_url      = NULL
                     ,@thumbnail_url  = NULL
                     ,@is_private     = @is_private
-                    ,@dbrow_version  = @dbrow_version
+                    ,@dbrow_version  = @dbrow_version OUTPUT
 
                 SET @company_contact_id = (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @company_public_key)
         
@@ -432,35 +437,17 @@ BEGIN
 
         IF( @TranStarted = 1 )
         BEGIN
+            COMMIT TRANSACTION ContactInsert;
             SET @TranStarted = 0
-            COMMIT TRANSACTION ContactInsert
         END
 
     END TRY
     BEGIN CATCH
-        DECLARE @ErrorNo int,
-        @Severity tinyint,
-        @ErrorState smallint,
-        @LineNo int,
-        @Message nvarchar(4000);
+        IF @TranStarted = 1 AND XACT_STATE() <> 0
+            ROLLBACK TRANSACTION ContactInsert;
 
-        SELECT
-            @ErrorNo = ERROR_NUMBER(),
-            @Severity = ERROR_SEVERITY(),
-            @ErrorState = ERROR_STATE(),
-            @LineNo = ERROR_LINE (),
-            @Message = ERROR_MESSAGE();
-            
-        -- Rollback any active or uncommittable transactions before
-        -- inserting information in the ErrorLog
-        IF (@TranStarted = 1 AND @@TRANCOUNT > 0)
-        BEGIN
-            SET @TranStarted = 0
-            ROLLBACK TRANSACTION ContactInsert
-        END
-        
-        BEGIN
-            RAISERROR(@Message, 16, 1 );
-        END
+        -- OUTPUT is not a commit receipt. Callers discard all context on failure.
+        SET @dbrow_version = NULL;
+        THROW;
     END CATCH;
 END

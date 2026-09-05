@@ -30,6 +30,7 @@ internal class DataDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void CreateSchemaFunctions() {
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Data.create_dbrow_version_ensure.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Data.create_data_sequence_next_number.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Data.create_tenant_insert.sql");
 
@@ -46,6 +47,7 @@ internal class DataDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void DropSchemaFunctions() {
+        DropProcedureIfExists("data", "dbrow_version_ensure");
         // DropProcedureIfExists("data", "list_item_insert");
         // DropProcedureIfExists("data", "list_insert");
 
