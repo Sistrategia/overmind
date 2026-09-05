@@ -7,6 +7,13 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Latest session handoff (2026-09-04):** read `docs/dbrow_version-design-session-handoff.md` first.
+The user prefers the balance of `docs/dbrow_version-allocation-design.md` over the optional
+chained-history alternative. Subsequent clarification narrows distribution to practical disconnected
+branch/client synchronization and history-preserving migrations across schemas/database providers.
+That clarification is captured in the handoff but is **not yet incorporated into the design documents**.
+Remain in design discussion; do not treat the pending SQL fixes below as an instruction to implement now.
+
 **`dbrow_version` allocation.** Full analysis + resume checklist:
 → `docs/dbrow_version-allocation-analysis.md`
 
