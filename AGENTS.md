@@ -16,6 +16,14 @@ sequence, a single `actor_resolve`, explicit `@self_registration` confined to `u
 §11 has canonical-template idioms (bump-once, root lock subsumes child races, interning under XACT_ABORT).
 Recommendations only; nothing implemented.
 
+**Answers to the implementing agent's ten questions (2026-09-05):** `docs/dbrow_version-independent-review-v3-answers.md`.
+Key decisions proposed there: net-transition history via upsert restricted to `dbrow_version = @v`; session-context
+marker (not a stored xact_id) proving same-transaction allocation, with auto-join so one SQL transaction yields one
+ledger row; `entity_lock` / `entity_bump` asserting the spine invariant (error 51012) instead of forbidding late
+aggregates; `actor_resolve` in entities; Change Tracking export protocol; identity `(origin_uid, origin_dbrow_version)`
+on the ledger row; read-first catalog interning (corrects review §11.3); permission model and its limits; reference
+implementation and test list. Two review items are marked superseded/corrected in place (§4.5, §11.3).
+
 **Repository scope (user clarification, 2026-09-05):** this is a **remake**. It intentionally holds only the
 bare-minimum partial schemas and inserts needed for a first user insertion, as the place to work out the
 mechanisms that will be applied across all code still to be migrated. Missing update/delete/child-history

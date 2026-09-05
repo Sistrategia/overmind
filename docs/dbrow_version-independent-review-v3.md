@@ -88,7 +88,7 @@ These are hours of work each and every one of them protects the "who / when / wh
 2. **Fail on unresolved tenant.** Remove the `MAX(tenant_id)` fallback in `user_insert`.
 3. **Make self-creation explicit and confined.** Replace the inferred `@created_by = @public_key` coincidence with an explicit parameter, allow it only where actors are created (`user_insert` and tenant bootstrap), and pre-allocate the entity id so no post-insert correction of `entity` or the ledger is needed. Full analysis and options in §10.
 4. **Server-stamp the ledger.** Add `recorded_at DATETIME2 NOT NULL` set inside the helper from `SYSUTCDATETIME()`, never from a parameter. Keep `modified` as the business/effective time for now and document the distinction. Standardize on `SYSUTCDATETIME()` everywhere.
-5. **Bind allocation to the engine transaction.** Add `xact_id BIGINT NOT NULL` = `CURRENT_TRANSACTION_ID()` on allocation; on reuse the helper requires `xact_id = CURRENT_TRANSACTION_ID()`. This rejects reuse of a committed version from a later transaction. Caveat: transaction IDs restart with the instance, so a collision is theoretically possible after a restart; combined with the tenant/actor checks it is a large improvement over "ledger row exists".
+5. **Bind allocation to the current transaction.** *Superseded by [answers §3](dbrow_version-independent-review-v3-answers.md):* a stored `xact_id` column is not reliable across restore or clone. Use a session-scoped marker instead: the helper stores `CURRENT_TRANSACTION_ID()` and the allocated version in `SESSION_CONTEXT` on allocation, and accepts a supplied or ambient version only when the marker matches the current transaction. No durable column. The same marker lets a NULL call inside an already-allocating transaction join it automatically, so one SQL transaction yields at most one ledger row.
 6. **Route the two bootstrap writers through the helper.** `tenant_insert` and `InsertSystemUser` should call `dbrow_version_ensure`; remove the hard-coded version 1 and the active `MAX()+1`. Fix `DECLARE @dbrow_version INT` to `BIGINT`.
 7. **Fix the column drift now** (`extension` width, `line_of_business_id`) and enforce the `contact_phone` / `contact_address` FKs `WITH CHECK`.
 8. **Type users as users.** `user_insert` calls `contact_insert`, which stamps `entity_type_id` = contact (2) on the entity row; `InsertSystemUser` stamps type 1. Both should be type 4 (`user`), which is what `entity_type.database_table = 'user'` already implies and what the "actors are users" rule in §10.3 needs. Add an optional `@entity_type_id` to `contact_insert` so a subtype can pass its own type through.
@@ -296,14 +296,22 @@ IF @@ROWCOUNT = 1
 Once every writer to a contact holds `UPDLOCK, HOLDLOCK` on its `entities.entity` row, the child ordinal `MAX(ordinal) + 1`, the "find or create relationship" reads, and the "one history row per child per transaction" rule are all serialized per contact for free. The extra range lock on the junction that spec §5 proposes becomes belt-and-braces rather than the primary protection.
 
 ### 11.3 Catalog interning under `XACT_ABORT ON`
-Catalog tables with unique keys (`person_name`, `email`, `country`, …) are interned with `IF NOT EXISTS … INSERT`. Two concurrent transactions interning the same new value race; the loser gets a duplicate-key error. With `SET XACT_ABORT ON`, a duplicate-key error caught by `TRY/CATCH` still leaves the transaction **uncommittable**, so "catch and re-select" cannot be the pattern here. Use a key-range lock instead:
+Catalog tables with unique keys (`person_name`, `email`, `country`, …) are interned with `IF NOT EXISTS … INSERT`. Two concurrent transactions interning the same new value race; the loser gets a duplicate-key error. With `SET XACT_ABORT ON`, a duplicate-key error caught by `TRY/CATCH` still leaves the transaction **uncommittable**, so "catch and re-select" cannot be the pattern here.
+
+*Corrected per [answers §8](dbrow_version-independent-review-v3-answers.md):* do **not** take `UPDLOCK, HOLDLOCK` on the lookup of an existing value; that holds an update lock until commit and serializes every transaction that shares a popular value ("Juan", "México"). Read without hints first; take the range lock only on the miss path:
 
 ```sql
-SELECT @id = [person_name_id] FROM [contacts].[person_name] WITH (UPDLOCK, HOLDLOCK) WHERE [name] = @value;
-IF @id IS NULL BEGIN INSERT … ; SET @id = SCOPE_IDENTITY(); END
+SELECT @id = [person_name_id] FROM [contacts].[person_name] WHERE [name] = @value;      -- hit: no hints
+IF @id IS NULL
+BEGIN
+    INSERT [contacts].[person_name] ([name]) SELECT @value
+     WHERE NOT EXISTS (SELECT 1 FROM [contacts].[person_name] WITH (UPDLOCK, HOLDLOCK) WHERE [name] = @value);
+    IF @@ROWCOUNT = 1 SET @id = SCOPE_IDENTITY();
+    ELSE SELECT @id = [person_name_id] FROM [contacts].[person_name] WHERE [name] = @value;  -- another transaction won
+END
 ```
 
-The second transaction blocks on the range until the first commits, then finds the row. Catalogs that lack a unique key today (`city`, `colony`) will accumulate duplicates under any pattern; give them a unique key scoped to their parent, or accept duplicates explicitly. Intern catalogs before locking roots so the short catalog locks are taken in a consistent position in every procedure.
+The second inserter blocks on the first's uncommitted row until it commits, then finds it, with no error raised. Catalogs that lack a unique key today (`city`, `colony`) will accumulate duplicates under any pattern; give them a unique key scoped to their parent, or accept duplicates explicitly. Give catalog value columns an explicit exact collation plus a normalized search column, so audit fidelity does not depend on the server's default collation. Intern catalogs before locking roots so catalog locks are taken in a consistent position in every procedure.
 
 ### 11.4 One clock per transaction, from the helper
 Have `dbrow_version_ensure` return `@recorded_at DATETIME2 OUTPUT` (server time on allocation, the stored value on reuse). Every row written in the transaction then shares one identical timestamp, and `entity.created` / `entity.modified` stop depending on a caller-supplied `@created`. Keep an explicit caller-supplied time only on the import path, where back-dating is the intent.
