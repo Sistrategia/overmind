@@ -11,7 +11,10 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 against the actual code. Verdict: allocation is settled; settle the canonical write mechanism on one reference
 family before the bulk migration (root-lock-before-allocation, fail-fast actor/tenant, server-stamped time,
 update / soft-delete / undelete template, child history shape); use Change Tracking instead of CDC for sync;
-defer DAG/crypto. Recommendations only; nothing implemented.
+defer DAG/crypto. §10 covers the self-registration bootstrap: recommend pre-allocating `entity_id` from a
+sequence, a single `actor_resolve`, explicit `@self_registration` confined to `user_insert`, no ledger UPDATE.
+§11 has canonical-template idioms (bump-once, root lock subsumes child races, interning under XACT_ABORT).
+Recommendations only; nothing implemented.
 
 **Repository scope (user clarification, 2026-09-05):** this is a **remake**. It intentionally holds only the
 bare-minimum partial schemas and inserts needed for a first user insertion, as the place to work out the

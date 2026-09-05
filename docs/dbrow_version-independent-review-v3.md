@@ -84,13 +84,14 @@ Accurate. Its "latest assistant recommendation" (origin identity, source transac
 
 These are hours of work each and every one of them protects the "who / when / which tenant" that customers trust.
 
-1. **Fail on unknown actor.** Replace every `COALESCE(…, 1)` actor resolution with `THROW`. System User attribution is allowed only through an explicit bootstrap path.
+1. **Fail on unknown actor.** Replace every `COALESCE(…, 1)` actor resolution with `THROW`. System User attribution is allowed only through an explicit bootstrap path. The fallback exists today only because self-registration cannot resolve an actor that does not exist yet; §10 shows how to remove that need so the fallback can go.
 2. **Fail on unresolved tenant.** Remove the `MAX(tenant_id)` fallback in `user_insert`.
-3. **Gate self-creation.** Move the `@created_by = @public_key` bootstrap out of the general path: either a dedicated `tenant_bootstrap` procedure or a guard that permits it only while the tenant has no non-system entities.
+3. **Make self-creation explicit and confined.** Replace the inferred `@created_by = @public_key` coincidence with an explicit parameter, allow it only where actors are created (`user_insert` and tenant bootstrap), and pre-allocate the entity id so no post-insert correction of `entity` or the ledger is needed. Full analysis and options in §10.
 4. **Server-stamp the ledger.** Add `recorded_at DATETIME2 NOT NULL` set inside the helper from `SYSUTCDATETIME()`, never from a parameter. Keep `modified` as the business/effective time for now and document the distinction. Standardize on `SYSUTCDATETIME()` everywhere.
 5. **Bind allocation to the engine transaction.** Add `xact_id BIGINT NOT NULL` = `CURRENT_TRANSACTION_ID()` on allocation; on reuse the helper requires `xact_id = CURRENT_TRANSACTION_ID()`. This rejects reuse of a committed version from a later transaction. Caveat: transaction IDs restart with the instance, so a collision is theoretically possible after a restart; combined with the tenant/actor checks it is a large improvement over "ledger row exists".
 6. **Route the two bootstrap writers through the helper.** `tenant_insert` and `InsertSystemUser` should call `dbrow_version_ensure`; remove the hard-coded version 1 and the active `MAX()+1`. Fix `DECLARE @dbrow_version INT` to `BIGINT`.
 7. **Fix the column drift now** (`extension` width, `line_of_business_id`) and enforce the `contact_phone` / `contact_address` FKs `WITH CHECK`.
+8. **Type users as users.** `user_insert` calls `contact_insert`, which stamps `entity_type_id` = contact (2) on the entity row; `InsertSystemUser` stamps type 1. Both should be type 4 (`user`), which is what `entity_type.database_table = 'user'` already implies and what the "actors are users" rule in §10.3 needs. Add an optional `@entity_type_id` to `contact_insert` so a subtype can pass its own type through.
 
 ---
 
@@ -207,7 +208,7 @@ A versioned JSON document per ledger transaction generated with `FOR JSON` from 
 
 ## 9. Suggested sequence for the next sessions
 
-1. ADR 0002: root-lock-before-allocation protocol, aggregate ownership rules, error numbers 51010+. Implement Tier 0 in the same change set; they are small.
+1. ADR 0002: root-lock-before-allocation protocol, aggregate ownership rules, error numbers 51010+. ADR 0003: actor policy and self-registration bootstrap (§10). Implement Tier 0 in the same change set; they are small.
 2. Reference implementation: `contact_update`, `entity_soft_delete`, `entity_undelete`, phone family insert/update/delete, `contact_as_of`; extend the SQL harness with the tests in §5.4.
 3. History coverage sweep (§5.3) plus the CI metadata assertion.
 4. Origin table, Change Tracking export, import map, one disconnected-branch pilot.
@@ -215,3 +216,106 @@ A versioned JSON document per ledger transaction generated with `FOR JSON` from 
 6. Revisit distribution and tamper evidence only against a named customer need.
 
 The thread's documents are good thinking. The product's advantage is realized in the procedures customers actually call. In a remake, the moment those procedures are migrated is the moment the mechanism becomes hard to change, so the mechanism deserves to be settled first, on the small reference set that exists today.
+
+---
+
+## 10. Actor resolution and the self-registration bootstrap
+
+Added 2026-09-05 after the user asked for deeper thinking on the step that "corrects" `created_by` / `modified_by` from System User to the entity that is creating itself.
+
+### 10.1 Why the correction exists
+
+`created_by` and `modified_by` are `INT NOT NULL` and semantically must reference a **user** entity. When a person self-registers, the actor is the very row being inserted, and with `IDENTITY` its `entity_id` is unknown until the INSERT returns. The chain is `user_insert → contact_insert → entity_insert`, and the ledger row is created at the top of that chain, before the entity exists. So the code resolves the actor to System User (1) as a placeholder, inserts, and then, inside the same transaction, rewrites `entity.created_by`, `entity.modified_by` and `data.dbrow_version.modified_by` to the new id. The committed state is correct.
+
+The user's own analysis is right: this is the **only** case where an actor genuinely cannot be resolved before the write, because the actor is the row being created. Every other actor is a pre-existing user. The remaining question is not *whether* the actor should be self (it should), but *how* to get there without a placeholder, and *who* is allowed to trigger it.
+
+### 10.2 Why the placeholder-then-correct shape is worth removing
+
+1. It is the only place the ledger is ever `UPDATE`d. Everything else in the design treats `data.dbrow_version` and the history tables as append-only. Removing this one exception lets the ledger be declared immutable and protected (§11.5).
+2. It is why the `COALESCE(…, 1)` actor fallback exists at all. As long as the self case needs System User as a stand-in, every procedure keeps a path that silently attributes to System, and that path also catches genuine bugs (wrong GUID, deleted actor, wrong tenant). Solve the self case properly and the fallback becomes a plain `THROW`.
+3. The trigger is an inferred coincidence (`@created_by = @public_key`) rather than a stated intent, and it is honored by `entity_insert` for **any** entity type, although a non-user entity can never be an actor.
+4. The helper's reuse check compares the ledger actor with the resolved actor; the bootstrap must rewrite the ledger before nested calls (for example the auto-created company) can pass that check. It works, but only because of ordering that a future reader has to rediscover.
+
+### 10.3 Recommended design: pre-allocate the entity id, resolve the actor once, pass scalars down
+
+**Pre-allocate.** Replace `IDENTITY` on `entities.entity.entity_id` with a sequence (`entities.entity_id_seq`) and a column default of `NEXT VALUE FOR`. `entity_insert` treats `@entity_id` as INOUT exactly like `@dbrow_version`: allocate when NULL, use when supplied. Nothing else changes for ordinary callers. With the id known before any write, a self-registration is a plain insert with `created_by = @entity_id`, and the ledger is written once with the correct actor. If a self-referencing FK `entity.created_by → entity.entity_id` is ever added, SQL Server accepts a row that references itself within one statement, so that becomes possible too. The remake is the right moment for this: `IDENTITY` cannot be removed in place on a deployed table, only rebuilt.
+
+**Resolve once, in one place.** Introduce `entities.actor_resolve(@actor_public_key, @tenant_id, @actor_id OUTPUT)` as the single implementation of the actor rule, mirroring what `dbrow_version_ensure` did for allocation. It resolves the GUID, requires the entity to be a user (entity type `user`, or `is_system = 1`), applies the tenant policy in §10.4, and `THROW`s otherwise. Public procedures accept the GUID and call it; nested procedures accept the already-resolved `@actor_id INT` and never re-resolve. That removes the need for a nested procedure to understand self-registration at all.
+
+**Confine self-registration to where actors are created.** Only `user_insert` (and the tenant bootstrap, below) may create an actor. Give it an explicit `@self_registration BIT = 0`. When set, it allocates `@entity_id` from the sequence, uses that value as `@actor_id`, calls the helper with it, and passes both `@entity_id` and `@actor_id` down the chain. `entity_insert` and `contact_insert` lose their self-creation branches entirely. The event becomes `security.user.self_registered`, distinct from `security.user.new`, so the audit viewer shows registration versus administrative creation without inspecting ids.
+
+**The transaction context is four scalars.** Tenant id, `dbrow_version`, actor id, and, for a creation chain, the pre-allocated entity id. This is the primary design's "context" reduced to what SQL Server can pass cheaply, and it is consistent with ADR 0001's INOUT approach.
+
+**Fallback if the id generation must stay `IDENTITY`.** Keep the two-step, but make it principled: the explicit `@self_registration` flag, confinement to `user_insert`, and a second helper operation (`dbrow_version_actor_rebind`) that permits changing the ledger actor only when the current value is System User and only when the row's `xact_id` equals `CURRENT_TRANSACTION_ID()`. This keeps the correction auditable and impossible after commit, but it still leaves one `UPDATE` on the ledger, which is why the pre-allocation route is preferred.
+
+### 10.4 Who may be an actor: a policy the migration can copy
+
+| Actor situation | Recommended rule |
+| --- | --- |
+| Ordinary operation | A pre-existing entity of type `user`, in the same tenant as the ledger row. Unknown or non-user identity: `THROW`. |
+| Self-registration | The pre-allocated id of the user being created (§10.3). Explicit flag, `user_insert` only. |
+| First user of a new tenant (SaaS sign-up) | A dedicated `tenant_bootstrap` procedure creating tenant and first user in one transaction with one ledger row, actor = the pre-allocated first user. Alternatively attribute tenant creation to the sign-up service account. Decide once. |
+| System User (1) | Reserved for its own bootstrap and for platform-initiated operations with no better identity: schema migrations, seeds, maintenance. Never a fallback. Its entity row should be type `user`. |
+| Integrations, scheduled jobs, API clients | One real user entity per integration, `is_system = 1`. Otherwise every automated change collapses into "System" and the audit loses which integration acted. |
+| Anonymous or public actions (lead forms, password-reset requests) | A seeded, well-known `Anonymous` user entity, `is_system = 1`, so the audit says "anonymous" rather than "System". Decide whether it is global or per tenant; global is simpler, per tenant is more precise for public sites. |
+| Support acting on behalf of a customer user | Add a nullable `on_behalf_of INT` to the ledger later (Tier 2). `modified_by` is the authenticated actor; `on_behalf_of` is the effective one. |
+| Imported or migrated history | Create the source actors first as user entities (login-less if needed), then import their actions with `modified_by` = the mapped source actor, `modified` = the original time, `recorded_at` = import time, and provenance naming the importing service account. Never attribute imported history to the importer or to System. |
+| Cross-tenant actor (provider staff in a hosted multi-tenant database) | Decide: either the actor's tenant must equal the ledger tenant unless `is_system = 1`, or introduce a provider tenant concept. The helper cannot check this (layer order); `actor_resolve` can. |
+| Soft-deleted or erased actor | Still resolvable because the entity row remains; erasure only redacts values. This is one more reason actors must never be physically deleted. |
+
+### 10.5 Tests to add for this mechanism
+
+- Self-registration produces `created_by = modified_by = entity_id` on the entity and the same actor on the ledger with **no UPDATE** executed against `data.dbrow_version` (assert via the `xact_id`/`recorded_at` columns being untouched, or via a trigger-free check that the row's values equal the allocation-time values).
+- Self-registration with an auto-created company shares one ledger row whose actor is the new user.
+- Self-creation requested through `entity_insert` or `contact_insert` directly is rejected.
+- An actor GUID that resolves to a non-user entity is rejected; an unknown GUID is rejected; an actor from another tenant is rejected or accepted per the policy chosen in §10.4.
+- System User bootstrap goes through the same path and yields entity type `user`.
+
+---
+
+## 11. Further mechanism notes for the canonical template
+
+These are small rules that fall out of the protocol in §5.1 and are cheap to state now so the migrated procedures inherit them.
+
+### 11.1 Bump the aggregate exactly once per transaction
+Nested procedures that change the same aggregate must not double-increment `entity_version`. The idempotent form is:
+
+```sql
+UPDATE [entities].[entity]
+   SET [entity_version] += 1, [dbrow_version] = @dbrow_version,
+       [modified] = @recorded_at, [modified_by] = @actor_id
+ WHERE [entity_id] = @entity_id AND [dbrow_version] <> @dbrow_version;
+IF @@ROWCOUNT = 1
+    INSERT [entities].[entity_version_history] ([tenant_id],[dbrow_version],[entity_id],[entity_version])
+    SELECT @tenant_id, @dbrow_version, [entity_id], [entity_version] FROM [entities].[entity] WHERE [entity_id] = @entity_id;
+```
+
+"The entity already carries this transaction's version" means "already bumped". The unique index `ux_evh_clock (entity_id, dbrow_version)` backs the invariant, and repeated changes to one aggregate inside one unit of work naturally collapse to one version.
+
+### 11.2 The root lock subsumes child-level races
+Once every writer to a contact holds `UPDLOCK, HOLDLOCK` on its `entities.entity` row, the child ordinal `MAX(ordinal) + 1`, the "find or create relationship" reads, and the "one history row per child per transaction" rule are all serialized per contact for free. The extra range lock on the junction that spec §5 proposes becomes belt-and-braces rather than the primary protection.
+
+### 11.3 Catalog interning under `XACT_ABORT ON`
+Catalog tables with unique keys (`person_name`, `email`, `country`, …) are interned with `IF NOT EXISTS … INSERT`. Two concurrent transactions interning the same new value race; the loser gets a duplicate-key error. With `SET XACT_ABORT ON`, a duplicate-key error caught by `TRY/CATCH` still leaves the transaction **uncommittable**, so "catch and re-select" cannot be the pattern here. Use a key-range lock instead:
+
+```sql
+SELECT @id = [person_name_id] FROM [contacts].[person_name] WITH (UPDLOCK, HOLDLOCK) WHERE [name] = @value;
+IF @id IS NULL BEGIN INSERT … ; SET @id = SCOPE_IDENTITY(); END
+```
+
+The second transaction blocks on the range until the first commits, then finds the row. Catalogs that lack a unique key today (`city`, `colony`) will accumulate duplicates under any pattern; give them a unique key scoped to their parent, or accept duplicates explicitly. Intern catalogs before locking roots so the short catalog locks are taken in a consistent position in every procedure.
+
+### 11.4 One clock per transaction, from the helper
+Have `dbrow_version_ensure` return `@recorded_at DATETIME2 OUTPUT` (server time on allocation, the stored value on reuse). Every row written in the transaction then shares one identical timestamp, and `entity.created` / `entity.modified` stop depending on a caller-supplied `@created`. Keep an explicit caller-supplied time only on the import path, where back-dating is the intent.
+
+### 11.5 Make the ledger and history append-only at the permission level
+With §10.3 in place no procedure updates `data.dbrow_version`. Then `DENY UPDATE, DELETE ON data.dbrow_version` and on every `*_history` table to the application principal. Regulatory erasure (op 10) runs through one dedicated procedure with `EXECUTE AS OWNER`, so the only path that can rewrite history is the audited one. This is a cheap tamper barrier that fits the stated threat model (hostile users and buggy code, not DBAs) and documents the contract in the schema itself.
+
+### 11.6 Small integrity additions
+- FK `entities.entity (tenant_id, dbrow_version) → data.dbrow_version`, matching the history and spine tables.
+- FK `entities.entity_history (entity_id) → entities.entity`, matching `contact_history`.
+- `entity_history` omits `is_system`; either declare it immutable in the contract or add it to the snapshot.
+- Enable `ALLOW_SNAPSHOT_ISOLATION` so reconstruction and export read under one consistent snapshot; consider `READ_COMMITTED_SNAPSHOT` for ordinary reads after measuring version-store cost. The write protocol's `UPDLOCK` behaves correctly under both.
+
+### 11.7 Erasure must propagate through sync
+Regulatory erasure rewrites history rows in place (spec §7.3). Any copy exported before the erasure still holds the personal data. When the Tier 2 export exists, an erasure transaction must travel as an instruction to redact, and receivers must apply it to their copies. Note this now so the envelope design in §6.5 reserves room for it.
