@@ -20,6 +20,13 @@ constructor fallback/type-promotion policy, role history, migrations and distrib
 Runner: `python tests/sql/run_dbrow_version_tests.py --server localhost` (SQL + C# + disposable DBs).
 Next agreed checkpoint: independent implementation review before porting the pattern to phone.
 Review request and targeted questions: `docs/email-reference-family-independent-review-prompt.md`.
+**Independent review delivered (2026-09-05):** `docs/email-reference-family-independent-review.md`, reviewed commit
+`48f2cd9` against baseline `f320fa1`. Verdict: ready after named fixes. Before copying to phone: root-leading indexes
+on entity_history/contact_history (reader range-locks other roots' history; probe-confirmed), define primary/display
+order (contact_view `ordinal = 1` shows NULL after deleting the first email; probe-confirmed), replace the catalog
+miss-path range lock with an exact-value applock (gap contention for the unit's lifetime; probe-confirmed, alternative
+validated), drop `entity_child_sequence` (redundant with identity MAX under root lock). Suite re-run green here;
+RCSI variant also green. Probes: `tests/review/email-reference-family/run_review_probes.py` (disposable DBs only).
 
 **Schema-cycle follow-up fix:** insert_ernesto_sample_data.sql explicitly enrolls the ambient business-seed
 transaction owned by RunLocalStoredCommands (otherwise CreateSchema fails with 51102). Generic DDL execution
