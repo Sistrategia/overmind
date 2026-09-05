@@ -3,6 +3,8 @@
 Date: 2026-09-04
 Status: optional assurance design for evaluation.
 
+Scope update (2026-09-05): the [primary design](dbrow_version-allocation-design.md) now has a smaller portable core, original transaction pairs, and optional commit capture. This document preserves the broader assurance exploration; its revision-parent and commit-capture machinery is additional work for this optional profile, not a current core dependency. No chained-history implementation is scheduled.
+
 Builds on [the primary design](dbrow_version-allocation-design.md). It retains `dbrow_version`, `entity_version`, portable identities, commit capture, and explicit merge semantics. It does not replace the database with a blockchain.
 
 ## 1. When this earns its cost

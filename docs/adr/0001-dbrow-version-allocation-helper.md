@@ -2,6 +2,8 @@
 
 Date: 2026-09-05. Status: accepted for this focused implementation by the user.
 
+Historical scope: this ADR describes the first helper extraction. [ADR 0005](0005-email-reference-family.md) supersedes its trusted-caller ownership limitation with tested native enrollment/guards and a C# transaction owner, while retaining shared allocation and optional INOUT. ADRs [0002](0002-portable-audit-unit-and-history.md), [0003](0003-tenant-actor-and-catalog-policy.md) and [0004](0004-portable-delivery-and-provider-profiles.md) remain the broader target. Statements below about then-unimplemented guards/bootstrap changes describe this earlier stage, not current code.
+
 ## Context and motivation
 
 The same sequence-allocation and `data.dbrow_version` ledger INSERT logic existed in `entities.entity_insert`, `contacts.contact_insert`, and `security.user_insert`. Historically the copies diverged: some used unlocked tenant `MAX()+1`, while another used the global sequence. The user proposed reusing the already implemented entity insertion logic to prevent that class of drift.

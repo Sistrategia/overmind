@@ -40,8 +40,8 @@ CREATE OR ALTER PROCEDURE [contacts].[contact_insert] (
 
     ,@person_marital_status         CHAR(1) = NULL
 
-    ,@email_location_name           NVARCHAR(25) = NULL
-    ,@email_address                 NVARCHAR(50) = NULL
+    ,@email_location_name           NVARCHAR(MAX) = NULL
+    ,@email_address                 NVARCHAR(MAX) = NULL
 
     ,@phone_location_name           NVARCHAR(25) = NULL
     ,@phone_number                  NVARCHAR(25) = NULL
@@ -103,6 +103,7 @@ BEGIN
         BEGIN
             BEGIN TRANSACTION ContactInsert
             SET @TranStarted = 1
+            EXEC [data].[audit_unit_begin];
         END
         ELSE
             SET @TranStarted = 0
@@ -258,28 +259,17 @@ BEGIN
 
         IF @email_address IS NOT NULL
         BEGIN
-            DECLARE @email_id INT
-			SET @email_id = (SELECT [email_id] FROM [contacts].[email] WHERE [email_address] = @email_address)
-            IF @email_id IS NULL
-			BEGIN
-				INSERT INTO [contacts].[email] ([email_address])
-				VALUES (@email_address)
-				SET @email_id = SCOPE_IDENTITY()
-			END
-
             IF @email_location_name IS NULL
                 SET @email_location_name = 'Primary'
-
-            DECLARE @email_location_id INT
-            SET @email_location_id = (SELECT [location_id] FROM [contacts].[email_location] WHERE [location_name] = @email_location_name)
-            IF @email_location_id IS NULL
-            BEGIN
-                INSERT INTO [contacts].[email_location] ([location_name]) VALUES (@email_location_name)
-                SET @email_location_id = SCOPE_IDENTITY()
-            END
-
-			INSERT INTO [contacts].[contact_email] ([contact_id],[ordinal],[email_id],[location_id],[dbrow_version])
-            	VALUES (@contact_id, COALESCE( (SELECT MAX([ordinal]) + 1 FROM [contacts].[contact_email] WHERE [contact_id] = @contact_id), 1), @email_id, @email_location_id, @dbrow_version)
+            -- New contact was absent at unit entry (expected version 0). Use its existing unit.
+            -- Legacy self-creation may have rebound the actor during entity insertion.
+            SET @audit_actor_id=(SELECT [modified_by] FROM [data].[dbrow_version]
+                WHERE [tenant_id]=@tenant_id AND [dbrow_version]=@dbrow_version);
+            EXEC [contacts].[contact_email_write]
+                @operation='insert', @contact_id=@contact_id, @tenant_id=@tenant_id,
+                @actor_entity_id=@audit_actor_id, @expected_entity_version=0,
+                @email_address=@email_address, @location_name=@email_location_name,
+                @dbrow_version=@dbrow_version OUTPUT, @show_in_timeline=0;
 		END
 
         -- IF (@address1 IS NOT NULL OR @country IS NOT NULL)

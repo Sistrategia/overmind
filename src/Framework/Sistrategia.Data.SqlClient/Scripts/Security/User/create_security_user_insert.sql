@@ -47,8 +47,8 @@ CREATE OR ALTER PROCEDURE [security].[user_insert] (
 --	,@security_stamp 				NVARCHAR(128) = NULL
     ,@password_salt                 NVARCHAR(128) = NULL
 
-    ,@email_location_name           NVARCHAR(25) = NULL
-	,@email 						NVARCHAR(256) = NULL
+    ,@email_location_name           NVARCHAR(MAX) = NULL
+	,@email 						NVARCHAR(MAX) = NULL
 --	,@email_confirmed 				BIT = 0
 --	,@email_label                   NVARCHAR(256) = 'Primary'
 
@@ -129,6 +129,7 @@ BEGIN
 		BEGIN
 			BEGIN TRANSACTION SecurityUserInsert
 			SET @TranStarted = 1
+            EXEC [data].[audit_unit_begin];
 		END
 		ELSE
     		SET @TranStarted = 0        

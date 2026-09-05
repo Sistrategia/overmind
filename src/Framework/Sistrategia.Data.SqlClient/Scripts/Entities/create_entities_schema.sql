@@ -89,6 +89,18 @@ ALTER TABLE [entities].[entity] CHECK CONSTRAINT [fk_entity_tenant]
 CREATE INDEX [ix_entity_tenant] ON [entities].[entity]
     ([tenant_id],[entity_type_id]) INCLUDE ([display_name],[deleted]);
 
+CREATE UNIQUE INDEX [uq_entity_tenant_identity] ON [entities].[entity] ([tenant_id],[entity_id]);
+
+-- Stable child identity allocation, serialized by the owning root lock.
+CREATE TABLE [entities].[entity_child_sequence] (
+    [entity_id] INT NOT NULL,
+    [family] VARCHAR(50) NOT NULL,
+    [last_ordinal] INT NOT NULL,
+    CONSTRAINT [pk_entity_child_sequence] PRIMARY KEY ([entity_id],[family]),
+    CONSTRAINT [fk_entity_child_sequence_root] FOREIGN KEY ([entity_id]) REFERENCES [entities].[entity]([entity_id]),
+    CONSTRAINT [ck_child_sequence_positive] CHECK ([last_ordinal] > 0)
+);
+
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [entities].[entity_version_history]
 -- -----------------------------------------------------------------------------------------------------------

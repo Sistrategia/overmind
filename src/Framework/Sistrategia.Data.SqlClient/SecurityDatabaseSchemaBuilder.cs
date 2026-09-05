@@ -38,7 +38,9 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void CreateSchemaFunctions() {
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_system_user_bootstrap.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_insert.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.create_email_runtime_permissions.sql");
         // // //RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_create.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_update_password.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_update_lockout.sql");
@@ -69,6 +71,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void DropSchemaFunctions() {
+        DropProcedureIfExists("security", "system_user_bootstrap");
         DropProcedureIfExists("security", "activity_log_cleanup");
         DropProcedureIfExists("security", "activity_log_insert");
         DropProcedureIfExists("security", "user_update_last_login");
@@ -112,66 +115,15 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     //}
 
     public void InsertSystemUser(string tenant, string tenantName, DateTime created) {
-        using (var conn = new SqlConnection(ConnectionString)) {
-            //             var command = new SqlCommand(@"
-            // INSERT INTO [data].[tenant] ([public_key],[name]) VALUES (@tenant, @tenant_name);
-            // INSERT INTO [data].[dbrow_version] ([tenant_id], [dbrow_version], [dboperation_type_id], [modified], [modified_by]) 
-            //     VALUES (1, COALESCE((SELECT MAX(dbrow_version) + 1 FROM [data].[dbrow_version] WHERE [tenant_id] = 1), 1), 1, @created, 1)
-            // INSERT INTO [entities].[entity] ([entity_type_id], [public_key], [tenant_id], [logical_key], [display_name], [created], [created_by], [modified], [modified_by], [summary], [is_private], [is_system], [dbrow_version]) 
-            //     VALUES (1, '71F092F4-3A35-463D-9589-E5EE1373F7D5', 1, 'system', 'System User', @created, 1, @created, 1, 'System User', 0, 1, 1)
-            // INSERT INTO [contacts].[contact] ([contact_id], [contact_type_id], [full_name]) --, [dbrow_version]) 
-            //     VALUES (1, 1, 'System User') --, 1)
-            // INSERT INTO [security].[user] ([user_id], [login_name], [password_hash]) 
-            //     VALUES (1, 'system', NULL) "
-            //                 , conn);
-            var command = new SqlCommand(
-                @"DECLARE @dbrow_version INT
-SET @dbrow_version = NEXT VALUE FOR [data].[dbrow_version_seq];
-INSERT INTO [data].[tenant] ([public_key],[name]) VALUES (@tenant, @tenant_name);
-INSERT INTO [data].[dbrow_version] ([tenant_id], [dbrow_version], [dboperation_type_id], [modified], [modified_by]) 
-    VALUES (1, COALESCE((SELECT MAX(dbrow_version) + 1 FROM [data].[dbrow_version] WHERE [tenant_id] = 1), 1), 1, @created, 1)
-INSERT INTO [entities].[entity] ([entity_type_id], [public_key], [tenant_id], [logical_key], [display_name], [created], [created_by], [modified], [modified_by], [summary], [is_private], [is_system], [dbrow_version]) 
-    VALUES (1, '71F092F4-3A35-463D-9589-E5EE1373F7D5', 1, 'system', 'System User', @created, 1, @created, 1, 'System User', 0, 1, 1)
-INSERT INTO [entities].[entity_history] ([dbrow_version],[tenant_id],[entity_id],[dboperation_type_id],[logical_key],[display_name],[summary],[image_url],[thumbnail_url],[is_private])
-    VALUES (1, 1, 1, 1, 'system', 'System User', 'System User', NULL, NULL, 0)
-INSERT INTO [contacts].[contact] ([contact_id], [contact_type_id], [full_name]) --, [dbrow_version]) 
-    VALUES (1, 1, 'System User') --, 1)
-INSERT INTO [security].[user] ([user_id], [login_name], [password_hash]) 
-    VALUES (1, 'system', NULL) 
-" // , '71F092F4-3A35-463D-9589-E5EE1373F7D5' 'Default tenant added.'
-, conn);
-
-            //             @"INSERT INTO [data].[tenant] ([public_key],[name]) VALUES (@tenant, @tenant_name);
-            // INSERT INTO [data].[dbrow_version] ([tenant_id], [dbrow_version], [dboperation_type_id], [modified], [modified_by]) 
-            //     VALUES (1, COALESCE((SELECT MAX(dbrow_version) + 1 FROM [data].[dbrow_version] WHERE [tenant_id] = 1), 1), 1, @created, 1)
-            // INSERT INTO [entities].[entity] ([entity_type_id], [public_key], [tenant_id], [logical_key], [display_name], [created], [created_by], [modified], [modified_by], [summary], [is_private], [is_system], [dbrow_version]) 
-            //     VALUES (1, '71F092F4-3A35-463D-9589-E5EE1373F7D5', 1, 'system', 'System User', @created, 1, @created, 1, 'System User', 0, 1, 1)
-            // INSERT INTO [entities].[entity_history] ([dbrow_version],[entity_id],[logical_key],[display_name],[summary],[image_url],[thumbnail_url],[is_private])
-            //     VALUES (1, 1, 'system', 'System User', 'System User', NULL, NULL, 0)
-            // INSERT INTO [contacts].[contact] ([contact_id], [contact_type_id], [full_name]) --, [dbrow_version]) 
-            //     VALUES (1, 1, 'System User') --, 1)
-            // INSERT INTO [security].[user] ([user_id], [login_name], [password_hash]) 
-            //     VALUES (1, 'system', NULL) 
-            // INSERT INTO [entities].[entity] ([entity_type_id], [public_key], [tenant_id], [logical_key], [display_name], [created], [created_by], [modified], [modified_by], [summary], [is_private], [is_system], [dbrow_version]) 
-            //     VALUES (0, @tenant, 1, 'default_tenant', @tenant_name, @created, 1, @created, 1, @tenant_name, 0, 1, 1)
-            // INSERT INTO [entities].[entity_history] ([dbrow_version],[entity_id],[logical_key],[display_name],[summary],[image_url],[thumbnail_url],[is_private])
-            //     VALUES (1, 2, 'default_tenant', @tenant_name, @tenant_name, NULL, NULL, 0)
-            // INSERT INTO [entities].[event] ([event_type_id],[tenant_id],[public_key],[display_name],[created],[created_by]
-            // , [subject_type_id], [subject_id], [subject_public_key], [summary], [is_system], [dbrow_version])
-            // VALUES ((SELECT [event_type_id] FROM [entities].[event_type] WHERE [code_name] = 'data.tenant.new')
-            // , 1,NEWID(),'Instancia por defecto agregada.',@created, 1
-            // , (SELECT [entity_type_id] FROM [entities].[entity_type] WHERE [code_name] = 'tenant'), 2
-            // , @tenant
-            // , 'Instancia por defecto agregada.', 1, 1)
-            // " // , '71F092F4-3A35-463D-9589-E5EE1373F7D5' 'Default tenant added.'
-
-
-            command.Parameters.AddWithValue("tenant", Guid.Parse(tenant));
-            command.Parameters.AddWithValue("created", created);
-            command.Parameters.AddWithValue("tenant_name", tenantName);
-            conn.Open();
-            command.ExecuteNonQuery();
-        }
+        using var conn = new SqlConnection(ConnectionString);
+        using var command = new SqlCommand("security.system_user_bootstrap", conn) {
+            CommandType = System.Data.CommandType.StoredProcedure
+        };
+        command.Parameters.Add("@tenant", System.Data.SqlDbType.UniqueIdentifier).Value = Guid.Parse(tenant);
+        command.Parameters.Add("@tenant_name", System.Data.SqlDbType.NVarChar, 256).Value = tenantName;
+        command.Parameters.Add("@created", System.Data.SqlDbType.DateTime2).Value = created;
+        conn.Open();
+        command.ExecuteNonQuery();
     }
 
     #region RunLocalStoredCommands

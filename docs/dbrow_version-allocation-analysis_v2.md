@@ -3,6 +3,8 @@
 Date: 2026-09-04
 Status: design review; not an implementation decision.
 
+Follow-up (2026-09-05): this analysis is preserved as historical reasoning. The [revised primary design](dbrow_version-allocation-design.md) and ADRs 0002–0004 narrow distribution to practical disconnected delivery/migration, make commit capture optional, and define provider-neutral audit contracts. Its newer scope takes precedence over the broader implementation proposals below.
+
 This document revisits [the original analysis](dbrow_version-allocation-analysis.md). It preserves that record rather than silently replacing its conclusions. The proposed implementation direction is in [the primary design](dbrow_version-allocation-design.md); the stronger integrity alternative is in [chained history](dbrow_version-allocation-design-immutable-chained-history.md).
 
 ## 1. Recommendation

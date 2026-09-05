@@ -25,6 +25,7 @@ IF @@TRANCOUNT <> 0 THROW 52000, 'Helper changed transaction ownership.', 1;
 
 -- Allocation/reuse preserves enclosing metadata and transaction count; rollback removes it.
 BEGIN TRANSACTION;
+EXEC data.audit_unit_begin;
 EXEC data.dbrow_version_ensure 1, 1, 2, '20260101', @v OUTPUT;
 DECLARE @original BIGINT = @v;
 EXEC data.dbrow_version_ensure 1, 1, 1, '20260201', @v OUTPUT;
@@ -86,6 +87,7 @@ GO
 -- Ambient composition, second entity/company creation, and rollback of the entire chain.
 DECLARE @v BIGINT, @public UNIQUEIDENTIFIER=NEWID(), @before INT=(SELECT COUNT(*) FROM data.dbrow_version);
 BEGIN TRANSACTION;
+EXEC data.audit_unit_begin;
 EXEC contacts.contact_insert @public_key=@public, @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',
  @full_name='Employee', @person_company='Test Company', @dbrow_version=@v OUTPUT;
 EXEC entities.entity_insert @entity_type_id=1, @display_name='Additional entity',
@@ -103,6 +105,7 @@ GO
 -- Reuse checks and invalid allocation input (helper does not own rollback).
 DECLARE @v BIGINT;
 BEGIN TRANSACTION;
+EXEC data.audit_unit_begin;
 EXEC data.dbrow_version_ensure 1, 1, 1, '20260101', @v OUTPUT;
 BEGIN TRY
     EXEC data.dbrow_version_ensure 2, 1, 1, '20260101', @v OUTPUT;
@@ -124,7 +127,7 @@ BEGIN TRY
     THROW 52000, 'Missing ledger accepted.', 1;
 END TRY
 BEGIN CATCH
-    IF ERROR_NUMBER() <> 51004 THROW;
+    IF ERROR_NUMBER() <> 51103 THROW;
 END CATCH;
 SET @v=NULL;
 BEGIN TRY
@@ -154,6 +157,7 @@ IF @@TRANCOUNT <> 0 OR EXISTS (SELECT 1 FROM entities.entity WHERE public_key=@p
 
 SET @v=NULL;
 BEGIN TRANSACTION;
+EXEC data.audit_unit_begin;
 BEGIN TRY
     EXEC contacts.contact_insert @public_key=@public, @contact_type_id=999,
      @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5', @full_name='Failure', @dbrow_version=@v OUTPUT;

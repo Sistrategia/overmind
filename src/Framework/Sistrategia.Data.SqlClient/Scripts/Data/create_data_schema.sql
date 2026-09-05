@@ -97,15 +97,24 @@ CREATE TABLE [data].[dbrow_version] (
     ,[dboperation_type_id]  INT         NOT NULL -- the BUSINESS operation of the transaction
     ,[modified]             DATETIME2   NOT NULL
     ,[modified_by]          INT         NOT NULL -- entity_id of the actor (user_id)
+    ,[recorded_at]          DATETIME2   NOT NULL CONSTRAINT [df_dbrow_recorded_at] DEFAULT SYSUTCDATETIME()
+    -- SQL Server adapter discovery hint only. Transaction-owned locks prove live ownership.
+    -- Not portable identity, commit order, or unique across server recovery incarnations.
+    ,[allocation_transaction_id] BIGINT NULL
+    ,[last_action_ordinal] INT NOT NULL CONSTRAINT [df_audit_action_ordinal] DEFAULT 0
     ,CONSTRAINT [pk_data_dbrow_version]	PRIMARY KEY CLUSTERED ( [tenant_id] ASC, [dbrow_version] ASC )
+    ,CONSTRAINT [uq_dbrow_version_global] UNIQUE ([dbrow_version])
     ,CONSTRAINT [fk_dbrow_version_op] FOREIGN KEY ([dboperation_type_id])
             REFERENCES [data].[dboperation_type]([dboperation_type_id])
     ,CONSTRAINT [fk_dbrow_version_tenant] FOREIGN KEY ([tenant_id])
         REFERENCES [data].[tenant]([tenant_id])
 );
 
-CREATE INDEX idx_dbrow_version_tenant_id 
+CREATE INDEX idx_dbrow_version_tenant_id
     ON [data].[dbrow_version] ([tenant_id], [dbrow_version] DESC);
+
+CREATE INDEX [ix_dbrow_allocation_transaction] ON [data].[dbrow_version] ([allocation_transaction_id])
+    INCLUDE ([dbrow_version]) WHERE [allocation_transaction_id] IS NOT NULL;
 
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [data].[sequence]

@@ -1,195 +1,125 @@
-# Audit transaction foundation — proposed design
+# Audit transaction foundation — recommended design
 
-Date: 2026-09-04
-Status: proposal for review, not executable migration SQL.
+Originally written: 2026-09-04. Revised: 2026-09-05 after independent review and the user's portability/tenant clarifications.
+Status: design recommendation, not executable migration SQL. ADR 0005 describes the implemented SQL Server email reference family and its audit-unit prerequisites; other capabilities remain recommendations.
 
-Companions: [analysis v2](dbrow_version-allocation-analysis_v2.md) and [optional chained-history design](dbrow_version-allocation-design-immutable-chained-history.md).
+This revision is the current design entry point. It replaces this document's earlier requirement for a general revision graph, mandatory CDC/commit index, and strict advance declaration of every aggregate. The earlier reasoning remains in [analysis v2](dbrow_version-allocation-analysis_v2.md), the [independent review](dbrow_version-independent-review-v3.md), and its [answers](dbrow_version-independent-review-v3-answers.md). The [chained-history alternative](dbrow_version-allocation-design-immutable-chained-history.md) remains optional future assurance work.
 
-## 1. Design decision
+## 1. Decision
 
-Retain the relational history model and global BIGINT `dbrow_version` sequence with gaps. Define this value as a **database-local audit transaction allocation ID**, not a commit clock or portable identifier. Retain `entity_version` as the sequential revision of an aggregate's locally accepted state.
+Keep the relational audit model, the database-local BIGINT dbrow_version with gaps, and user-friendly entity_version. Strengthen attribution, tenant ownership, controlled transaction composition, aggregate ordering, final row histories, and reconstruction before migrating the rest of the framework.
 
-Add portable transaction and revision identities, explicit parent relationships, and a durable source commit index. SQL Server remains the first implementation. Other databases integrate through a versioned evidence envelope and adapter capability contract.
+SQL Server and Azure remain the first implementation. PostgreSQL, MySQL/InnoDB, and local SQLite stores implement the same behavioral contract through provider-specific allocation, locking, and snapshot primitives. A matching SQL syntax or a common engine transaction-ID function is not required.
 
-Default deployment allows concurrent writes to independent aggregates. Whole-tenant reconstruction uses captured commit boundaries, and therefore has an explicit freshness watermark. No tenant counter is required. A tenant counter remains an alternative deployment architecture if synchronous committed prefixes are necessary and measured throughput permits it; it is not a runtime switch to mix arbitrarily among writers.
+Most installations need only local audit. Disconnected installations add durable publication/inbox work and explicit reconciliation. A provider commit feed is an optional stronger ordering capability, not the only way to synchronize and not a prerequisite for the audit product.
 
-## 2. Scope and guarantees
+## 2. Decision records and implementation status
 
-The foundation supports:
+| Record | Purpose | Status |
+| --- | --- | --- |
+| [ADR 0001](adr/0001-dbrow-version-allocation-helper.md) | Existing helper, optional INOUT, owner/ambient behavior and tested limits | Implemented focused change |
+| [ADR 0002](adr/0002-portable-audit-unit-and-history.md) | Controlled audit unit, ownership boundary, aggregate ordering, history state transitions | Recommended next contract |
+| [ADR 0003](adr/0003-tenant-actor-and-catalog-policy.md) | Default/shared tenancy, actor authorization boundary, roles, bootstrap, dictionaries | Recommended next contract |
+| [ADR 0004](adr/0004-portable-delivery-and-provider-profiles.md) | Portable delivery, source identity, historical imports, provider-specific implementations | Recommended capability design |
+| [ADR 0005](adr/0005-email-reference-family.md) | Email lifecycle/history/action reader, native ownership guards, C# unit, permissions and bootstrap prerequisites | Implemented fresh-schema reference family |
 
-- Atomic local business mutations, actor/operation attribution, and complete committed history.
-- Exact local aggregate revision reconstruction, including child associations and deletion.
-- Local tenant state at a certified source commit boundary.
-- Portable evidence, deduplicated delivery, provenance-preserving import, and explicit conflict resolution.
-- Future cryptographic verification without replacing relational keys.
+The user subsequently authorized the email implementation. dbrow_version_ensure now requires explicit enrollment and proves native ownership with private transaction-owned guards, using an engine transaction ID only for indexed allocation discovery. Optional INOUT is preserved. The email family implements the root/history protocol; shared-actor delegation, general first-user preallocation, other child/role lifecycles, migration and delivery remain separate work. ADR 0005 records the precise scope and tested limits.
 
-It does not promise a universal global transaction order, distributed ACID across offline nodes, automatic conflict-free merging of arbitrary business records, or proof of privileged non-tampering without the companion assurance layer. A commit-order index records visibility order; it does not upgrade application isolation to serializability or prevent write skew across inadequately protected invariants.
+## 3. Guarantees and boundaries
 
-## 3. Identity and time vocabulary
+The intended local foundation guarantees atomic business/history/action writes, exact reconstruction of a local aggregate revision, preserved transaction attribution, tenant ownership, and explicit deletion/restoration behavior. It preserves the identity of an entity as it gains contact/user subtypes.
 
-| Field/concept | Scope and meaning |
+It does not promise a gapless tenant transaction count, allocation order equal to commit order, wall-clock causality, distributed ACID, automatic reconciliation of arbitrary business conflicts, or protection against administrators who control all evidence. Atomicity does not by itself protect cross-aggregate business invariants; the write operation must lock/check those invariants.
+
+Whole-tenant historical querying is deferred, not dismissed as equivalent to backup/PITR. A meaningful business record should preserve the values/revisions it used, so an invoice or payment remains explainable without requiring a full tenant snapshot at its timestamp.
+
+## 4. Identity, time, and scope
+
+| Concept | Meaning |
 | --- | --- |
-| `tenant_id`, `entity_id`, actor `*_by` | Existing local INT keys; actor remains an entity |
-| Tenant/entity public key | Portable identity; existing GUIDs can serve after uniqueness and migration rules are verified |
-| `dbrow_version` | Local BIGINT from the existing global sequence; gaps allowed |
-| `transaction_uid` | Random UUID allocated once per accepted local transaction; unique constraint; collision rejected, never silently overwritten |
-| `origin_uid` | Identity of a writing database incarnation; changes when an independently writable fork is created |
-| `revision_uid` | Portable identity of an aggregate revision; independent of local version number |
-| `entity_version` | Local accepted revision counter; increases once per changed aggregate per transaction |
-| Parent revision IDs | Causal predecessors, including every input to an explicit merge |
-| `recorded_at` | Server UTC time when the local operation is recorded; not commit time |
-| `effective_at` | Optional business-effective time supplied under domain rules; may be earlier/later |
-| Source commit position | Adapter-defined ordered token, scoped to origin/incarnation; SQL Server uses captured commit LSN |
-| `request_uid` | Idempotency scope for a submitted command; distinct from transaction identity |
+| tenant_id / entity_id / *_by | Local keys; actors remain entities |
+| Default tenant | A real configured business tenant for single-tenant installations; never an unknown-tenant fallback |
+| Shared definition/value | Explicit global storage; tenant-owned associations and authorization still apply |
+| dbrow_version | Local transaction allocation identity; globally unique within the local ledger, gaps allowed |
+| entity_version | Local accepted aggregate revision; increases at most once per audit unit |
+| (origin_uid, origin_dbrow_version) | Original transaction identity retained through exact imports and forwarding |
+| Base transaction reference per affected aggregate | Identifies the state an incoming change was based on; local version numbers are not compared across databases |
+| recorded_at | Server UTC instant recorded by the allocator; not commit time |
+| Business-effective / source-recorded time | Separate domain/provenance metadata; never fabricated from the local clock |
+| Provider commit cursor | Opaque, scoped position with capture coverage and recovery lineage |
+| Delivery/receipt progress | Progress through durable transport; not automatically business application or original commit order |
 
-Portable UUID indexes should normally be nonclustered so that random identity does not replace compact local clustering everywhere. UUID uniqueness is enforced locally and collisions across imports cause quarantine. Avoid trusting a source solely because its IDs look valid.
+No random transaction_uid or revision_uid is required in addition to the origin pair. Keep API request idempotency distinct and add it where retry/uncertain-commit behavior needs it. Imported source-local IDs are mapped to destination keys. Shared seed GUIDs, including the default tenant, are not proof that unrelated databases have the same ownership.
 
-A normal failover continuing the same fenced database lineage preserves origin identity. A restored copy allowed to diverge obtains a new origin before accepting writes. An in-place recovery that loses acknowledged history also opens a new incarnation and records the recovery boundary. Previously recorded transaction and revision IDs never change.
-
-## 4. Logical schema additions
-
-These are logical tables/fields, to be translated into migrations after reviewing actual schemas and existing data. Keep the current ledger PK `(tenant_id, dbrow_version)` and layer dependency order **data → entities → contacts → security**.
-
-### 4.1 Local ledger and operation context
-
-Extend `data.dbrow_version` with `transaction_uid`, `origin_uid`, server-recorded time, optional effective time, request/correlation identity, and operation schema version. Preserve existing actor and operation references. Treat legacy `modified` as legacy recorded metadata; do not relabel historical values as commit time.
-
-Keep rich authentication/delegation context in a companion record keyed by transaction. The data layer can carry scalar actor IDs as today; avoid adding a circular DDL dependency on security tables. Validate actor/tenant relationships in the controlled write path and reconciliation jobs.
-
-Define one ledger entry per successful tenant-scoped business unit of work per outer local transaction. Nested mutators share its context. Cross-tenant business work is rejected by this default contract; use explicitly linked tenant transactions with a saga, or a separately designed coordinator. Cross-database operations never pretend to be one local commit.
-
-### 4.2 Aggregate revision graph
-
-Extend the version spine with `revision_uid` and add a parent relation `(revision_uid, parent_revision_uid)`. Each local accepted revision has a unique `(entity_id, entity_version)` and `(entity_id, dbrow_version)`. A revision registry records portable aggregate identity and envelope/schema version; remote-only revisions can exist in the registry without being assigned a local accepted `entity_version`.
-
-For a normal change, the parent is the previously accepted revision. For a merge, parents include the current accepted revision and incoming revision(s). Validate tenant/aggregate compatibility, no self-parenting or cycles, and required-parent availability. Local application of an imported state is a new local revision linked to its source; do not falsely assign the source's version number to the local spine.
-
-### 4.3 Durable commit index
-
-Companion `data.audit_commit` maps local ledger identity to `(origin_uid, source_commit_position)` and observed commit-time metadata. The mapping is write-once through the controlled capture service. A separate capture checkpoint stores the fully processed source position, adapter version, coverage start, and lineage.
-
-The same physical commit position may group several captured records. Never require that LSN be unique per row. The default one-unit-of-work contract normally yields one ledger insert; the adapter still processes complete source transactions and complete capture batches.
-
-### 4.4 Distribution records
-
-An inbox stores unique source transaction identity, original evidence bytes or an immutable reference, validation status, and conflict/dependency status. An application mapping links a source transaction to its receiving local transaction and transformation policy version. An outbox stores durable publication work in the same transaction as the local changes. Delivery leases/attempts belong to mutable operational records, not immutable source evidence.
-
-History tables continue to use local compact keys. Export maps local catalog, actor, entity, and child identities to portable representations. Add stable child public IDs where children currently have only local ordinals; do not equate ordinal 3 created independently at two nodes. Preserve original local identity mappings for forensic navigation.
+A fork or recovery losing acknowledged history opens a new writable incarnation before accepting new work. Existing original identities remain unchanged. A normal restart without lost/divergent history does not create new identities for old work.
 
 ## 5. Canonical local write protocol
 
-1. Resolve and authorize tenant, authenticated actor, effective actor, and business operation. Reject invalid identities; allow System User only through an explicit authorized system/bootstrap path.
-2. Begin or join a controlled outer transaction. Establish command idempotency using a tenant/request unique key and request-content fingerprint. A duplicate identical committed request returns the original result; differing content under the same key fails.
-3. Determine the complete affected aggregate set. Acquire root protection in deterministic order, retaining it until outer completion. New aggregates require protection of applicable unique business keys; a nonexistent root cannot be locked as an existing row.
-4. Under that protection, validate expected `entity_version`/revision and domain invariants. Revalidate any preliminary reads. Protect cross-aggregate invariants explicitly.
-5. Allocate one sequence value and transaction UUID, and insert the ledger/context. Only then distribute the context to nested mutators.
-6. Apply mutations and write post-change history; deletion records carry the deleted identity/state. Once per changed aggregate, increment `entity_version`, create its revision/parents, and write the spine. Preserve the existing rule that stamp-only root changes need no duplicate payload history.
-7. Persist event metadata and outbox work atomically. Freeze the portable evidence manifest or make it reproducible exclusively from immutable history and pinned schema/catalog versions.
-8. Commit the outer transaction. Publish nothing externally before successful commit. Capture later attaches commit metadata.
+1. Resolve the configured/explicit tenant and authenticated actor context. Authorize the target tenant, operation, aggregate, and tenant-owned references. Unknown actors do not become System User.
+2. Begin or join a controlled audit unit. The owner holds the real connection/transaction lifetime; raw client BIGINTs and session variables do not establish enrollment. Check command idempotency where used.
+3. Resolve immutable catalog values through the provider's tested interning path. Lock known existing roots in deterministic order; revalidate expected entry versions and relevant domain invariants under protection.
+4. Allocate the unit's ledger row lazily. Nested calls share that allocation, actor, target database/tenant and operation metadata. A source import is one business unit, not an arbitrary transport batch.
+5. Before mutating each late-discovered root, reject if its current dbrow_version is greater than the unit's version. Hold its root lock through completion. Reassert monotonicity in the bump helper.
+6. Mutate and maintain final history for touched rows. Bump each changed aggregate once and insert one spine row. Repeated nested calls validate against the unit-entry optimistic token, not the bump they themselves caused.
+7. Record meaningful business actions, including intermediate values or revisions they used. When delivery is enabled, persist publication work atomically. External side effects occur only after commit through an idempotent dispatcher.
+8. The owner commits. On any failure, roll back the whole unit and discard its context; recover uncertain commits through recorded idempotency/application state.
 
-The context carries tenant, ledger ID, transaction UID, actor, and protected aggregate set. Merely accepting a caller's BIGINT is not enough. Trusted composition must reject adding an unprotected aggregate after allocation; discover it first or restart the entire unit of work. This restriction preserves the existing numeric-bound reconstruction algorithm.
+ADR 0002 defines the permitted late-root case, history transition table, root/child lifecycle, and ownership enforcement choices. An ordinary application transaction coordinator is the portable baseline. SQL Server may additionally use a tested private, transaction-owned lock to support guarded native composition. SESSION_CONTEXT is only a hint, not the authority. There is no requirement to emulate that SQL Server API in every provider.
 
-For SQL Server, evaluate explicit `UPDLOCK, HOLDLOCK` root acquisition with deterministic ordering and supporting indexes. The exact stored procedure pattern, ambient-transaction behavior, deadlock retries, savepoints, and error propagation require implementation review. A failed unit of work must never let a caller commit partially written business/history data. Set a documented owner-aborts-on-failure contract; do not swallow errors.
+## 6. History, reconstruction, and shared values
 
-Multiple changes to the same row inside one unit of work produce one final state snapshot under the current history key. If intermediate actions themselves matter, record ordered operation steps in an additional action log. They are not separately committed entity versions. No-op commands need not bump the aggregate; significant no-op/security actions can be recorded separately.
+A history row is the final state for a touched row in one audit unit. The implementation may update/delete that unit's own uncommitted history after validating its ownership. Committed history is protected except for explicit audited redaction. Statement no-ops can be skipped; a series of real writes returning to its entry value may leave a redundant snapshot. A meaningful action remains recorded even if its final state delta is empty.
 
-## 6. Source commit capture and completeness
+Use a consistent multi-query read snapshot to resolve (entity_id, entity_version) to its local spine boundary and retrieve the latest applicable root/child snapshots at or below that boundary. This works because the root protocol preserves strictly increasing local dbrow_version across that aggregate's revisions. It does not establish tenant-wide commit order or order independent source histories.
 
-For SQL Server, capture ledger inserts through CDC. Its `__$start_lsn` identifies the source commit and supplies transaction order. CDC has finite retention and asynchronous capture; preserve required mappings independently. [Microsoft CDC semantics](https://learn.microsoft.com/en-us/sql/relational-databases/track-changes/about-change-data-capture-sql-server)
+The first email reader supplies consistency through a short, owned SERIALIZABLE read transaction with the root read first, avoiding a required database snapshot option. ADR 0005 documents the blocking tradeoff; a snapshot reader remains an optimization to evaluate.
 
-Protocol:
+For migrated data, exact reconstruction is limited to declared coverage. Track complete intervals, snapshot-only baselines and unknown periods by source/tenant/family, with aggregate exceptions where necessary. Unknown historical children are not a known empty collection. The [legacy inspection](dbrow_version-legacy-implementation-findings.md) shows why joining current children onto old root history would fabricate certainty; ADR 0004 defines the migration manifest and correction provenance.
 
-1. Establish an explicit coverage start while enabling capture; use a controlled write pause or validated baseline procedure. Do not infer commit positions for older rows from their sequence numbers.
-2. Read a complete bounded CDC interval, validate that its lower endpoint is still retained, and identify all ledger transactions in it.
-3. In one worker transaction, idempotently insert commit mappings and advance the durable checkpoint only after the entire interval is processed. Empty intervals can also advance after complete scanning.
-4. Ordered exports join the ledger to captured mappings and use only positions at or below this checkpoint. If several records share a position, paginate with a complete tie-breaker or buffer the entire group before advancing.
-5. On a retention gap, lineage mismatch, or reconciliation failure, stop certifying completeness. Recover from retained source evidence/backups where possible; otherwise record a coverage discontinuity and establish a new baseline. Never silently skip forward.
+Child IDs used by history are stable local identities. Allocate their ordinals from a per-root/per-family high-water mark; separate display ordering and never reuse a committed deleted child's ID for a new child. Cross-origin child changes use identity mappings. A relationship belongs to its declared owner; a company's unchanged version does not by itself reconstruct historical reverse membership from all employee-owned relationships.
 
-Return capture boundary and lag in APIs. Requests newer than that boundary wait, return an explicit incomplete result, or fail according to the API contract. Do not substitute `MAX(dbrow_version)`. Availability of CDC on the customer's exact SQL Server version/edition/deployment is a release prerequisite for this profile, not assumed from the SQL Server 2016 minimum alone.
+Keep shared immutable dictionaries where useful. Preserve exact accepted values separately from normalized matching forms. Audit changes to associations, and audit mutable global security definitions whose meaning affects users. Sentinel repointing and physical payload removal are distinct outcomes; history, exported evidence, replicas, and backups follow a declared redaction/retention policy. ADR 0003 records the details and bootstrap changes.
 
-For an unordered outbox dispatcher, scan durable pending work regardless of allocation ID; use leases, retries, and receiver deduplication. A single `> last_id` cursor is unsafe. For ordered distribution, use the certified commit index. Capturing only ledger inserts provides membership/order, not proof that all table writes have history; that remains a separate control.
+## 7. Distribution without mandatory engine change capture
 
-Legacy data has explicitly limited guarantees: aggregate reconstruction may be supported after validation, but exact historical commit order before coverage cannot be manufactured. Do not label an estimated ordering as captured fact.
+The portable delivery profile uses a transactional outbox/publication table and durable receiver inbox. Scan pending work, not versions greater than the last sent allocation. Late lower-numbered commits must still be delivered. Base/dependency references make out-of-order delivery explicit and distinguish missing predecessors from actual conflicts.
 
-## 7. Reconstruction contracts
+Receive a batch durably if useful, but apply each source business transaction in its own local audit unit. Preserve original source identity and actor, local accepting-service provenance, and whole-source atomicity. Stage a transaction if any required aggregate conflicts. A domain reconciliation creates a new local original identity and links its inputs; it must not pretend changed content is the unmodified source transaction.
 
-### Aggregate version
+Historical migration is a distinct mode: transform recorded outcomes using versioned mappings, preserve source evidence and actors, and mark approximate chronology. Do not execute old commands through today's business rules. The evidence codec is typed and versioned; large integers/decimals, timestamps, UUIDs, binary values, null/missing fields, and redaction are explicit. SQL Server FOR JSON is an implementation option, not a wire protocol requirement.
 
-Within one consistent database snapshot, resolve the local spine row for `(entity_id, entity_version)`. Retrieve latest root/child history at or below its `dbrow_version`, excluding children whose latest operation is DELETE. This is valid because every accepted change to that aggregate obeys the ordering protocol. Use one snapshot transaction across multiple queries; statement-level consistency alone is insufficient for a multi-query reconstruction.
+## 8. Optional source commit order
 
-Remote branches are reconstructed by revision ancestry and their portable evidence, not by comparing their source BIGINTs. Never apply the local numeric-bound algorithm to a union of foreign histories.
+Prefer SQL Server Change Tracking on the committed transaction ledger when an installation enables the captured-order profile. Use a snapshot-bound cursor protocol, explicit authorized tenant scope, durable receipt, complete version-group pagination, and recovery-generation checks. Retention validation alone does not detect every restored producer. Persist any long-term commit mappings in a separate untracked journal.
 
-### Tenant committed boundary
+PostgreSQL logical decoding and MySQL transactional binlog readers are possible provider adapters. No raw engine token becomes a portable business identity. A deployment relying on exact captured order must monitor coverage and detect resets/retention gaps; a generous retention setting is not a permanent history archive.
 
-For a certified position P, identify ledger transactions whose captured commit position is at or before P. Choose each row's latest applicable history within that membership, ordered by source commit position. Resolve deletions and reference data under the same snapshot and coverage rules. Do not first reduce P to a maximum local sequence number.
+A portable outbox can continue to provide dependency-aware delivery without certifying original cross-aggregate commit order. A retained dispatcher order is named delivery order. Exact tenant-wide historical queries would require their own certified membership/boundary contract later.
 
-An as-of-time API maps source commit-time metadata to a boundary and reports timestamp precision/ambiguity; the ordered position is authoritative. Business-effective time is a separate query dimension. General bitemporal interval semantics should be defined by domains needing them, not inferred from one `effective_at` field.
+## 9. Provider choices that require explicit testing
 
-### Distributed boundary
+| Contract | SQL Server first | Other provider candidates |
+| --- | --- | --- |
+| Audit allocator | Existing BIGINT sequence, gaps | PostgreSQL sequence CACHE 1; MySQL ledger AUTO_INCREMENT |
+| Existing-root protection | XLOCK/HOLDLOCK on the clustered root key in ADR 0005, paired with its serializable reader | PostgreSQL/MySQL SELECT FOR UPDATE; SQLite serialized writer; reader consistency also needs the provider's read profile |
+| Multi-query historical read | SNAPSHOT | PostgreSQL/MySQL explicit repeatable snapshot; SQLite read transaction |
+| Unit lifetime | Explicit owner plus optional native guard | Trusted transaction coordinator; native composition only when proven |
+| Catalog miss race | Locking recheck before insert | Provider-specific unique conflict handling, with correct error/visibility rules |
+| Delivery | Transactional pending work | Same relational/transactional contract |
 
-A multi-origin snapshot uses a manifest of per-origin certified boundaries and included revisions. Verify dependency closure: every included revision's required parents are present or explicitly covered by a trusted baseline. Independent source boundaries do not automatically form a causally consistent cut. Report incomplete/conflicted state rather than inventing one universal historical clock.
+The [provider ADR](adr/0004-portable-delivery-and-provider-profiles.md) includes primary documentation and test gates. In particular, PostgreSQL per-session sequence caching can produce out-of-order values, MySQL GET_LOCK does not end with the transaction, and PostgreSQL CURRENT_TIMESTAMP is transaction-start time. Portability means preserving the guarantees while accommodating these differences, not translating function names mechanically.
 
-## 8. Portable envelope and merge
+## 10. Implementation sequence
 
-Envelope version 1 should include:
+1. Prove the controlled SQL Server unit/reuse boundary, including forged session hints, wrong database, optional INOUT, owner rollback, and uncertain-commit handling. Keep the existing API transition explicit.
+2. Fix actor/default-tenant handling, target/reference ownership, System/first-user bootstrap, entity-ID reservation, type promotion, and the two remaining direct ledger writers. Preserve known System ID 1 references deliberately.
+3. Complete one reference family: entity/contact plus email lifecycle, final history, aggregate bump/order, role changes, and contact_as_of/diff. Adapt the existing CFUS email behavior to the new contracts, then implement phone through the same mechanism before expanding further. Verify child schema widths, visibility attributes where required, enabled FKs, exact catalog identity, and reconstruction indexes.
+4. Test concurrency, rollback, repeated nested changes, stale entry tokens, late-root restart, self-registration, cross-tenant attempts, and fraud/action reconstruction. CI structure checks complement these tests, not replace them.
+5. Implement one disconnected workflow with durable delivery and one historical migration. Enable/test Change Tracking separately when captured commit order earns its operational cost.
+6. Run the same behavioral suite before claiming another write provider is supported. Keep a read/import-only adapter's lower capabilities explicit.
 
-- Source transaction/origin identity, portable tenant and actor identities, operation/schema versions, recorded/effective times, and optional captured commit metadata.
-- Changed aggregate revision IDs and parents, portable child IDs, deletion markers, and typed post-change evidence.
-- Referenced immutable values or resolvable content references; local integer catalog IDs alone are insufficient.
-- Correlation, causation, import provenance, transformation version, and attachment integrity metadata where relevant.
+Do not estimate performance from a fixed number of history rows. Measure a hot aggregate with long history, independent contacts sharing common catalog values, concurrent new catalog values, hub relationships, large multi-root units, and publication backlog. Track retries, lock waits, log bytes, index size, reconstruction latency, and retention/capture lag. Partitioning, compression, changed clustering, and a general merge graph require workload evidence.
 
-Use explicit type encodings for decimals, large integers, dates, binary data, nulls, and missing fields. Preserve original received bytes and the decoded schema version; transformations create derivative records. A SQL-to-document adapter may reshape projections without changing original evidence. An adapter that cannot supply source transaction atomicity or commit order must declare reduced capabilities. Per-document revisions cannot masquerade as a cross-document transaction.
+## 11. What remains optional
 
-Receive protocol: authenticate source and tenant mapping → deduplicate transaction → validate envelope and dependencies → quarantine unresolved parents/conflicts → apply authorized whole transaction atomically → record local transaction/revision links → acknowledge durably. Retransmission must not create new business versions. Prevent loops using original source identities and application mappings, not just last-hop identifiers.
-
-Default concurrency policy is single authority per aggregate, with fenced ownership transfer for online authoritative writes. Offline changes can be submitted as proposals against parent revisions. Modules may explicitly allow multiple writers; then concurrent branches are retained and reviewed or merged by a versioned domain policy. An offline writer cannot safely self-grant exclusive authority during a network partition.
-
-Example: both nodes edit contact revision R4. One changes phone, another changes address. A domain policy may merge these disjoint changes into a revision with both parents after validating invariants. Concurrent invoice amount changes or permission grants are conflicts by default. Never use last-wall-clock-wins as the framework-wide policy. CRDT-like merging is opt-in only for fields with defined algebra and domain semantics.
-
-If a source transaction touches several aggregates and one conflicts, stage the transaction as a whole. Splitting its application requires an explicit compensating workflow, with provenance, rather than silently weakening source atomicity. Distributed workflows record saga steps and compensations as new transactions, never erase prior steps.
-
-## 9. Security, retention, and operational evidence
-
-Application principals receive controlled procedure access, not direct history/ledger DML. Tenant ownership must be validated on every related identity, including revision parents and imports. Keep administrative repair paths explicit and separately audited. Existing composite ledger FKs prove ledger existence; they do not alone prove an entity belongs to that ledger's tenant.
-
-Reconcile ledger, revision spine, and changed-row manifests. Use generated write patterns and integration checks for mutation coverage; string searches alone cannot prove it. Record failed logins, denied actions, and rolled-back command attempts through an independent durable security sink with request correlation and explicit delivery-failure policy.
-
-Corrections and reversals create new transactions. Approved erasure is an explicit exception with a redaction record, policy version, actor, and affected scope. Do not promise both unconditional historical payload availability and irreversible payload erasure. Shared immutable catalogs require review of residual identifying information; removing one association does not itself prove erasure across replicas, archives, and backups.
-
-Retain decoding schemas, transformation versions, portable identity maps, and referenced values alongside history. Test recovery of the database plus evidence/archive manifests. Evidence exports include boundary, coverage, schema, provenance, and known limitations; jurisdiction-specific compliance acceptance is a separate review.
-
-## 10. Performance and rollout
-
-Keep BIGINT joins and existing history storage. Evaluate entity-leading reconstruction indexes and child-key/version indexes against write amplification. Store wide provenance and portable envelopes once per operation or changed revision where practical. Benchmark outbox payload duplication versus reproducible immutable manifests. Use retention-aware archives/checkpoints to accelerate reads only with verified links back to authoritative history; checkpoints do not replace evidence.
-
-Measure representative small and largest deployments, including a hot tenant, independent tenants, one hot aggregate, multi-aggregate batches, rollback storms, and disconnected import backlog. Record p50/p95/p99 write latency, lock waits, deadlocks, log bytes/op, storage growth, reconstruction latency, and capture/verification lag. Set numerical budgets from measured customer workloads before selecting cache/index/archive policies.
-
-Phases:
-
-1. Confirm this vocabulary and threat model. Review actual mutation procedures and ambient transaction composition.
-2. Fix unsafe allocation and enforce root ordering; add meaningful concurrency tests. Preserve existing schemas until migration is reviewed.
-3. Add portable IDs, revision parents, request idempotency, and controlled transaction context. Backfill legacy identity deterministically within recorded migration lineage; mark provenance as migrated, not original.
-4. Deploy commit capture and coverage-aware reconstruction/export, with restore and retention-gap drills.
-5. Add envelopes, inbox/outbox, identity mapping, and single-authority transfer; pilot two-database imports before enabling offline branches.
-6. Add domain-specific merge policies. Optionally enable the companion cryptographic layer.
-
-## 11. Acceptance cases
-
-| Scenario | Required outcome |
-| --- | --- |
-| A allocates first, B commits first | Commit-boundary reads/export include B without prematurely including A |
-| Two child updates on one root | Serialized revisions or explicit stale failure; reconstructed children match each revision |
-| Nested caller introduces a new aggregate late | Rejected/restarted before violating allocation order |
-| Error after business update before history write | Entire business unit rolls back; no partial commit permitted |
-| Repeated updates in one unit | One final accepted revision; optional ordered action evidence |
-| Retry after ambiguous commit response | Same request yields original result; no duplicate mutation |
-| CDC worker crash/checkpoint retry | No missing mapping; duplicates safely absorbed |
-| CDC retention gap | Completeness disabled and discontinuity surfaced |
-| Duplicate/out-of-order remote delivery | No duplicate effect; missing parents staged |
-| Remote transaction has one conflicting aggregate | Whole source transaction staged unless explicit workflow authorizes decomposition |
-| Two writable restore branches | Distinct origins, preserved inherited IDs, divergent revisions detected |
-| SQL export into document projection | Original typed evidence and provenance survive transformation |
-| Historical schema/catalog evolution | Old revision reconstructs with pinned interpretation |
-| Redaction and recovery | Approved exception visible; replicas/backups handled under recorded policy |
-
-These tests are an implementation acceptance plan, not tests executed for this documentation change.
+Transactional tenant counters, generic revision DAGs, random revision UUIDs, blockchain/hash chains, mandatory commit capture, distributed snapshot manifests, and wholesale provider reimplementation are not prerequisites. The optional chained-history proposal is retained for a named tamper-evidence requirement. The first release earns confidence through complete, tested audit behavior on the small reference family.

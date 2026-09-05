@@ -56,6 +56,7 @@ BEGIN
         BEGIN
             BEGIN TRANSACTION EntityInsert
             SET @TranStarted = 1
+            EXEC [data].[audit_unit_begin];
         END
         ELSE
             SET @TranStarted = 0

@@ -35,6 +35,9 @@ internal class EntitiesDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void CreateSchemaFunctions() {
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_actor_resolve.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_write_lock.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_version_bump.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_insert.sql");
         // //RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_update.sql");
 
@@ -63,6 +66,9 @@ internal class EntitiesDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
 
         DropProcedureIfExists("entities", "entity_update");
         DropProcedureIfExists("entities", "entity_insert");
+        DropProcedureIfExists("entities", "entity_version_bump");
+        DropProcedureIfExists("entities", "entity_write_lock");
+        DropProcedureIfExists("entities", "actor_resolve");
     }
 
     public override void DropSchemaViews() {
@@ -89,6 +95,7 @@ internal class EntitiesDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
 
         DropTableIfExists("entities", "entity_history");
         DropTableIfExists("entities", "entity_version_history");
+        DropTableIfExists("entities", "entity_child_sequence");
         DropTableIfExists("entities", "entity");
         DropTableIfExists("entities", "entity_type_property");
         DropTableIfExists("entities", "entity_type");

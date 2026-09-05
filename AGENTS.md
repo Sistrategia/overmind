@@ -7,6 +7,47 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Latest implementation — email reference family (2026-09-05):** explicitly authorized and implemented.
+Read `docs/adr/0005-email-reference-family.md` and `docs/email-reference-family.md` first. Email lifecycle,
+stable child identities, final history, ordered action evidence, historical reader/diff and C# SqlAuditUnit
+are in place for fresh schemas. Native enrollment + private transaction-owned guards prove reuse;
+allocation_transaction_id is an indexed hint, not durable identity. Ambient SQL callers must enroll explicitly.
+Contact construction delegates its initial email to the same writer. Exact value keys use bytes AND length
+(SQL VARBINARY equality also pads trailing zero bytes). New email paths reject invalid actor/tenant/root context.
+The email_runtime role isolates the public capability. System bootstrap and tenant creation now use the helper;
+System ID 1 is reserved explicitly and the actual tenant ID is used. General first-user preallocation, legacy
+constructor fallback/type-promotion policy, role history, migrations and distribution remain separate work.
+Runner: `python tests/sql/run_dbrow_version_tests.py --server localhost` (SQL + C# + disposable DBs).
+Next agreed checkpoint: independent implementation review before porting the pattern to phone.
+Review request and targeted questions: `docs/email-reference-family-independent-review-prompt.md`.
+
+**Schema-cycle follow-up fix:** insert_ernesto_sample_data.sql explicitly enrolls the ambient business-seed
+transaction owned by RunLocalStoredCommands (otherwise CreateSchema fails with 51102). Generic DDL execution
+does not auto-enroll. tests/EmailReference/SchemaCycle.cs now exercises the actual Overmind manager's
+CreateSchema → DropSchema → CreateSchema path and seed/email history; the expanded suite passed. Rebuild/restart
+the application to load changed embedded SQL. Do not infer full application creation coverage from selected SQL fixtures alone.
+
+**Current recommended design (2026-09-05):** start with `docs/dbrow_version-allocation-design.md` and
+`docs/dbrow_version-design-session-handoff.md`. The user asked to continue without another review round and
+avoid excessive MSSQL dependency while keeping SQL Server/Azure first. New ADRs 0002–0004 define the portable
+audit unit/history, tenant/actor/catalog policy, and delivery/provider profiles. ADR 0005 defines the implemented
+subset; ADR 0001 is the historical helper-extraction record, not the current ownership contract.
+
+Key refinements: trusted transaction enrollment, optional INOUT, current-unit history upserts, validated late
+roots, explicit default tenant and legitimate shared data, no automatic cross-tenant privilege from is_system,
+separate public self-registration/internal bootstrap, stable local child ordinals with source mappings, and
+one source transaction per receiving business transaction. Portable outbox/inbox delivery is the baseline;
+Change Tracking and a retained commit journal are optional ordering capabilities. PostgreSQL/MySQL mappings
+are researched but unimplemented. General DAG/crypto remains deferred.
+
+**Focused source intake (2026-09-05):** read `docs/dbrow_version-legacy-implementation-findings.md` before
+porting more contacts/users code. CFUS email lifecycle confirms child history plus aggregate version; its
+entity_history is a spine, not Overmind's root payload history. LaSalle's inspected email extractor projects
+current values onto historical root entries, and its child import has an unresolved stale-parent lookup risk
+(details/source lines in the report). Sibling projects were read-only. Coverage/baseline/correction contracts
+were added to the recommendations during that read-only intake. The later email implementation is ADR 0005;
+phone follows its review. Keep further source reading bounded to the family/adapter being implemented.
+
 **Independent review v3 (2026-09-05):** `docs/dbrow_version-independent-review-v3.md` reviews the whole thread
 against the actual code. Verdict: allocation is settled; settle the canonical write mechanism on one reference
 family before the bulk migration (root-lock-before-allocation, fail-fast actor/tenant, server-stamped time,
@@ -14,15 +55,16 @@ update / soft-delete / undelete template, child history shape); use Change Track
 defer DAG/crypto. §10 covers the self-registration bootstrap: recommend pre-allocating `entity_id` from a
 sequence, a single `actor_resolve`, explicit `@self_registration` confined to `user_insert`, no ledger UPDATE.
 §11 has canonical-template idioms (bump-once, root lock subsumes child races, interning under XACT_ABORT).
-Recommendations only; nothing implemented.
+Those were recommendations at review time. ADR 0005 now identifies the implemented email subset;
+the broader bootstrap/user-lifecycle proposals remain partially deferred.
 
-**Answers to the implementing agent's ten questions (2026-09-05):** `docs/dbrow_version-independent-review-v3-answers.md`.
-Key decisions proposed there: net-transition history via upsert restricted to `dbrow_version = @v`; session-context
-marker (not a stored xact_id) proving same-transaction allocation, with auto-join so one SQL transaction yields one
-ledger row; `entity_lock` / `entity_bump` asserting the spine invariant (error 51012) instead of forbidding late
-aggregates; `actor_resolve` in entities; Change Tracking export protocol; identity `(origin_uid, origin_dbrow_version)`
-on the ledger row; read-first catalog interning (corrects review §11.3); permission model and its limits; reference
-implementation and test list. Two review items are marked superseded/corrected in place (§4.5, §11.3).
+**Independent answers (2026-09-05):** `docs/dbrow_version-independent-review-v3-answers.md` remains reviewer input,
+not the current authority where the newer ADRs differ. Accepted directions include final touched-row history,
+late-root monotonicity checks, original transaction pairs, and read-first catalog interning. Its SESSION_CONTEXT
+marker does NOT independently prove ownership: callers can set it and it survives database context changes.
+Other corrections: receiving a batch is distinct from applying its source transactions; BIN2 alone does not
+distinguish trailing spaces; no-row SELECT can preserve a stale OUTPUT value. The new ADRs/handoff preserve the
+probe evidence and remaining implementation gates. Do not describe these proposals as deployed mechanisms.
 
 **Repository scope (user clarification, 2026-09-05):** this is a **remake**. It intentionally holds only the
 bare-minimum partial schemas and inserts needed for a first user insertion, as the place to work out the
@@ -30,19 +72,19 @@ mechanisms that will be applied across all code still to be migrated. Missing up
 procedures are expected scope, not defects. Do not report them as neglect; report mechanism issues that the
 migration would copy.
 
-**Latest implementation (2026-09-05):** allocation helper extracted with user authorization.
+**Earlier implementation (2026-09-05):** allocation helper extracted with user authorization.
 Read `docs/adr/0001-dbrow-version-allocation-helper.md` for the decision, contracts, tests, and limitations.
 `data.dbrow_version_ensure` centralizes sequence allocation/ledger creation and tenant/actor reuse checks.
 Entity/contact/user inserts retain optional INOUT versions; only the transaction owner commits/rolls back.
-Supplied versions require an ambient transaction, but proving SAME-transaction ownership remains a trusted
-caller contract. SQL integration runner: `python tests/sql/run_dbrow_version_tests.py --server localhost`.
+That version's ownership limitation is superseded by the guarded enrollment in ADR 0005. SQL integration runner:
+`python tests/sql/run_dbrow_version_tests.py --server localhost`.
 
 **Design session handoff (2026-09-04):** read `docs/dbrow_version-design-session-handoff.md` for broader context.
 The user prefers the balance of `docs/dbrow_version-allocation-design.md` over the optional
 chained-history alternative. Subsequent clarification narrows distribution to practical disconnected
 branch/client synchronization and history-preserving migrations across schemas/database providers.
-That clarification is captured in the handoff but is **not yet incorporated into the design documents**.
-The broader distributed design remains a proposal; the helper extraction alone was authorized and implemented.
+That clarification and the later tenant/portability discussion are now incorporated into the revised primary
+design and ADRs 0002–0004. The later email implementation is recorded separately in ADR 0005.
 
 **`dbrow_version` allocation.** Full analysis + resume checklist:
 → `docs/dbrow_version-allocation-analysis.md`
@@ -64,11 +106,11 @@ Spec reference: `D:\Code\GitHub\Sistrategia\SistrategiaDataAnalysis\schema-analy
 ## Open items from `entity_insert` review (not yet acted on)
 - Helper now rejects missing tenants; user_insert's legacy tenant fallback still needs policy review.
 - Entity/contact/user CATCH now uses bare THROW; other procedures have not been standardized.
-- Reuse validates ledger tenant/actor; exact transaction ownership is documented but not proven by the scalar ID.
+- Reuse now proves active native ownership through enrollment/guards; the scalar ID alone remains insufficient.
 - Corrected: procedure-scoped SET XACT_ABORT is restored on return (verified). It is now enabled for ambient calls too.
 - Legacy unknown-actor fallback and self-creation bootstrap authorization remain separate review items.
-- Separate bootstrap writers remain: tenant_insert hard-codes ledger version 1; InsertSystemUser in
-  SecurityDatabaseSchemaBuilder has active MAX()+1/hard-coded references. Not covered by this extraction's tests.
+- Separate bootstrap allocation bypasses were removed in the email implementation; actual C# System bootstrap
+  and subsequent tenant/email creation are covered by the expanded tests. General first-user creation remains legacy.
 
 ## Working style with this user
 - Discuss design as a partner; when multiple valid designs exist, map the trade-space honestly rather than citing "best practice".
