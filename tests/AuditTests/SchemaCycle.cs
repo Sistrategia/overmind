@@ -7,7 +7,7 @@ using Sistrategia.Overmind.Data.SqlClient;
 internal static class SchemaCycle
 {
     public static async Task RunAsync(string connectionString) {
-        // Program validates that this is a runner-created disposable database.
+        // AuditDatabase supplies a connection to a database created and owned by this scenario.
         // Use the application's real manager, resources, seed batch and transaction runner.
         var manager = new OvermindSqlDatabaseManager(new TestConnectionStringProvider(connectionString),
             NullLogger<Database>.Instance);

@@ -29,7 +29,7 @@ The [small glossary](glossary.md) is a lookup page, not prerequisite reading.
 
 ## How to use the other documents afterward
 
-This guide teaches the model. The [primary design](../dbrow_version-allocation-design.md) states the broader recommendation. An ADR, or architecture decision record, preserves a particular decision and its reasons. The [email usage guide](../email-reference-family.md) supplies API examples and test commands. Independent reviews supply challenges and counterexamples. The handoff is primarily a resume record for ongoing work.
+This guide teaches the model. The [primary design](../dbrow_version-allocation-design.md) states the broader recommendation. An ADR, or architecture decision record, preserves a particular decision and its reasons. The [email usage guide](../email-reference-family.md) supplies API examples; the [testing handoff](../testing-handoff.md) supplies current .NET test commands, environment requirements and verification evidence. Independent reviews supply challenges and counterexamples. The design handoff is primarily a resume record for ongoing work.
 
 Those documents serve different purposes; you do not need to read them chronologically. Chapter 8 gives you a small selection for each kind of question, including the latest review's unresolved findings.
 

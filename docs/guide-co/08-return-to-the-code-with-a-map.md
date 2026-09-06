@@ -48,6 +48,8 @@ At this guide's checkpoint, the email lifecycle is the complete reference family
 
 The actual application create/drop/create cycle is tested. It uses the normally constructed seed user for email work. The implementing and independent-review reports record passing SQL/C# runs with RCSI off and on. The runner creates and removes generated disposable databases. These results are existing evidence; writing this guide did not run the suite again.
 
+Testing infrastructure was subsequently migrated on 2026-09-06 to discoverable .NET tests. Use the [testing handoff](../testing-handoff.md) for current commands, configuration, the old-to-new scenario map and migration evidence. This changes how developers run the tests; the audit behavior described here is unchanged.
+
 This is fresh creation DDL. It is not an upgrade/backfill package for a customer's populated database. A running application must also load its rebuilt embedded SQL resources before using changed creation scripts.
 
 The latest [user-construction review](../user-construction-independent-review.md) is useful precisely because a passing reference suite does not exhaust every reachable behavior. Its current open items include:
@@ -71,6 +73,7 @@ Shared actor delegation, public self-registration, broader account/role/relation
 | Exactly what the email implementation guarantees | [ADR 0005](../adr/0005-email-reference-family.md) and [ADR 0006](../adr/0006-email-review-corrections-and-saved-order.md) |
 | Why user construction needed another change | [ADR 0007](../adr/0007-ordinary-user-construction-and-type-history.md) and its [review](../user-construction-independent-review.md) |
 | How to call and verify the reference | [Usage/test guide](../email-reference-family.md) |
+| How to run or extend backend tests today | [Testing handoff](../testing-handoff.md) |
 | The longer-term delivery and migration contract | [ADR 0004](../adr/0004-portable-delivery-and-provider-profiles.md) |
 
 The earlier analyses and review exchanges preserve how the reasoning evolved. They are useful when investigating a decision's history, but they are not prerequisites for understanding today's write path. Some describe proposals that were simplified or findings that were corrected later.

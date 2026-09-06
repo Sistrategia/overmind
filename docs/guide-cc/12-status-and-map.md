@@ -40,6 +40,7 @@ Implemented in the working tree, tested by the disposable-database suite in both
 | Email as implemented | `docs/adr/0005-email-reference-family.md`, then `docs/adr/0006-email-review-corrections-and-saved-order.md` |
 | Users as implemented | `docs/adr/0007-ordinary-user-construction-and-type-history.md` |
 | Usage and test guide | `docs/email-reference-family.md` |
+| Current backend test commands, coverage and evidence | [Testing handoff](../testing-handoff.md) |
 | Independent reviews | `docs/email-reference-family-independent-review.md`, `docs/user-construction-independent-review.md`, and the earlier `docs/dbrow_version-independent-review-v3.md` with its answers |
 | Why the old code needed this | `docs/dbrow_version-legacy-implementation-findings.md`, `docs/dbrow_version-allocation-analysis_v2.md` |
 | Resume notes for agents | `AGENTS.md`, `docs/dbrow_version-design-session-handoff.md` |
@@ -47,11 +48,13 @@ Implemented in the working tree, tested by the disposable-database suite in both
 ## Running the verification
 
 ```powershell
-python tests/sql/run_dbrow_version_tests.py --server localhost
-python tests/sql/run_dbrow_version_tests.py --server localhost --rcsi
+$env:OVERMIND_TEST_CONNECTION_STRING = 'Server=localhost;Database=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True'
+dotnet restore Overmind.Tests.sln
+dotnet build Overmind.Tests.sln -c Release --no-restore
+dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
 ```
 
-Both create and drop their own `OvermindAuditTest_<random>` databases, load the real scripts, run the SQL fixtures, the two-connection schedules, the C# harness, the real System bootstrap and the real application schema cycle. They never touch an application database. Review probes live under `tests/review/` and are disposable in the same way.
+The full command runs both real RCSI profiles through MSTest/VSTest, with independently owned disposable databases, real scripts, SQL fixtures, concurrent schedules, C# cases, System bootstrap and application schema cycles. The [testing handoff](../testing-handoff.md) is the maintained operational entry point, including remote-server prerequisites and recovery. Historical review probes remain under `tests/review/` and are outside the supported test command.
 
 ## The next step
 

@@ -1,0 +1,44 @@
+# Example only: copy into .github/workflows/ after configuring the dedicated SQL service.
+# A hosted runner does NOT supply SQL Server. AUDIT_TEST_CONNECTION_STRING must point
+# to a separately provisioned full SQL Server 2022+ test instance reachable by this job.
+name: Backend audit tests
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    environment: audit-tests
+    env:
+      OVERMIND_TEST_CONNECTION_STRING: ${{ secrets.AUDIT_TEST_CONNECTION_STRING }}
+      OVERMIND_TEST_RESULTS: ${{ github.workspace }}/artifacts/test-results/resources
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Restore
+        shell: pwsh
+        run: |
+          dotnet restore Overmind.Tests.sln
+          exit $LASTEXITCODE
+      - name: Build Release
+        shell: pwsh
+        run: |
+          dotnet build Overmind.Tests.sln -c Release --no-restore
+          exit $LASTEXITCODE
+      - name: Full audit gate (both RCSI profiles)
+        shell: pwsh
+        run: |
+          dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger "trx;LogFileName=audit.trx" --results-directory artifacts/test-results
+          exit $LASTEXITCODE
+      - name: Retain results even after failure
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: audit-results
+          path: artifacts/test-results/
+          if-no-files-found: warn
+          retention-days: 14

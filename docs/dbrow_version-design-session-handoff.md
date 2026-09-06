@@ -4,6 +4,12 @@ Updated: 2026-09-05. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Testing infrastructure, 2026-09-06:** use [testing-handoff.md](testing-handoff.md) for current .NET/MSTest commands,
+configuration, coverage continuity, migration execution evidence and the pending return-session verification checklist.
+The maintained Python/sqlcmd runner and console entry point have been replaced by `Overmind.Tests.sln` and
+`tests/AuditTests`. Commands in older dated sections are historical. Production design and open review findings are
+unchanged; this migration does not authorize a phone port, constructor corrections or live deployment.
+
 **Session close, 2026-09-05:** the user's latest priority is understanding the accumulated design and code through an approachable reading path. Codex completed [guide-co](guide-co/README.md): eight linked chapters following Mariana editing Lina's contact, plus a glossary and a code/status map. Start with chapters 1–3; source/ADR reading is optional on the first pass. The other agent's [guide-cc](guide-cc/README.md) is complementary and remains preserved. Keep both guides' implementation/status claims current when mechanisms change.
 
 At close, the working tree was clean at `1e0da91` before this memory edit. Ordinary construction and its independent review are in `c575325`; both guides are in `fb0fa88`. The guide describes the implementation at `c575325`. Codex checked its links, navigation, Markdown fences/whitespace and C# example signatures; the documentation task did not rerun SQL tests. This closing memory edit is saved on disk without a new commit.

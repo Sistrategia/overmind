@@ -32,4 +32,6 @@ Your audit design had the right shape: a per-tenant transaction clock stamped on
 
 This guide is the easy entry. The precise contracts live in the ADRs under `docs/adr/`, the reasoning in the analysis and design documents under `docs/`, and the verification in the two independent reviews and the test suite. [Chapter 12](12-status-and-map.md) maps each subject to its authoritative document.
 
+For the current .NET test commands and migration verification evidence, start with the [testing handoff](../testing-handoff.md), updated 2026-09-06. It also contains the pending verification checklist for the returning implementation session.
+
 Start with [Chapter 1](01-from-old-to-new.md).

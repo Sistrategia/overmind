@@ -92,15 +92,16 @@ For administrative SQL creation, supply an authenticated/authorized existing act
 
 ## Run the verification
 
-Prerequisites: .NET 8, Python 3, sqlcmd and a local SQL Server test account allowed to create/drop disposable databases, inspect lock/session DMVs and terminate its own test session for the commit-failure fixture. The first build restores normal project dependencies; no additional test framework package was introduced.
+Current commands, configuration, prerequisites, coverage mapping and execution evidence are maintained in the [testing handoff](testing-handoff.md). The supported path uses .NET 8 with MSTest/VSTest and a dedicated full SQL Server test instance; Python, Node.js and sqlcmd are no longer required.
 
 ```powershell
-dotnet build tests/EmailReference/EmailReference.csproj --nologo
-python tests/sql/run_dbrow_version_tests.py --server localhost
-python tests/sql/run_dbrow_version_tests.py --server localhost --rcsi
+$env:OVERMIND_TEST_CONNECTION_STRING = 'Server=localhost;Database=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True'
+dotnet restore Overmind.Tests.sln
+dotnet build Overmind.Tests.sln -c Release --no-restore
+dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
 ```
 
-The Python runner loads real repository DDL/procedures, builds the harness without restoring again, runs SQL and C# assertions, and removes only its own generated OvermindAuditTest_<random> databases. The C# harness rejects arbitrary database names. No application migration or rebuild runs against an existing database.
+The full command discovers both RCSI profiles and executes real production DDL, SQL fixtures and C# behavior through direct SqlClient sessions. Each scenario creates and removes only its own generated databases, with resource journals and TRX results. See the handoff before configuring a remote server: the certificate bypass above is an explicit local test setting.
 
 Verified on 2026-09-05 against local SQL Server 2022: the complete email-correction and ordinary-user-construction suite passed under READ COMMITTED with RCSI off and with RCSI on, including the final company-reference changes. Both builds reported zero warnings/errors; each profile created and removed three disposable databases (six in final validation). The actual schema-cycle test now uses the normally constructed seed user as its email actor and checks its user type/account history, alongside the audited business runner and view/login/membership checks. Competing promotions and the C# historical type reader passed in both profiles.
 
@@ -143,7 +144,7 @@ Not claimed: a capacity benchmark, every SQL Server/Azure version, PostgreSQL/My
 | C# ownership and reader | SqlAuditUnit.cs, AuditUnitCommitUncertainException.cs, SqlContactEmailReader.cs |
 | Grants | Scripts/Security/create_email_runtime_permissions.sql |
 | Fresh System/tenant construction | Scripts/Security/User/create_system_user_bootstrap.sql, Scripts/Data/create_tenant_insert.sql, SecurityDatabaseSchemaBuilder.cs |
-| Ordinary user construction/type history | Scripts/Security/User/create_security_user_insert.sql, create_user_history_schema.sql, create_user_history_create.sql; Scripts/Entities/create_entity_history_snapshot.sql; tests/sql/user_construction_tests.sql, user_construction_regressions.py; tests/EmailReference/UserConstructionCases.cs |
-| Executable cases | tests/sql/email_family_tests.sql, email_order_tests.sql, email_review_regressions.py, run_dbrow_version_tests.py; tests/EmailReference/Program.cs, OrderingCases.cs, LifetimeCases.cs, SchemaCycle.cs |
+| Ordinary user construction/type history | Scripts/Security/User/create_security_user_insert.sql, create_user_history_schema.sql, create_user_history_create.sql; Scripts/Entities/create_entity_history_snapshot.sql; tests/sql/user_construction_tests.sql; tests/AuditTests/SqlScenarios.cs, UserConstructionCases.cs |
+| Discoverable tests and retained cases | tests/AuditTests/AuditScenarios.cs, SqlScenarios.cs, SharedUnitCases.cs, OrderingCases.cs, LifetimeCases.cs, SchemaCycle.cs; tests/sql/email_family_tests.sql, email_order_tests.sql; [testing handoff](testing-handoff.md) |
 
 Source paths except tests are relative to src/Framework/Sistrategia.Data.SqlClient. No edits were made to CFUS-TOP-React, LaSalle-egresados or SistrategiaDataAnalysis.
