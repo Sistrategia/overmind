@@ -7,6 +7,11 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Entry-level guide for the author (2026-09-05):** `docs/guide-cc/README.md` is a short book that bridges the legacy
+audit design to the new one (unit, clocks, locking, final-state history, child identity/order, dictionaries, actors and
+users, reader, porting recipe, error glossary, status map). Keep it in sync when mechanisms change; it describes the
+working tree as of this date and says where designs are not yet implemented.
+
 **User-construction independent review (2026-09-05):** `docs/user-construction-independent-review.md`, target = working
 tree over `a3b715a`. Verdict: sound bounded reference; proceed to the next family. Both suite profiles pass. Before reusing
 or exposing `user_insert`: exact-value lock on the company-name miss path (under RCSI two concurrent creations made
