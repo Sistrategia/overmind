@@ -373,7 +373,11 @@ BEGIN
             DECLARE @company_public_key UNIQUEIDENTIFIER
             DECLARE @company_contact_id INT = NULL
 
-            SET @company_contact_id = (SELECT [contact_id] FROM [contacts].[contact] WHERE [full_name] = @person_company)
+            DECLARE @company_matches INT;
+            SELECT @company_matches=COUNT(*),@company_contact_id=MIN(c.[contact_id])
+            FROM [contacts].[contact] c JOIN [entities].[entity] e ON e.[entity_id]=c.[contact_id]
+            WHERE c.[full_name]=@person_company AND c.[contact_type_id]=2 AND e.[tenant_id]=@tenant_id;
+            IF @company_matches>1 THROW 51313,'Company name is ambiguous within this tenant; select a company explicitly.',1;
 
             IF @company_contact_id IS NULL
             BEGIN
@@ -396,12 +400,18 @@ BEGIN
         
                 INSERT INTO [contacts].[contact] ([contact_id], [contact_type_id], [full_name])
                     VALUES (@company_contact_id, 2, @person_company) 
+                INSERT INTO [contacts].[contact_history] ([dbrow_version],[tenant_id],[contact_id],[full_name],[do_not_contact])
+                    VALUES (@dbrow_version,@tenant_id,@company_contact_id,@person_company,0);
 
                 INSERT INTO [contacts].[contact_relationship] ([contact_relationship_type_id],[from_contact_id],[to_contact_id]) 
                 VALUES ((SELECT [contact_relationship_type_id] FROM [contacts].[contact_relationship_type] WHERE [code_name] = 'worksfor'), @contact_id, @company_contact_id)                
             END
             ELSE 
             BEGIN
+                -- Retain reference eligibility through this unit; do not bump the referenced company.
+                IF NOT EXISTS (SELECT 1 FROM [entities].[entity] WITH (HOLDLOCK,INDEX([px_entities_entity]))
+                    WHERE [entity_id]=@company_contact_id AND [tenant_id]=@tenant_id AND [deleted] IS NULL AND [locked] IS NULL)
+                    THROW 51203,'Referenced company is deleted, locked, or outside this tenant.',1;
                 INSERT INTO [contacts].[contact_relationship] ([contact_relationship_type_id],[from_contact_id],[to_contact_id]) 
                 VALUES ((SELECT [contact_relationship_type_id] FROM [contacts].[contact_relationship_type] WHERE [code_name] = 'worksfor'), @contact_id, @company_contact_id)
             END

@@ -7,6 +7,33 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**User-construction independent review (2026-09-05):** `docs/user-construction-independent-review.md`, target = working
+tree over `a3b715a`. Verdict: sound bounded reference; proceed to the next family. Both suite profiles pass. Before reusing
+or exposing `user_insert`: exact-value lock on the company-name miss path (under RCSI two concurrent creations made
+duplicates, then every creation naming that company fails 51313; probe-confirmed), reject contact-detail inputs on
+promotion instead of dropping them (probe-confirmed). Decide login uniqueness scope (duplicates accepted today) and
+whether company contacts may hold accounts (accepted today). Probes: `tests/review/user-construction/`.
+
+**Latest implementation — ordinary user construction (2026-09-05):** read
+`docs/adr/0007-ordinary-user-construction-and-type-history.md`. user_insert now validates an existing active
+user actor/default or explicit tenant, creates a user-typed revision 1, or locks/promotes an ordinary contact
+using a required unit-entry expected_entity_version and one bump. Optional INOUT dbrow_version remains;
+user_id/entity_version OUTPUT were appended. No System/MAX-tenant fallback or implicit self-registration in
+this constructor. The installation seed explicitly uses System to create its account, which then acts for itself.
+entity_history now carries required entity_type_id; entity creation/promotion/System bootstrap share the private
+entity_history_snapshot helper. user_history records non-secret construction payload via a private helper;
+hashes, salts, security tokens and login telemetry are excluded. Account email is initialized unconfirmed and
+remains separate from contact email. The reader exposes historical EntityTypeId. Initial role names require
+exactly one eligible tenant/global definition and its ID is retained in creation event_args. Optional company
+lookup is scoped to tenant/company category, rejects inactive/ambiguous matches, and writes new company contact
+history. Public self-registration, login uniqueness/authentication policy, full user/role/relationship lifecycle,
+broader legacy constructor hardening and migration remain separate work. email_runtime still denies constructors.
+The previous email correction checkpoint is now committed as a3b715a. This user-construction pass is uncommitted.
+Follow-up review prompt: `docs/user-construction-independent-review-prompt.md` (baseline a3b715a/current worktree).
+Final user-construction validation: full SQL/C# suite passed READ COMMITTED with RCSI off and on, including
+company-reference fixes, competing promotions, historical type and actual seed-user schema-cycle operations.
+Both builds had zero warnings/errors; all six final-profile disposable databases were removed.
+
 **Latest implementation — email review corrections (2026-09-05):** explicitly authorized and implemented.
 Read `docs/adr/0006-email-review-corrections-and-saved-order.md` and `docs/email-reference-family.md` first;
 ADR 0005 preserves the initial checkpoint. Stable email ordinal is separate from dense display_order;
@@ -24,14 +51,12 @@ retry remains unimplemented. The named RunLocalStoredAuditCommands owns/enrolls 
 the ordinary runner. email_runtime/memberships intentionally survive schema drop/recreate. tenant_insert requires
 an explicit actor. Constructor actor/tenant fallback, historical type promotion and shared-user lifecycle remain
 separate work. The independent report/probes are preserved unchanged. Run the full suite both normally and --rcsi.
-Concrete integration prerequisite found by the expanded schema-cycle test: legacy user_insert leaves the actual
-seeded user's entity typed as contact, so actor_resolve rejects it with 51201. Tests use the explicitly bootstrapped
-System actor; they do not promote the seed with raw DML. Fix ordinary user construction/type policy before adopting
-the new actor-bound API for application users. This correction pass does not claim to fix that lifecycle.
+The concrete 51201 prerequisite found here is now resolved by ADR 0007 above. Schema-cycle tests now use the
+normally constructed seed user for email changes, without raw-DML promotion or a System-actor substitute.
 Final validation: full SQL/C# runner passed READ COMMITTED with RCSI off and on, zero build warnings/errors;
 all six final-run disposable DBs removed. Actual schema cycle, role membership, reader locks, order/history/actions,
 queued/executing cancellation/disposal and terminated-owned-session commit failure are covered. git diff --check
-and documentation links passed. This correction pass is uncommitted; review checkpoint files are unchanged.
+and documentation links passed. The email correction pass is checkpoint a3b715a; independent review files are unchanged.
 
 **Initial email reference family (2026-09-05):** Email lifecycle,
 stable child identities, final history, ordered action evidence, historical reader/diff and C# SqlAuditUnit

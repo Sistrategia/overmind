@@ -41,7 +41,7 @@ GO
 -- Bootstrap and standalone optional OUTPUT. Procedure-scoped SET options are restored.
 SET XACT_ABORT OFF;
 DECLARE @v BIGINT, @id INT;
-EXEC entities.entity_insert @entity_type_id=1,
+EXEC entities.entity_insert @entity_type_id=4,
  @public_key='71F092F4-3A35-463D-9589-E5EE1373F7D5',
  @tenant='908E5A8C-0372-4EDC-ADDF-011E059091ED', @display_name='System',
  @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5', @dbrow_version=@v OUTPUT, @entity_id=@id OUTPUT;
@@ -76,7 +76,7 @@ SET @public=NEWID(); SET @v=NULL;
 EXEC contacts.contact_insert @public_key=@public, @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5', @full_name='Existing contact';
 SET @before=(SELECT COUNT(*) FROM data.dbrow_version);
 EXEC security.user_insert @public_key=@public, @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',
- @login_name='existing-contact-user', @full_name='Existing contact', @dbrow_version=@v OUTPUT;
+ @login_name='existing-contact-user', @full_name='Existing contact', @expected_entity_version=1, @dbrow_version=@v OUTPUT;
 IF @v IS NULL OR (SELECT COUNT(*) FROM data.dbrow_version) <> @before+1
     THROW 52000, 'Existing-contact user failed to allocate.', 1;
 IF NOT EXISTS (SELECT 1 FROM entities.event WHERE subject_public_key=@public AND dbrow_version=@v)

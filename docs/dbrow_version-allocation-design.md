@@ -1,7 +1,7 @@
 # Audit transaction foundation — recommended design
 
 Originally written: 2026-09-04. Revised: 2026-09-05 after independent review and the user's portability/tenant clarifications.
-Status: design recommendation, not executable migration SQL. ADRs 0005 and 0006 describe the implemented SQL Server email reference family, its review corrections and audit-unit prerequisites; other capabilities remain recommendations.
+Status: design recommendation, not executable migration SQL. ADRs 0005–0007 describe the implemented SQL Server email reference family, its review corrections, ordinary user construction and audit-unit prerequisites; other capabilities remain recommendations.
 
 This revision is the current design entry point. It replaces this document's earlier requirement for a general revision graph, mandatory CDC/commit index, and strict advance declaration of every aggregate. The earlier reasoning remains in [analysis v2](dbrow_version-allocation-analysis_v2.md), the [independent review](dbrow_version-independent-review-v3.md), and its [answers](dbrow_version-independent-review-v3-answers.md). The [chained-history alternative](dbrow_version-allocation-design-immutable-chained-history.md) remains optional future assurance work.
 
@@ -23,8 +23,9 @@ Most installations need only local audit. Disconnected installations add durable
 | [ADR 0004](adr/0004-portable-delivery-and-provider-profiles.md) | Portable delivery, source identity, historical imports, provider-specific implementations | Recommended capability design |
 | [ADR 0005](adr/0005-email-reference-family.md) | Email lifecycle/history/action reader, native ownership guards, C# unit, permissions and bootstrap prerequisites | Implemented fresh-schema reference family |
 | [ADR 0006](adr/0006-email-review-corrections-and-saved-order.md) | Review corrections, saved email order/principal, root-history access, catalog locking, explicit batches and commit admission | Implemented refinement of the email family |
+| [ADR 0007](adr/0007-ordinary-user-construction-and-type-history.md) | Ordinary user construction/promotion, historical type and non-secret account creation payload | Implemented prerequisite for ordinary user actors |
 
-The user subsequently authorized the email implementation. dbrow_version_ensure now requires explicit enrollment and proves native ownership with private transaction-owned guards, using an engine transaction ID only for indexed allocation discovery. Optional INOUT is preserved. The email family implements the root/history protocol; shared-actor delegation, general first-user preallocation, other child/role lifecycles, migration and delivery remain separate work. ADRs 0005 and 0006 record the precise scope and tested limits, including the legacy user-type construction prerequisite before application adoption.
+The user subsequently authorized the email implementation. dbrow_version_ensure now requires explicit enrollment and proves native ownership with private transaction-owned guards, using an engine transaction ID only for indexed allocation discovery. Optional INOUT is preserved. ADR 0007 resolves the ordinary-user construction/type prerequisite for actor-bound email operations. Shared-actor delegation, public self-registration/ID reservation, other child/role/account lifecycles, migration and delivery remain separate work. ADRs 0005–0007 record the precise scope and tested limits.
 
 ## 3. Guarantees and boundaries
 

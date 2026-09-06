@@ -3,6 +3,8 @@
 Date: 2026-09-05.
 Status: implemented for fresh schemas; verification results are maintained in the [email guide](../email-reference-family.md).
 
+Follow-up: [ADR 0007](0007-ordinary-user-construction-and-type-history.md) now resolves the ordinary user constructor/type-history prerequisite described as deferred below. This document preserves the email correction pass's decisions at its checkpoint.
+
 This refines [ADR 0005](0005-email-reference-family.md) after the [independent implementation review](../email-reference-family-independent-review.md) and the user's clarification of what “primary email” means. The independent report and its probes remain unchanged as the review record. Broader audit, migration and delivery contracts remain in ADRs 0002–0004.
 
 ## Product decision: a saved ordered list

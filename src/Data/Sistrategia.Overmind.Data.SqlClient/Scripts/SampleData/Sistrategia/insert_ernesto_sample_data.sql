@@ -14,7 +14,8 @@ SET @batch_id = 1
 SET @tenant = '908E5A8C-0372-4EDC-ADDF-011E059091ED'
 
 SET @public_key = '97A45AEE-EF87-4EFF-98D5-E51195A6669A'
-SET @created_by = '97A45AEE-EF87-4EFF-98D5-E51195A6669A'
+-- Installation creates this account administratively; it is not public self-registration.
+SET @created_by = '71F092F4-3A35-463D-9589-E5EE1373F7D5'
 SET @created = '2022-01-04 21:00:00.000'
 SET @dbrow_version = NULL
 

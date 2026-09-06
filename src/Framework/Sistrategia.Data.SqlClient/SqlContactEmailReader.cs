@@ -14,7 +14,7 @@ public sealed record ContactEmailAction(long DbrowVersion, int ActionOrdinal, in
     int? PreviousDisplayOrder, int? DisplayOrder);
 public sealed record ContactEmailRevision(int EntityVersion, long DbrowVersion, string DisplayName, string FullName,
     string? Summary, bool IsPrivate, DateTime? Deleted, DateTime RecordedAtUtc, int ActorEntityId, IReadOnlyList<ContactEmailState> Emails,
-    IReadOnlyList<ContactEmailDifference> Differences, IReadOnlyList<ContactEmailAction> Actions);
+    IReadOnlyList<ContactEmailDifference> Differences, IReadOnlyList<ContactEmailAction> Actions, int EntityTypeId);
 
 /// <summary>Historical email family, with historical root labels; not a full reconstruction of other contact families.</summary>
 public sealed class SqlContactEmailReader(string connectionString)
@@ -40,6 +40,7 @@ public sealed class SqlContactEmailReader(string connectionString)
         var fullName = reader.GetString(6);
         var recordedAt = DateTime.SpecifyKind(reader.GetDateTime(7), DateTimeKind.Utc);
         var actorId = reader.GetInt32(8);
+        var entityTypeId = reader.GetInt32(9);
 
         await reader.NextResultAsync(cancellationToken);
         var emails = new List<ContactEmailState>();
@@ -57,7 +58,7 @@ public sealed class SqlContactEmailReader(string connectionString)
             actions.Add(new(reader.GetInt64(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetString(3), reader.GetString(4), Text(reader, 5), reader.GetBoolean(6), reader.GetBoolean(7), reader.GetInt32(8), DateTime.SpecifyKind(reader.GetDateTime(9), DateTimeKind.Utc), reader.GetInt32(10), Position(reader, 11), Position(reader, 12)));
         // Consume completion too: a failure after result rows must not be mistaken for success.
         await reader.NextResultAsync(cancellationToken);
-        return new(version, stamp, displayName, fullName, summary, isPrivate, deleted, recordedAt, actorId, emails, differences, actions);
+        return new(version, stamp, displayName, fullName, summary, isPrivate, deleted, recordedAt, actorId, emails, differences, actions, entityTypeId);
     }
 
     private static string? Text(SqlDataReader reader, int ordinal) => reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);

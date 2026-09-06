@@ -95,10 +95,8 @@ internal static class SchemaCycle
             login = row.GetString(0);
             email = row.GetValue(1);
         }
-        // Legacy user_insert leaves this seed's root typed as contact. It cannot supply actor
-        // context to the strict email API until the separate user-lifecycle work fixes creation.
-        // Do not weaken actor validation or quietly promote it through test-only raw DML.
-        await using (var unit = await SqlAuditUnit.BeginAsync(connectionString, actor)) {
+        // Actual ordinary constructor output must be eligible without a System-actor workaround.
+        await using (var unit = await SqlAuditUnit.BeginAsync(connectionString, user)) {
             var added = await unit.InsertEmailAsync(user, 1, "card-principal@example.test");
             await unit.MakeEmailPrincipalAsync(user, 1, added.Ordinal);
             await unit.CommitAsync();
@@ -112,8 +110,10 @@ internal static class SchemaCycle
         using var check = new SqlCommand("""
             IF NOT EXISTS (SELECT 1 FROM contacts.contact_view WHERE public_key=@user AND email_address=N'card-principal@example.test')
                 THROW 52000,'Contact card ignored saved order.',1;
-            IF NOT EXISTS (SELECT 1 FROM entities.entity_view WHERE public_key=@user AND modified_by_email=N'actor-principal@example.test')
+            IF NOT EXISTS (SELECT 1 FROM entities.entity_view WHERE public_key=@user AND modified_by_email=N'card-principal@example.test')
                 THROW 52000,'Actor display ignored saved order.',1;
+            IF NOT EXISTS (SELECT 1 FROM entities.entity_view WHERE public_key='71F092F4-3A35-463D-9589-E5EE1373F7D5' AND modified_by_email=N'actor-principal@example.test')
+                THROW 52000,'System actor display ignored saved order.',1;
             IF EXISTS (SELECT login_name,email FROM security.[user] u JOIN entities.entity e ON e.entity_id=u.user_id WHERE e.public_key=@user
                 EXCEPT SELECT @login,@email)
                 THROW 52000,'Contact ordering changed login or account email.',1;
@@ -137,6 +137,13 @@ internal static class SchemaCycle
                 WHERE public_key='97A45AEE-EF87-4EFF-98D5-E51195A6669A' AND tenant_id=@tenant);
             IF @contact IS NULL OR NOT EXISTS (SELECT 1 FROM security.[user] WHERE user_id=@contact)
                 THROW 52000, 'Application business seed did not create its user.', 1;
+            IF NOT EXISTS (SELECT 1 FROM entities.entity e
+                JOIN entities.entity_history h ON h.entity_id=e.entity_id AND h.dbrow_version=e.dbrow_version
+                JOIN security.user_history u ON u.user_id=e.entity_id AND u.dbrow_version=e.dbrow_version
+                JOIN data.dbrow_version v ON v.dbrow_version=e.dbrow_version AND v.tenant_id=e.tenant_id
+                WHERE e.entity_id=@contact AND e.entity_type_id=4 AND h.entity_type_id=4 AND h.dboperation_type_id=1
+                    AND v.modified_by=1 AND u.email=N'ernesto@sistrategia.com' AND u.email_confirmed=0)
+                THROW 52000,'Seeded user lost its final type, account payload or installation actor.',1;
             IF NOT EXISTS (SELECT 1 FROM entities.entity e
                 JOIN contacts.contact_email c ON c.contact_id=e.entity_id AND c.tenant_id=e.tenant_id
                 JOIN contacts.contact_email_history h ON h.contact_id=c.contact_id AND h.ordinal=c.ordinal

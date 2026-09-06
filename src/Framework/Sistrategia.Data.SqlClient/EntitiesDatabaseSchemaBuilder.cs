@@ -38,6 +38,7 @@ internal class EntitiesDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_actor_resolve.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_write_lock.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_version_bump.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_history_snapshot.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_insert.sql");
         // //RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Entities.create_entity_update.sql");
 
@@ -66,6 +67,7 @@ internal class EntitiesDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
 
         DropProcedureIfExists("entities", "entity_update");
         DropProcedureIfExists("entities", "entity_insert");
+        DropProcedureIfExists("entities", "entity_history_snapshot");
         DropProcedureIfExists("entities", "entity_version_bump");
         DropProcedureIfExists("entities", "entity_write_lock");
         DropProcedureIfExists("entities", "actor_resolve");

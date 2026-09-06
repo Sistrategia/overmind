@@ -1,7 +1,7 @@
 # ADR 0003: Tenant ownership, actor scope, bootstrap, and shared catalogs
 
 Date: 2026-09-05.
-Status: recommended overall policy. [ADR 0005](0005-email-reference-family.md) implements email tenant/actor checks, exact email dictionaries and System/tenant bootstrap prerequisites. General first-user preallocation, shared-actor delegation and role/user lifecycle remain separate work.
+Status: recommended overall policy. [ADR 0005](0005-email-reference-family.md) implements email tenant/actor checks and System/tenant bootstrap prerequisites; [ADR 0007](0007-ordinary-user-construction-and-type-history.md) implements ordinary administrative user creation/promotion, scoped initial roles and construction/type history. Public self-registration/ID preallocation, shared-actor delegation and the remaining role/user lifecycle remain separate work.
 
 Companions: [primary design](../dbrow_version-allocation-design.md), [audit unit](0002-portable-audit-unit-and-history.md), [provider profiles](0004-portable-delivery-and-provider-profiles.md), and [independent answers](../dbrow_version-independent-review-v3-answers.md).
 

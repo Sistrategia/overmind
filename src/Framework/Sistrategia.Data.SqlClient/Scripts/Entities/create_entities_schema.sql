@@ -115,7 +115,7 @@ CREATE TABLE [entities].[entity_history] (
      [dbrow_version]        BIGINT              NOT NULL
     ,[tenant_id]            INT                 NOT NULL -- ?
     ,[entity_id]            INT                 NOT NULL
---  ,[entity_type_id]       INT                 NOT NULL
+    ,[entity_type_id]       INT                 NOT NULL
     ,[dboperation_type_id]  INT                 NOT NULL
     ,[logical_key]          NVARCHAR(256)           NULL
     ,[display_name]         NVARCHAR(256)       NOT NULL
@@ -136,6 +136,8 @@ CREATE TABLE [entities].[entity_history] (
         ( [dbrow_version] ASC, [entity_id] ASC )
     ,CONSTRAINT [fk_entity_history_ledger] FOREIGN KEY ([tenant_id],[dbrow_version])
         REFERENCES [data].[dbrow_version]([tenant_id],[dbrow_version])
+    ,CONSTRAINT [fk_entity_history_type] FOREIGN KEY ([entity_type_id])
+        REFERENCES [entities].[entity_type]([entity_type_id])
 ) 
 
 -- Root payload is sparse: child-only revisions must seek by root, not scan the global clock.

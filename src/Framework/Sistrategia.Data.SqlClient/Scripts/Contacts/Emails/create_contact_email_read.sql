@@ -42,7 +42,7 @@ BEGIN
                 WHERE [contact_id]=@contact_id AND [dbrow_version]<=@bound)
             THROW 51402, 'Historical root payload is unavailable for this revision.', 1;
         SELECT @entity_version AS [entity_version],@bound AS [revision_dbrow_version],
-            e.[display_name],e.[summary],e.[is_private],e.[deleted],c.[full_name],v.[recorded_at],v.[modified_by]
+            e.[display_name],e.[summary],e.[is_private],e.[deleted],c.[full_name],v.[recorded_at],v.[modified_by],e.[entity_type_id]
         FROM (SELECT TOP(1) * FROM [entities].[entity_history] WITH (FORCESEEK,INDEX([ix_entity_history_root]))
             WHERE [entity_id]=@contact_id AND [dbrow_version]<=@bound ORDER BY [dbrow_version] DESC) e
         CROSS JOIN (SELECT TOP(1) * FROM [contacts].[contact_history] WITH (FORCESEEK,INDEX([ix_contact_history_root]))

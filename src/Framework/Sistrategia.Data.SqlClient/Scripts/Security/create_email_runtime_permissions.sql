@@ -23,10 +23,12 @@ DENY EXECUTE ON [data].[tenant_insert] TO [email_runtime];
 DENY EXECUTE ON [entities].[actor_resolve] TO [email_runtime];
 DENY EXECUTE ON [entities].[entity_write_lock] TO [email_runtime];
 DENY EXECUTE ON [entities].[entity_version_bump] TO [email_runtime];
+DENY EXECUTE ON [entities].[entity_history_snapshot] TO [email_runtime];
 DENY EXECUTE ON [contacts].[email_values_ensure] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_email_write] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_email_history_sync] TO [email_runtime];
 DENY EXECUTE ON [security].[system_user_bootstrap] TO [email_runtime];
+DENY EXECUTE ON [security].[user_history_create] TO [email_runtime];
 -- Legacy constructors retain separate compatibility/authorization work; this profile does not expose them.
 DENY EXECUTE ON [entities].[entity_insert] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_insert] TO [email_runtime];

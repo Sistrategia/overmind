@@ -13,6 +13,7 @@ import subprocess
 import tempfile
 import uuid
 from email_review_regressions import run as run_review_regressions
+from user_construction_regressions import run as run_user_regressions
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "src/Framework/Sistrategia.Data.SqlClient/Scripts"
@@ -75,6 +76,9 @@ END;
             "Contacts/Emails/create_email_schema.sql",
             "Contacts/Addresses/create_address_schema.sql",
             "Security/User/create_security_user_schema.sql",
+            "Security/User/create_user_history_schema.sql",
+            "Security/Role/create_security_role_schema.sql",
+            "Security/UserRole/create_security_user_role_schema.sql",
             "Entities/Events/create_events_schema.sql",
             "Data/create_audit_isolation_assert.sql",
             "Data/create_audit_unit_begin.sql",
@@ -85,6 +89,7 @@ END;
             "Entities/create_actor_resolve.sql",
             "Entities/create_entity_write_lock.sql",
             "Entities/create_entity_version_bump.sql",
+            "Entities/create_entity_history_snapshot.sql",
             "Contacts/Emails/create_email_values_ensure.sql",
             "Contacts/Emails/create_contact_email_history_sync.sql",
             "Contacts/Emails/create_contact_email_write.sql",
@@ -100,6 +105,7 @@ END;
             "Entities/create_entity_insert.sql",
             "Contacts/create_contact_insert.sql",
             "Security/User/create_security_user_insert.sql",
+            "Security/User/create_user_history_create.sql",
             "Security/User/create_system_user_bootstrap.sql",
             "Entities/Events/create_event_create.sql",
             "Security/create_email_runtime_permissions.sql",
@@ -112,6 +118,7 @@ END;
         print(sql((Path(__file__).with_name("dbrow_version_tests.sql")).read_text()), flush=True)
         print(sql((Path(__file__).with_name("email_family_tests.sql")).read_text(encoding="utf-8")), flush=True)
         print(sql((Path(__file__).with_name("email_order_tests.sql")).read_text(encoding="utf-8")), flush=True)
+        print(sql((Path(__file__).with_name("user_construction_tests.sql")).read_text(encoding="utf-8")), flush=True)
 
         actor = "71F092F4-3A35-463D-9589-E5EE1373F7D5"
         root2 = "E0000000-0000-0000-0000-000000000002"
@@ -207,6 +214,7 @@ EXEC contacts.contact_email_read @contact_public_key='{root2}',@actor='{actor}',
         print("PASS concurrency: historical reader waits at the initial root lock and succeeds after release", flush=True)
 
         run_review_regressions(sql, concurrent, signal, wait_signal, actor)
+        run_user_regressions(sql, concurrent, signal, wait_signal, actor)
 
         project = str(ROOT / "tests/EmailReference/EmailReference.csproj")
         subprocess.run(["dotnet", "build", project, "--no-restore", "--nologo", "--verbosity", "quiet"], check=True)

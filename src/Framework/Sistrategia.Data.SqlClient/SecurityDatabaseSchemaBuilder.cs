@@ -25,6 +25,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.Application.create_security_application_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.Role.create_security_role_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_schema.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_user_history_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.UserRole.create_security_user_role_schema.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.PasswordResetToken.create_security_password_reset_token_schema.sql");
         // // //RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.EmailConfirmationToken.create_security_email_confirmation_token_schema.sql");
@@ -38,6 +39,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void CreateSchemaFunctions() {
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_user_history_create.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_system_user_bootstrap.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_insert.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.create_email_runtime_permissions.sql");
@@ -81,6 +83,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         DropProcedureIfExists("security", "user_update_password");
         DropProcedureIfExists("security", "user_create");
         DropProcedureIfExists("security", "user_insert");
+        DropProcedureIfExists("security", "user_history_create");
         DropProcedureIfExists("security", "user_update_lockout");
     }
 
@@ -95,6 +98,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         DropTableIfExists("security", "email_confirmation_token");
         DropTableIfExists("security", "password_reset_token");
         DropTableIfExists("security", "user_role");
+        DropTableIfExists("security", "user_history");
         DropTableIfExists("security", "user");
         DropTableIfExists("security", "role_localized");
         DropTableIfExists("security", "role");

@@ -1,6 +1,6 @@
 # Email reference family: usage, tests and review map
 
-Implemented 2026-09-05 for fresh Overmind schemas. [ADR 0005](adr/0005-email-reference-family.md) records the initial implementation; [ADR 0006](adr/0006-email-review-corrections-and-saved-order.md) records the review corrections, saved-order decision and deferred findings. These scripts are creation DDL, not an upgrade/migration package for an existing database.
+Implemented 2026-09-05 for fresh Overmind schemas. [ADR 0005](adr/0005-email-reference-family.md) records the initial implementation; [ADR 0006](adr/0006-email-review-corrections-and-saved-order.md) records the email corrections; [ADR 0007](adr/0007-ordinary-user-construction-and-type-history.md) resolves ordinary user construction and historical type. These scripts are creation DDL, not an upgrade/migration package for an existing database.
 
 ## Saved order and principal email
 
@@ -33,6 +33,7 @@ var revision = await history.ReadAsync(contactPublicKey, actorPublicKey,
 // Emails carry DisplayOrder/IsPrincipal; Differences carry old/new positions.
 // Action payload version 2 carries PreviousDisplayOrder/DisplayOrder, including move commands.
 // DisplayName/FullName come from historical payload, even if today's contact has been renamed/deleted.
+// EntityTypeId also comes from historical payload, including contact-to-user promotion.
 ```
 
 The reader owns a short serializable transaction; it rejects ambient transactions. Root-leading history indexes and required root seeks bound its root-payload access. It reconstructs the email family and historical root context, not every contact child family. A missing revision/root payload throws instead of becoming a misleading empty collection. Legacy coverage/baseline support is separate, as described in ADR 0004. A move/revert can leave an empty net diff with several actual actions; shifted siblings receive final snapshots.
@@ -85,7 +86,9 @@ For embedded business batches use SqlDatabase.RunLocalStoredAuditCommands. It ow
 
 Assign the trusted backend's database user to the shipped email_runtime role for the reference API. This deployment-owned role and its memberships survive DropSchema; recreation reapplies object grants. The role intentionally excludes legacy constructors, administrative bootstrap and raw table/catalog access. Other application capabilities require their own reviewed grants. Passing an actor GUID does not authenticate the caller; this is a backend API, not an unrestricted end-user SQL endpoint.
 
-Known application prerequisite: legacy user_insert currently leaves the seeded user's entity typed as contact, so that user is rejected as an actor by the new API (51201). The schema-cycle email test uses the explicitly bootstrapped System actor. Correct ordinary user creation/type handling in the user-lifecycle pass before adopting these actor-bound APIs for logged-in users; the email role does not expose a constructor bypass.
+The ordinary-user prerequisite is now resolved: user_insert commits a user-typed root with account creation history, and the schema-cycle test performs email changes as that normally created seed user. It validates an existing user actor; the installation seed explicitly uses System for administrative creation. Public self-registration remains a separate API design, and the email role still cannot invoke constructors.
+
+For administrative SQL creation, supply an authenticated/authorized existing actor and either a new public key or an existing contact with its expected_entity_version. Existing contacts retain their contact details/email list. The appended user_id and entity_version OUTPUT parameters and optional INOUT dbrow_version support composition; expected versions are always from unit entry. Creation/role assignment authorization remains the backend's responsibility. See ADR 0007 for examples of the transitions and the still-unimplemented login/account lifecycle policies.
 
 ## Run the verification
 
@@ -99,7 +102,9 @@ python tests/sql/run_dbrow_version_tests.py --server localhost --rcsi
 
 The Python runner loads real repository DDL/procedures, builds the harness without restoring again, runs SQL and C# assertions, and removes only its own generated OvermindAuditTest_<random> databases. The C# harness rejects arbitrary database names. No application migration or rebuild runs against an existing database.
 
-Verified on 2026-09-05 against local SQL Server 2022: the complete correction suite passed under READ COMMITTED with RCSI off and with RCSI on. Both builds reported zero warnings/errors; each profile created and removed three disposable databases (six in final validation). The new root-history lock regression failed with indexes alone and passed after requiring root-leading seeks. Earlier regressions had independently reproduced the writer/reader lock-upgrade problem and application seed enrollment error 51102. The schema-cycle test now passes with the named audited business runner and the expanded view/login/membership checks.
+Verified on 2026-09-05 against local SQL Server 2022: the complete email-correction and ordinary-user-construction suite passed under READ COMMITTED with RCSI off and with RCSI on, including the final company-reference changes. Both builds reported zero warnings/errors; each profile created and removed three disposable databases (six in final validation). The actual schema-cycle test now uses the normally constructed seed user as its email actor and checks its user type/account history, alongside the audited business runner and view/login/membership checks. Competing promotions and the C# historical type reader passed in both profiles.
+
+Earlier regressions independently reproduced the writer/reader lock-upgrade problem and application seed enrollment error 51102. The root-history lock regression failed with indexes alone and passed after requiring root-leading seeks. These tests remain in the expanded suite.
 
 Coverage includes:
 
@@ -118,6 +123,9 @@ Coverage includes:
 - Distinct new email/location values inserted under the runtime role into the same catalog gaps while another unit remains open; bounded root-history locks inside the actual reader amid 200 unrelated contacts.
 - Queued cancellation versus commit, cancellation/disposal during blocked SQL, provider commit failure after terminating only the unit's own disposable-database session, and commit preceding a later queued command.
 - Unsupported isolation before/after enrollment, explicit batch success/rollback/missing-helper failure, role membership persistence, and cleanup of the removed legacy child counter on drop.
+- Ordinary user creation at revision 1, existing-contact promotion with historical type, account history excluding credentials, and ordinary-user C# email operations without a System substitute.
+- Promotion before/after child edits, rollback of new/existing roots, competing promotions, actor/tenant failures, and eligible versus ambiguous/foreign initial roles.
+- Optional company references scoped to tenant/company category, new company contact history, and rejection of inactive/ambiguous name matches.
 - Two databases sharing one connection/engine transaction and matching numeric hints still rejecting foreign-version reuse.
 
 Not claimed: a capacity benchmark, every SQL Server/Azure version, PostgreSQL/MySQL execution, generic authorization/role lifecycle, full schema-upgrade testing, historical import, redaction, commit-loss fault injection or exactly-once retry receipts.
@@ -135,6 +143,7 @@ Not claimed: a capacity benchmark, every SQL Server/Azure version, PostgreSQL/My
 | C# ownership and reader | SqlAuditUnit.cs, AuditUnitCommitUncertainException.cs, SqlContactEmailReader.cs |
 | Grants | Scripts/Security/create_email_runtime_permissions.sql |
 | Fresh System/tenant construction | Scripts/Security/User/create_system_user_bootstrap.sql, Scripts/Data/create_tenant_insert.sql, SecurityDatabaseSchemaBuilder.cs |
+| Ordinary user construction/type history | Scripts/Security/User/create_security_user_insert.sql, create_user_history_schema.sql, create_user_history_create.sql; Scripts/Entities/create_entity_history_snapshot.sql; tests/sql/user_construction_tests.sql, user_construction_regressions.py; tests/EmailReference/UserConstructionCases.cs |
 | Executable cases | tests/sql/email_family_tests.sql, email_order_tests.sql, email_review_regressions.py, run_dbrow_version_tests.py; tests/EmailReference/Program.cs, OrderingCases.cs, LifetimeCases.cs, SchemaCycle.cs |
 
 Source paths except tests are relative to src/Framework/Sistrategia.Data.SqlClient. No edits were made to CFUS-TOP-React, LaSalle-egresados or SistrategiaDataAnalysis.

@@ -186,8 +186,8 @@ BEGIN TRAN; EXEC data.audit_unit_begin;
 EXEC entities.entity_write_lock @id,1,7,@v OUTPUT,@r OUTPUT;
 EXEC data.dbrow_version_ensure 1,1,2,@now,@v OUTPUT;
 UPDATE entities.entity SET display_name=N'Later renamed contact',deleted=@now,deleted_by=1 WHERE entity_id=@id;
-INSERT entities.entity_history (dbrow_version,tenant_id,entity_id,dboperation_type_id,display_name,deleted,deleted_by,is_private)
-SELECT @v,1,@id,3,display_name,deleted,deleted_by,is_private FROM entities.entity WHERE entity_id=@id;
+INSERT entities.entity_history (dbrow_version,tenant_id,entity_id,entity_type_id,dboperation_type_id,display_name,deleted,deleted_by,is_private)
+SELECT @v,1,@id,entity_type_id,3,display_name,deleted,deleted_by,is_private FROM entities.entity WHERE entity_id=@id;
 EXEC entities.entity_version_bump @id,1,1,@v,@now,@r OUTPUT;
 COMMIT;
 EXEC contacts.contact_insert @public_key='E0000000-0000-0000-0000-000000000002',@created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',@full_name='Concurrent email',@email_address=N'concurrent@example.test';

@@ -27,8 +27,9 @@ BEGIN
                 JOIN [entities].[entity_version_history] h ON h.[entity_id]=e.[entity_id] AND h.[entity_version]=1
                 JOIN [entities].[entity_history] eh ON eh.[entity_id]=e.[entity_id] AND eh.[dbrow_version]=h.[dbrow_version] AND eh.[tenant_id]=e.[tenant_id]
                 JOIN [contacts].[contact_history] ch ON ch.[contact_id]=e.[entity_id] AND ch.[dbrow_version]=h.[dbrow_version] AND ch.[tenant_id]=e.[tenant_id]
+                JOIN [security].[user_history] uh ON uh.[user_id]=e.[entity_id] AND uh.[dbrow_version]=h.[dbrow_version] AND uh.[tenant_id]=e.[tenant_id]
                 WHERE e.[entity_id]=1 AND e.[public_key]='71F092F4-3A35-463D-9589-E5EE1373F7D5'
-                  AND e.[entity_type_id]=4 AND e.[tenant_id]=@tenant_id AND u.[login_name]=N'system'
+                  AND e.[entity_type_id]=4 AND eh.[entity_type_id]=4 AND e.[tenant_id]=@tenant_id AND u.[login_name]=N'system'
                   AND e.[is_system]=1 AND e.[deleted] IS NULL AND e.[locked] IS NULL)
                 THROW 51502, 'Conflicting or incomplete System identity; bootstrap will not repair it implicitly.', 1;
             IF @owns=1 COMMIT;
@@ -47,12 +48,12 @@ BEGIN
             @created,1,@created,1,N'System User',0,1,1,@v);
         SET IDENTITY_INSERT [entities].[entity] OFF; SET @identity_on=0;
         INSERT [entities].[entity_version_history] ([tenant_id],[dbrow_version],[entity_id],[entity_version]) VALUES (@tenant_id,@v,1,1);
-        INSERT [entities].[entity_history] ([dbrow_version],[tenant_id],[entity_id],[dboperation_type_id],[logical_key],[display_name],[summary],[is_private])
-        VALUES (@v,@tenant_id,1,1,N'system',N'System User',N'System User',0);
+        EXEC [entities].[entity_history_snapshot] 1,@tenant_id,@v;
         INSERT [contacts].[contact] ([contact_id],[contact_type_id],[full_name]) VALUES (1,1,N'System User');
         INSERT [contacts].[contact_history] ([dbrow_version],[tenant_id],[contact_id],[full_name],[do_not_contact],[open_to_work],[recruiting],[is_deceased])
         VALUES (@v,@tenant_id,1,N'System User',0,0,0,0);
         INSERT [security].[user] ([user_id],[login_name]) VALUES (1,N'system');
+        EXEC [security].[user_history_create] 1,@tenant_id,@v;
         IF @owns=1 COMMIT;
     END TRY
     BEGIN CATCH

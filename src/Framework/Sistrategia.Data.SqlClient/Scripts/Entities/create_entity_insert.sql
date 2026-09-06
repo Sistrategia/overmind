@@ -95,15 +95,7 @@ BEGIN
             ([tenant_id],[dbrow_version],[entity_id],[entity_version])
         VALUES (@tenant_id, @dbrow_version, @entity_id, 1);
 
-        INSERT INTO [entities].[entity_history] (
-             [dbrow_version],[tenant_id],[entity_id],[dboperation_type_id],[logical_key],[display_name]
-            ,[deleted],[deleted_by],[locked],[locked_by],[validated],[validated_by]
-            ,[summary],[image_url],[thumbnail_url],[is_private] -- ,[is_system]
-            )
-        SELECT @dbrow_version, @tenant_id, [entity_id], 1, [logical_key],[display_name]
-            ,[deleted],[deleted_by],[locked],[locked_by],[validated],[validated_by]
-            ,[summary],[image_url],[thumbnail_url],[is_private] -- ,[is_system]
-        FROM [entities].[entity] WHERE [entity_id] = @entity_id;
+        EXEC [entities].[entity_history_snapshot] @entity_id,@tenant_id,@dbrow_version;
     
         IF( @TranStarted = 1 )
         BEGIN

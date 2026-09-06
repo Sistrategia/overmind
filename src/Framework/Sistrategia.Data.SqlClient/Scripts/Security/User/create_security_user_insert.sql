@@ -81,76 +81,59 @@ CREATE OR ALTER PROCEDURE [security].[user_insert] (
 
 	,@dbrow_version                 BIGINT = NULL OUTPUT
 
-    ,@auto_create_person_company    BIT = 1	 
+    ,@auto_create_person_company    BIT = 1
+    ,@expected_entity_version       INT = NULL
+    ,@entity_version                INT = NULL OUTPUT
+    ,@user_id                       INT = NULL OUTPUT
 )
 AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
-    -- NULL INOUT creates an audit entry; non-NULL joins the caller's SAME active transaction.
-    -- Supplied versions must match tenant/actor. Never reuse after commit or failure.
-    -- Only the transaction owner commits/rolls back; an ambient owner MUST roll back on error.
-
-    DECLARE @tenant_id INT
-
-    DECLARE @TranStarted   BIT
-	SET @TranStarted = 0
-
-    IF @created IS NULL SET @created = GETUTCDATE()
-    IF @public_key IS NULL SET @public_key = NEWID()    
-    IF @tenant IS NULL SET @tenant_id = (SELECT [tenant_id] FROM [entities].[entity] WHERE [public_key] = @created_by)
-    ELSE SET @tenant_id = (SELECT [tenant_id] FROM [data].[tenant] WHERE [public_key] = @tenant)
-
-    IF @tenant_id IS NULL SET @tenant_id = (SELECT MAX([tenant_id]) FROM [data].[tenant])
-
-    IF @tenant IS NULL SET @tenant = (SELECT [public_key] FROM [data].[tenant] WHERE [tenant_id] = @tenant_id)
-
-    IF @full_name IS NULL SET @full_name = @login_name
-    IF @display_name IS NULL SET @display_name = @full_name
-    -- IF @summary IS NULL SET @summary = @full_name
-
-    IF @contact_type_id IS NULL SET @contact_type_id = 1
-    IF @is_private IS NULL SET @is_private = 0    
-
-    --IF @security_stamp IS NULL SET @security_stamp = LOWER(NEWID())
-
-    --IF @email_confirmed IS NULL SET @email_confirmed = 0
-    --IF @phone_number_confirmed IS NULL SET @phone_number_confirmed = 0
-    --IF @two_factor_enabled IS NULL SET @two_factor_enabled = 0
-    ----IF @lockout_end_date_utc IS NULL SET @lockout_end_date_utc = NULL
-    --IF @lockout_enabled IS NULL SET @lockout_enabled = 1
-    --IF @access_failed_count IS NULL SET @access_failed_count = 0
-
+    -- Administrative construction by an existing authorized actor. No implicit self-registration.
+    -- Optional INOUT joins only this enrolled unit; the outer transaction owner completes it.
+    -- Existing contacts require the unit-entry optimistic token and retain their contact payload.
+    DECLARE @owns BIT=0,@tenant_id INT,@actor_id INT,@contact_id INT,@recorded_at DATETIME2,
+        @user_type INT=(SELECT entity_type_id FROM entities.entity_type WHERE code_name=N'user'),
+        @contact_type INT=(SELECT entity_type_id FROM entities.entity_type WHERE code_name=N'contact');
+    SET @entity_version=NULL; SET @user_id=NULL;
+    IF @created IS NULL SET @created=SYSUTCDATETIME();
+    IF @public_key IS NULL SET @public_key=NEWID();
+    IF @full_name IS NULL SET @full_name=@login_name;
+    IF @display_name IS NULL SET @display_name=@full_name;
     BEGIN TRY
-        IF @dbrow_version IS NOT NULL AND @@TRANCOUNT = 0
-            THROW 51008, 'A supplied audit version requires the caller''s active transaction.', 1;
+        IF @dbrow_version IS NOT NULL AND @@TRANCOUNT=0
+            THROW 51008,'A supplied audit version requires an enrolled caller transaction.',1;
+        IF @@TRANCOUNT=0
+        BEGIN
+            BEGIN TRANSACTION; SET @owns=1;
+            EXEC data.audit_unit_begin;
+        END;
+        EXEC data.audit_unit_assert @dbrow_version OUTPUT;
+        EXEC entities.actor_resolve @created_by,@tenant,@actor_id OUTPUT,@tenant_id OUTPUT;
+        SET @tenant=(SELECT public_key FROM data.tenant WHERE tenant_id=@tenant_id);
+        IF @user_type IS NULL OR @contact_type IS NULL THROW 51600,'User/contact type definitions are required.',1;
+        IF @email IS NOT NULL AND (DATALENGTH(@email)=0 OR DATALENGTH(@email)>512)
+            THROW 51300,'Account email must contain 1 to 256 UTF-16 code units.',1;
 
-        IF( @@TRANCOUNT = 0 )
-		BEGIN
-			BEGIN TRANSACTION SecurityUserInsert
-			SET @TranStarted = 1
-            EXEC [data].[audit_unit_begin];
-		END
-		ELSE
-    		SET @TranStarted = 0        
+        -- Resolve by public key, then validate the actual root's tenant under its write lock.
+        SELECT @contact_id=entity_id FROM entities.entity WHERE public_key=@public_key;
+        IF @contact_id IS NOT NULL
+        BEGIN
+            EXEC entities.entity_write_lock @contact_id,@tenant_id,@expected_entity_version,
+                @dbrow_version OUTPUT,@entity_version OUTPUT;
+            IF EXISTS (SELECT 1 FROM security.[user] WHERE user_id=@contact_id)
+                THROW 51601,'This contact already has a user account.',1;
+            IF NOT EXISTS (SELECT 1 FROM entities.entity e JOIN contacts.contact c ON c.contact_id=e.entity_id
+                WHERE e.entity_id=@contact_id AND e.entity_type_id=@contact_type)
+                THROW 51600,'Only an ordinary contact can be promoted to a user.',1;
+        END
+        ELSE IF @expected_entity_version IS NOT NULL AND @expected_entity_version<>0
+            THROW 51603,'New user construction accepts only an absent-root version (0 or omitted).',1;
 
-        DECLARE @audit_actor_id INT = COALESCE(
-            (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @created_by), 1);
-        EXEC [data].[dbrow_version_ensure]
-             @tenant_id = @tenant_id
-            ,@actor_entity_id = @audit_actor_id
-            ,@dboperation_type_id = 1
-            ,@modified = @created
-            ,@dbrow_version = @dbrow_version OUTPUT;
-
-        DECLARE @entity_id INT
-        DECLARE @contact_id INT
-		SET @contact_id = (SELECT c.[contact_id] FROM [contacts].[contact] AS c
-            INNER JOIN [entities].[entity] AS e ON (c.[contact_id] = e.[entity_id])
-            WHERE e.[public_key] = @public_key)
-
-        IF (@contact_id IS NULL AND EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_SCHEMA = 'contacts' AND TABLE_NAME = 'contact'))
+        -- Existing roots were locked before first allocation; new roots will be inserted in this unit.
+        EXEC data.dbrow_version_ensure @tenant_id,@actor_id,1,@created,@dbrow_version OUTPUT,@recorded_at OUTPUT;
+        IF @contact_id IS NULL
         BEGIN
             DECLARE @RC INT
             EXECUTE @RC = [contacts].[contact_insert] 
@@ -196,108 +179,40 @@ BEGIN
             @dbrow_version = @dbrow_version OUTPUT,
             @auto_create_person_company = @auto_create_person_company,
             @supress_event_message = 1
-            
-            -- @contact_type_id, @public_key, @tenant, @logical_key, @display_name
-            --     , @created, @created_by
-            --     , @summary, @image_url
-            --     , @thumbnail_url, @is_private
+            SET @contact_id=(SELECT entity_id FROM entities.entity WHERE public_key=@public_key AND tenant_id=@tenant_id);
+            EXEC entities.entity_write_lock @contact_id,@tenant_id,0,@dbrow_version OUTPUT,@entity_version OUTPUT;
+        END;
 
-            --     ,@full_name,@person_title,@person_first_name -- ,@person_last_name
-            --     ,@person_last_name1,@person_last_name2,@person_suffix,@person_alias
-            --     ,@person_job_title,@person_company
-            --     ,@person_gender_code,@person_birth_date
-            --     ,@person_marital_status
-            --     ,@email_location_name,@email
-            --     ,@phone_location_name,@phone_number,@phone_area_code,@phone_extension,@numbers_only,@full_phone
-            --     ,@address_location_name,@address1,@address2,@zip_code,@city,@state,@country
-            --     ,@dbrow_version
-            --     ,@auto_create_person_company
-            --     ,1 -- @supress_event_message
-
-            --SET @contact_id = SCOPE_IDENTITY()
-
-            SET @contact_id = (
-                SELECT c.[contact_id] FROM [contacts].[contact] AS c
-                INNER JOIN [entities].[entity] AS e ON (c.[contact_id] = e.[entity_id])
-                WHERE e.[public_key] = @public_key)
-
-        END
-
-   --     IF (@contact_id IS NULL AND EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'contacts' AND TABLE_NAME = 'contact'))
-   --     BEGIN
-   --         INSERT INTO [contacts].[contact] ([contact_id], [contact_type_id]            
-   --         , [full_name]-- ,[email],[email_confirmed],[phone_number],[phone_number_confirmed]
-   --         -- , [person_title]
-   --         , [person_first_name], [person_last_name], [person_last_name1], [person_last_name2]
-   --         -- , [person_alias], [person_gender_code], [person_birth_date]
-			--, [person_job_title], [person_company]
-			--)
-   --         VALUES (@entity_id, @contact_type_id
-   --         , @full_name -- , @email, @email_confirmed, @phone_number, @phone_number_confirmed
-   --         , @person_first_name, @person_last_name, @person_last_name1, @person_last_name2
-			--, @person_job_title, @person_company			
-   --         ) 
-
-			--SET @contact_id = @entity_id
-   --     END
-
-        INSERT INTO [security].[user] ([user_id]
-            ,[login_name] -- ,[full_name]
-            ,[password_hash] -- ,[security_stamp]
-            ,[password_salt]
-            -- ,[email],[email_confirmed],[phone_number],[phone_number_confirmed]
-            -- ,[two_factor_enabled],[lockout_end_date_utc],[lockout_enabled],[access_failed_count],[mature_content_accepted]
-            -- ,[dbrow_version]
-            ) VALUES (@contact_id			
-            , @login_name -- , @full_name
-            , @password_hash -- , @security_stamp
-            , @password_salt
-            -- , @email, @email_confirmed, @phone_number, @phone_number_confirmed
-            -- , @two_factor_enabled, @lockout_end_date_utc, @lockout_enabled, @access_failed_count, @mature_content_accepted
-            -- , @dbrow_version
-            ) 
-
-        IF (@user_primary_role IS NOT NULL)
+        DECLARE @role_id INT=NULL,@role_matches INT;
+        IF @user_primary_role IS NOT NULL
         BEGIN
-            DECLARE @role_id INT
-            SELECT @role_id = [role_id] FROM [security].[role] WHERE [role_name] = @user_primary_role
-            IF (@role_id IS NOT NULL)
-            BEGIN
-                INSERT INTO [security].[user_role] ([user_id], [role_id]) VALUES (@contact_id, @role_id)
-            END
-        END
+            -- Hold the eligible definition while assigning it; no cross-tenant or silent name fallback.
+            SELECT @role_matches=COUNT(*),@role_id=MAX(role_id) FROM security.[role] WITH (HOLDLOCK)
+            WHERE role_name=@user_primary_role AND (tenant_id=@tenant_id OR tenant_id IS NULL);
+            IF @role_matches<>1 THROW 51602,'Initial role name must identify exactly one eligible definition.',1;
+        END;
+        INSERT security.[user] (user_id,login_name,password_hash,password_salt,email)
+        VALUES (@contact_id,@login_name,@password_hash,@password_salt,@email);
+        IF @role_id IS NOT NULL INSERT security.user_role (user_id,role_id) VALUES (@contact_id,@role_id);
 
-        IF (@contact_id IS NOT NULL AND EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'entities' AND TABLE_NAME = 'event'))
-        BEGIN
-            -- Title/summary now resolved at read time from [entities].[event_type_localized]
-            -- templates via [[Author.FullName]] / [[Subject.Name]] placeholders.
-            EXECUTE [entities].[event_create]
-                 @tenant             = @tenant
-                ,@event_code         = 'security.user.new'
-                ,@author             = @created_by
-                ,@subject_type_code  = 'user'
-                ,@subject_public_key = @public_key
-                ,@subject_id         = @contact_id
-                ,@event_args         = NULL
-                ,@when_ocurred       = @created
-                ,@is_system          = 0
-                ,@dbrow_version      = @dbrow_version
-        END
+        -- A new contact has only provisional type 1; its committed creation snapshot is user type.
+        -- An existing contact gets one new root revision and keeps its earlier contact-type history.
+        UPDATE entities.entity SET entity_type_id=@user_type WHERE entity_id=@contact_id AND tenant_id=@tenant_id;
+        EXEC entities.entity_version_bump @contact_id,@tenant_id,@actor_id,@dbrow_version,@recorded_at,@entity_version OUTPUT;
+        EXEC entities.entity_history_snapshot @contact_id,@tenant_id,@dbrow_version;
+        EXEC security.user_history_create @contact_id,@tenant_id,@dbrow_version;
 
-        IF( @TranStarted = 1 )
-		BEGIN
-			COMMIT TRANSACTION SecurityUserInsert;
-            SET @TranStarted = 0
-		END
-
+        -- Retain the initial assignment choice; later role lifecycle/history is a separate capability.
+        DECLARE @event_args NVARCHAR(MAX)=(SELECT 1 AS payload_version,@role_id AS initial_role_id FOR JSON PATH,WITHOUT_ARRAY_WRAPPER,INCLUDE_NULL_VALUES);
+        EXEC entities.event_create @tenant=@tenant,@event_code='security.user.new',@author=@created_by,
+            @subject_type_code='user',@subject_public_key=@public_key,@subject_id=@contact_id,
+            @event_args=@event_args,@when_ocurred=@recorded_at,@is_system=0,@dbrow_version=@dbrow_version;
+        SET @user_id=@contact_id;
+        IF @owns=1 COMMIT;
     END TRY
-
     BEGIN CATCH
-        IF @TranStarted = 1 AND XACT_STATE() <> 0
-            ROLLBACK TRANSACTION SecurityUserInsert;
-
-        -- OUTPUT is not a commit receipt. Callers discard all context on failure.
-        SET @dbrow_version = NULL;
+        IF @owns=1 AND XACT_STATE()<>0 ROLLBACK;
+        SET @dbrow_version=NULL; SET @entity_version=NULL; SET @user_id=NULL;
         THROW;
     END CATCH;
-END
+END;
