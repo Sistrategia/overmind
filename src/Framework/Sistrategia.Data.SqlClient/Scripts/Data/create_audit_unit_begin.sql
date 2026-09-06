@@ -24,24 +24,30 @@ BEGIN
     EXEC [data].[audit_isolation_assert];
 
     IF XACT_STATE() <> 1
+    BEGIN
         THROW 51100, 'Audit unit enrollment requires a committable caller transaction.', 1;
+    END
 
     DECLARE @resource NVARCHAR(255) = N'overmind:unit:' + CONVERT(NVARCHAR(20), CURRENT_TRANSACTION_ID());
 
     -- If already exclusively held by this transaction, we're done
     IF APPLOCK_MODE(N'dbo', @resource, N'Transaction') = N'Exclusive' 
+    BEGIN
         RETURN;
+    END
 
     DECLARE @result INT;
 
     EXEC @result = sys.sp_getapplock 
-        @Resource=@resource, 
-        @LockMode='Exclusive',
-        @LockOwner='Transaction', 
-        @DbPrincipal='dbo', 
-        @LockTimeout=0
+        @Resource = @resource, 
+        @LockMode = 'Exclusive',
+        @LockOwner = 'Transaction', 
+        @DbPrincipal = 'dbo', 
+        @LockTimeout = 0
     ;
 
     IF @result < 0 
+    BEGIN
         THROW 51101, 'Could not enroll the audit unit.', 1;
+    END
 END;
