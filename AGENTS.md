@@ -7,6 +7,16 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Session close 2026-09-05 — resume checklist.** Everything below is committed. Implemented and green in both isolation
+profiles: audit-unit guards, email family with saved order (ADR 0005/0006), ordinary user construction (ADR 0007).
+Independent reviews delivered: email (`docs/email-reference-family-independent-review.md`, its four fixes are applied)
+and user construction (`docs/user-construction-independent-review.md`, findings still pending builder response).
+Reader-friendly entry point for the author: `docs/guide-cc/README.md`. To resume: (1) `git log a3b715a..HEAD` for
+overnight builder changes; (2) decide the four user-construction items (company-name applock, reject contact details on
+promotion, login uniqueness scope, company accounts) and give `entity_history_snapshot` an explicit operation parameter;
+(3) port phone by `docs/guide-cc/10-porting-a-family.md`, then request its independent review; (4) update guide-cc
+chapters touched by any mechanism change.
+
 **Entry-level guide for the author (2026-09-05):** `docs/guide-cc/README.md` is a short book that bridges the legacy
 audit design to the new one (unit, clocks, locking, final-state history, child identity/order, dictionaries, actors and
 users, reader, porting recipe, error glossary, status map). Keep it in sync when mechanisms change; it describes the
