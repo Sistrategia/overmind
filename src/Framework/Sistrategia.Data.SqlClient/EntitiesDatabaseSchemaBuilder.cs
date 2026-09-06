@@ -95,6 +95,7 @@ internal class EntitiesDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
 
         DropTableIfExists("entities", "entity_history");
         DropTableIfExists("entities", "entity_version_history");
+        // Compatibility cleanup: fresh schemas allocate from retained child identities.
         DropTableIfExists("entities", "entity_child_sequence");
         DropTableIfExists("entities", "entity");
         DropTableIfExists("entities", "entity_type_property");

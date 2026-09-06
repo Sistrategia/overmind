@@ -48,7 +48,8 @@ internal class OvermindDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public void InsertSistrategiaData() {
-        RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_ernesto_sample_data.sql");
+        SqlDatabase.RunLocalStoredAuditCommands(System.Reflection.Assembly.GetExecutingAssembly(),
+            "Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_ernesto_sample_data.sql");
         // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_sistrategia_organization.sql");
         // // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_jocelyn_data.sql");
         // // RunLocalStoredCommands("Sistrategia.Overmind.Data.SqlClient.Scripts.SampleData.Sistrategia.insert_ciceromae.sql");

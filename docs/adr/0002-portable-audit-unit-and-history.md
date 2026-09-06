@@ -117,7 +117,7 @@ Root soft-delete and undelete retain the root and its identity, snapshot lifecyc
 
 Changes to child associations bump only their defined owner. A contact_relationship is owned by from_contact_id; reading a company's employees at an earlier point cannot be inferred solely from that company's entity_version. That reverse historical query needs the relationship histories and an explicit boundary. This prevents falsely promising full historical membership from an unchanged hub revision.
 
-Child ordinals used in history are stable local child IDs, not display positions. Allocate from a per-root/per-family high-water mark under the root lock; retain it after deletion. Do not use MAX(current live ordinal)+1. Reordering uses a separate display-order value. Explicit restoration reuses the same logical child; a new child never takes a committed deleted child's identity. Remote child identities require mapping as specified in ADR 0004.
+Child ordinals used in history are stable local child IDs, not display positions. Allocate from a per-root/per-family high-water mark under the root lock; retain it after deletion. The retained identity table itself supplies MAX(ordinal)+1 safely under that lock; a separate counter table is unnecessary for the email implementation ([ADR 0006](0006-email-review-corrections-and-saved-order.md)). Do not use MAX(current live ordinal)+1. Reordering uses a separate display-order value. Explicit restoration reuses the same logical child; a new child never takes a committed deleted child's identity. Remote child identities require mapping as specified in ADR 0004.
 
 ### State and business action evidence
 

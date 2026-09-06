@@ -209,6 +209,7 @@ ALTER TABLE [contacts].[contact_history] CHECK CONSTRAINT [fk_contact_history_db
 ALTER TABLE [contacts].[contact_history] WITH CHECK ADD CONSTRAINT [fk_contact_history_contact] FOREIGN KEY([contact_id])
 REFERENCES [contacts].[contact] ([contact_id])
 ALTER TABLE [contacts].[contact_history] CHECK CONSTRAINT [fk_contact_history_contact]
+CREATE INDEX [ix_contact_history_root] ON [contacts].[contact_history] ([contact_id],[dbrow_version] DESC);
 
 -- ALTER TABLE [contacts].[contact_history] WITH CHECK ADD CONSTRAINT [fk_contact_history_line_of_business] FOREIGN KEY([line_of_business_id])
 -- REFERENCES [contacts].[line_of_business] ([line_of_business_id]);

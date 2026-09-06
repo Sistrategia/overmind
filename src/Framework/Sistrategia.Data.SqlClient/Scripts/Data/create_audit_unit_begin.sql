@@ -6,6 +6,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+    EXEC [data].[audit_isolation_assert];
     IF XACT_STATE() <> 1
         THROW 51100, 'Audit unit enrollment requires a committable caller transaction.', 1;
     DECLARE @resource NVARCHAR(255) = N'overmind:unit:' + CONVERT(NVARCHAR(20), CURRENT_TRANSACTION_ID());

@@ -1,7 +1,5 @@
--- RunLocalStoredCommands owns the seed transaction; this business batch enrolls it.
--- Direct standalone execution lets user_insert own and enroll its transaction instead.
-IF @@TRANCOUNT > 0
-    EXEC [data].[audit_unit_begin];
+-- The builder runs this business batch through RunLocalStoredAuditCommands, which owns and enrolls
+-- its transaction. A direct standalone user_insert call owns/enrolls its own transaction.
 
 DECLARE @RC INT
 DECLARE @batch_id INT

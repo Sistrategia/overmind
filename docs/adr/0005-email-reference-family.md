@@ -1,7 +1,7 @@
 # ADR 0005: Implemented email reference family and SQL Server audit units
 
 Date: 2026-09-05.
-Status: implemented for fresh Overmind schemas; independently review before copying the pattern across other families. No existing customer database was upgraded.
+Status: initial fresh-schema implementation record. The independent review was delivered; [ADR 0006](0006-email-review-corrections-and-saved-order.md) supersedes the counter, catalog miss locking, saved-order, root-history access, seed enrollment and C# commit details below. Read that ADR and the current guide before copying the pattern. No existing customer database was upgraded.
 
 Companions: [primary design](../dbrow_version-allocation-design.md), [audit-unit design](0002-portable-audit-unit-and-history.md), [actor/catalog policy](0003-tenant-actor-and-catalog-policy.md), [delivery design](0004-portable-delivery-and-provider-profiles.md), [legacy findings](../dbrow_version-legacy-implementation-findings.md), [usage and test guide](../email-reference-family.md).
 

@@ -3,7 +3,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Sistrategia.Data.SqlClient;
 
-public sealed record EmailWriteResult(int Ordinal, int EmailId, int EntityVersion, long? DbrowVersion);
+public sealed record EmailWriteResult(int Ordinal, int EmailId, int EntityVersion, long? DbrowVersion, int? DisplayOrder);
 
 /// <summary>
 /// Owns one connection, transaction, tenant and authenticated actor. Do not construct actor
@@ -17,6 +17,9 @@ public sealed class SqlAuditUnit : IAsyncDisposable
     private readonly Guid actor;
     private readonly Guid? tenant;
     private readonly SemaphoreSlim gate = new(1, 1);
+    private readonly object lifetimeSync = new();
+    private bool abortRequested;
+    private bool commitIssued;
     private bool completed;
     private bool disposed;
     public long? DbrowVersion { get; private set; }
@@ -68,10 +71,18 @@ public sealed class SqlAuditUnit : IAsyncDisposable
         string? location = null, bool isPublic = false, CancellationToken cancellationToken = default) =>
         ChangeEmailAsync("restore", contact, expectedEntityVersion, ordinal, email, location, isPublic, cancellationToken);
 
+    public Task<EmailWriteResult> MoveEmailAsync(Guid contact, int expectedEntityVersion, int ordinal, int displayOrder,
+        CancellationToken cancellationToken = default) =>
+        ChangeEmailAsync("move", contact, expectedEntityVersion, ordinal, null, null, false, cancellationToken, displayOrder);
+
+    public Task<EmailWriteResult> MakeEmailPrincipalAsync(Guid contact, int expectedEntityVersion, int ordinal,
+        CancellationToken cancellationToken = default) => MoveEmailAsync(contact, expectedEntityVersion, ordinal, 1, cancellationToken);
+
     private async Task<EmailWriteResult> ChangeEmailAsync(string operation, Guid contact, int expected, int? ordinal,
-        string? email, string? location, bool isPublic, CancellationToken cancellationToken) {
+        string? email, string? location, bool isPublic, CancellationToken cancellationToken, int? displayOrder = null) {
         await EnterAsync(cancellationToken);
         try {
+            cancellationToken.ThrowIfCancellationRequested();
             EnsureActive();
             using var command = new SqlCommand("contacts.contact_email_change", connection, transaction) { CommandType = CommandType.StoredProcedure };
             command.Parameters.Add("@operation", SqlDbType.VarChar, 10).Value = operation;
@@ -86,9 +97,13 @@ public sealed class SqlAuditUnit : IAsyncDisposable
             var version = Output(command, "@dbrow_version", SqlDbType.BigInt, DbrowVersion);
             var revision = Output(command, "@entity_version", SqlDbType.Int, null);
             var emailId = Output(command, "@email_id", SqlDbType.Int, null);
+            var position = Output(command, "@display_order", SqlDbType.Int, displayOrder);
             await command.ExecuteNonQueryAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            EnsureActive(); // A queued cancellation/disposal may have invalidated this unit while SQL ran.
             DbrowVersion = version.Value is DBNull ? null : (long)version.Value;
-            return new EmailWriteResult((int)child.Value, (int)emailId.Value, (int)revision.Value, DbrowVersion);
+            return new EmailWriteResult((int)child.Value, (int)emailId.Value, (int)revision.Value, DbrowVersion,
+                position.Value is DBNull ? null : (int)position.Value);
         } catch {
             await AbortAsync();
             throw;
@@ -106,12 +121,27 @@ public sealed class SqlAuditUnit : IAsyncDisposable
 
     public async Task CommitAsync(CancellationToken cancellationToken = default) {
         await EnterAsync(cancellationToken);
+        var issued = false;
         try {
+            using var registration = cancellationToken.Register(RequestAbort);
+            cancellationToken.ThrowIfCancellationRequested();
             EnsureActive();
-            await transaction.CommitAsync(cancellationToken);
+            // Linearize commit admission against queued cancellations/disposal. Once admitted,
+            // cancellation cannot undo commit; failures from this point are conservatively uncertain.
+            lock (lifetimeSync) {
+                if (abortRequested) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    throw new InvalidOperationException("This audit unit was cancelled or disposed.");
+                }
+                commitIssued = true;
+                issued = true;
+            }
+            await transaction.CommitAsync(CancellationToken.None);
             completed = true;
-        } catch {
+        } catch (Exception error) {
+            var attemptedVersion = DbrowVersion;
             await AbortAsync();
+            if (issued) throw new AuditUnitCommitUncertainException(attemptedVersion, error);
             throw;
         } finally {
             gate.Release();
@@ -121,17 +151,27 @@ public sealed class SqlAuditUnit : IAsyncDisposable
     private void EnsureActive() {
         if (completed || disposed || transaction.Connection != connection)
             throw new InvalidOperationException("This audit unit is no longer active.");
+        lock (lifetimeSync) {
+            if (abortRequested) throw new InvalidOperationException("This audit unit was cancelled or disposed.");
+        }
     }
 
     private async Task EnterAsync(CancellationToken cancellationToken) {
         try {
+            using var registration = cancellationToken.Register(RequestAbort);
             await gate.WaitAsync(cancellationToken);
         } catch (OperationCanceledException) {
-            // Even cancellation while queued invalidates prior provisional work in this unit.
+            // The callback marks failure immediately, before another waiter can admit a commit.
             await gate.WaitAsync(CancellationToken.None);
             try { await AbortAsync(); }
             finally { gate.Release(); }
             throw;
+        }
+    }
+
+    private void RequestAbort() {
+        lock (lifetimeSync) {
+            if (!commitIssued) abortRequested = true;
         }
     }
 
@@ -144,6 +184,7 @@ public sealed class SqlAuditUnit : IAsyncDisposable
     }
 
     public async ValueTask DisposeAsync() {
+        RequestAbort();
         await gate.WaitAsync();
         try {
             if (disposed) return;

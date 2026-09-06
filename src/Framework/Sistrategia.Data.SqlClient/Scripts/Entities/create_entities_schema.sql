@@ -91,16 +91,6 @@ CREATE INDEX [ix_entity_tenant] ON [entities].[entity]
 
 CREATE UNIQUE INDEX [uq_entity_tenant_identity] ON [entities].[entity] ([tenant_id],[entity_id]);
 
--- Stable child identity allocation, serialized by the owning root lock.
-CREATE TABLE [entities].[entity_child_sequence] (
-    [entity_id] INT NOT NULL,
-    [family] VARCHAR(50) NOT NULL,
-    [last_ordinal] INT NOT NULL,
-    CONSTRAINT [pk_entity_child_sequence] PRIMARY KEY ([entity_id],[family]),
-    CONSTRAINT [fk_entity_child_sequence_root] FOREIGN KEY ([entity_id]) REFERENCES [entities].[entity]([entity_id]),
-    CONSTRAINT [ck_child_sequence_positive] CHECK ([last_ordinal] > 0)
-);
-
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [entities].[entity_version_history]
 -- -----------------------------------------------------------------------------------------------------------
@@ -147,6 +137,9 @@ CREATE TABLE [entities].[entity_history] (
     ,CONSTRAINT [fk_entity_history_ledger] FOREIGN KEY ([tenant_id],[dbrow_version])
         REFERENCES [data].[dbrow_version]([tenant_id],[dbrow_version])
 ) 
+
+-- Root payload is sparse: child-only revisions must seek by root, not scan the global clock.
+CREATE INDEX [ix_entity_history_root] ON [entities].[entity_history] ([entity_id],[dbrow_version] DESC);
 
 -- -----------------------------------------------------------------------------------------------------------
 -- Table [entities].[entity_metadata]

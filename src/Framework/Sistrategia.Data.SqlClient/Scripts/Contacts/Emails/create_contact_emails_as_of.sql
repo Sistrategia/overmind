@@ -3,7 +3,7 @@
 CREATE OR ALTER FUNCTION [contacts].[contact_emails_as_of] (@contact_id INT, @bound BIGINT)
 RETURNS TABLE
 AS RETURN (
-    SELECT h.[ordinal],h.[email_id],v.[email_address],h.[location_id],l.[location_name],h.[is_public],h.[dbrow_version]
+    SELECT h.[ordinal],h.[email_id],v.[email_address],h.[location_id],l.[location_name],h.[is_public],h.[dbrow_version],h.[display_order]
     FROM [contacts].[contact_email_identity] i
     CROSS APPLY (
         SELECT TOP(1) * FROM [contacts].[contact_email_history] h

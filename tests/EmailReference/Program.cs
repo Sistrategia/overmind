@@ -96,3 +96,5 @@ await using (var unit = await SqlAuditUnit.BeginAsync(connectionString, actor)) 
 }
 
 Console.WriteLine("PASS C#: shared unit, provisional outputs, historical reader/diff/actions, disposal, failed-unit lifetime, delete/restore, unknown revision");
+await OrderingCases.RunAsync(connectionString, actor);
+await LifetimeCases.RunAsync(connectionString, actor);

@@ -38,6 +38,7 @@ CREATE TABLE [contacts].[contact_email] (
      [contact_id]       INT             NOT NULL
     ,[tenant_id]        INT             NOT NULL
     ,[ordinal]          INT             NOT NULL
+    ,[display_order]    INT             NOT NULL
     ,[email_id]         INT             NOT NULL
     ,[location_id]      INT                 NULL
     ,[is_public]        BIT             NOT NULL CONSTRAINT [df_contact_email_is_public] DEFAULT 0  -- spec 10: show in public directory
@@ -45,6 +46,7 @@ CREATE TABLE [contacts].[contact_email] (
     ,CONSTRAINT [fk_contact_email_owner] FOREIGN KEY ([tenant_id],[contact_id]) REFERENCES [entities].[entity]([tenant_id],[entity_id])
     ,CONSTRAINT [fk_contact_email_ledger] FOREIGN KEY ([tenant_id],[dbrow_version]) REFERENCES [data].[dbrow_version]([tenant_id],[dbrow_version])
     ,CONSTRAINT [ck_contact_email_ordinal] CHECK ([ordinal] > 0)
+    ,CONSTRAINT [ck_contact_email_order] CHECK ([display_order] > 0)
     ,CONSTRAINT [pk_contact_email] PRIMARY KEY CLUSTERED (
         [contact_id] ASC, [ordinal] ASC
     )
@@ -55,6 +57,10 @@ CREATE TABLE [contacts].[contact_email] (
     -- ,CONSTRAINT [fk_contact_email_location] FOREIGN KEY ([location_id])
     --     REFERENCES [contacts].[email_location]([location_id])
 );
+
+-- Root-locked commands enforce a dense, unique order at completion; range moves are set based.
+CREATE INDEX [ix_contact_email_order] ON [contacts].[contact_email] ([contact_id],[display_order],[ordinal])
+    INCLUDE ([email_id],[location_id],[is_public],[dbrow_version]);
 
 ALTER TABLE [contacts].[contact_email] WITH CHECK ADD CONSTRAINT 
     [fk_contact_email_contact] FOREIGN KEY([contact_id])
@@ -80,6 +86,7 @@ CREATE TABLE [contacts].[contact_email_history] (
     ,[email_id]             INT     NOT NULL
     ,[location_id]          INT         NULL
     ,[is_public]            BIT     NOT NULL
+    ,[display_order]        INT     NOT NULL
     ,CONSTRAINT [pk_contact_email_history] PRIMARY KEY CLUSTERED
         ([dbrow_version],[contact_id],[ordinal])
     ,CONSTRAINT [fk_email_history_owner] FOREIGN KEY ([tenant_id],[contact_id]) REFERENCES [entities].[entity]([tenant_id],[entity_id])
@@ -87,10 +94,11 @@ CREATE TABLE [contacts].[contact_email_history] (
     ,CONSTRAINT [fk_email_history_value] FOREIGN KEY ([email_id]) REFERENCES [contacts].[email]([email_id])
     ,CONSTRAINT [fk_email_history_location] FOREIGN KEY ([location_id]) REFERENCES [contacts].[email_location]([location_id])
     ,CONSTRAINT [ck_email_history_operation] CHECK ([dboperation_type_id] IN (1,2,3))
+    ,CONSTRAINT [ck_email_history_order] CHECK ([display_order] > 0)
 );
 
 CREATE INDEX [ix_email_history_root] ON [contacts].[contact_email_history] ([contact_id],[ordinal],[dbrow_version] DESC)
-    INCLUDE ([tenant_id],[dboperation_type_id],[email_id],[location_id],[is_public]);
+    INCLUDE ([tenant_id],[dboperation_type_id],[email_id],[location_id],[is_public],[display_order]);
 
 -- Retained identity, including insert/delete in one unit. Restoring an identity is explicit.
 CREATE TABLE [contacts].[contact_email_identity] (
@@ -110,7 +118,8 @@ CREATE TABLE [contacts].[contact_email_action] (
     [tenant_id] INT NOT NULL, [dbrow_version] BIGINT NOT NULL, [action_ordinal] INT NOT NULL,
     [contact_id] INT NOT NULL, [ordinal] INT NOT NULL, [operation] VARCHAR(10) NOT NULL,
     [email_id] INT NOT NULL, [location_id] INT NULL, [is_public] BIT NOT NULL,
-    [payload_version] INT NOT NULL CONSTRAINT [df_email_action_payload] DEFAULT 1,
+    [previous_display_order] INT NULL, [display_order] INT NULL,
+    [payload_version] INT NOT NULL CONSTRAINT [df_email_action_payload] DEFAULT 2,
     [show_in_timeline] BIT NOT NULL,
     CONSTRAINT [pk_contact_email_action] PRIMARY KEY ([tenant_id],[dbrow_version],[action_ordinal]),
     CONSTRAINT [fk_email_action_ledger] FOREIGN KEY ([tenant_id],[dbrow_version]) REFERENCES [data].[dbrow_version]([tenant_id],[dbrow_version]),
@@ -118,6 +127,10 @@ CREATE TABLE [contacts].[contact_email_action] (
     CONSTRAINT [fk_email_action_identity] FOREIGN KEY ([contact_id],[ordinal]) REFERENCES [contacts].[contact_email_identity]([contact_id],[ordinal]),
     CONSTRAINT [fk_email_action_value] FOREIGN KEY ([email_id]) REFERENCES [contacts].[email]([email_id]),
     CONSTRAINT [fk_email_action_location] FOREIGN KEY ([location_id]) REFERENCES [contacts].[email_location]([location_id]),
-    CONSTRAINT [ck_email_action_operation] CHECK ([operation] IN ('insert','update','delete','restore'))
+    CONSTRAINT [ck_email_action_operation] CHECK ([operation] IN ('insert','update','delete','restore','move')),
+    CONSTRAINT [ck_email_action_order] CHECK (
+        ([operation]='delete' AND [display_order] IS NULL AND [previous_display_order] IS NOT NULL AND [previous_display_order]>0)
+        OR ([operation]<>'delete' AND [display_order] IS NOT NULL AND [display_order]>0
+            AND ([previous_display_order] IS NULL OR [previous_display_order]>0)))
 );
 CREATE INDEX [ix_email_action_root] ON [contacts].[contact_email_action] ([contact_id],[dbrow_version],[action_ordinal]);

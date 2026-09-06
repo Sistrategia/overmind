@@ -69,7 +69,8 @@ LEFT JOIN [contacts].[person_name] AS cpnn7 ON(cpn7.[person_name_id] = cpnn7.[pe
 
 LEFT JOIN [contacts].[contact_phone] AS cp ON(c.contact_id = cp.contact_id AND cp.ordinal = 1) 
 LEFT JOIN [contacts].[phone] AS p ON(cp.phone_id = p.phone_id) 
-LEFT JOIN [contacts].[contact_email] AS ce ON(c.contact_id = ce.contact_id AND ce.ordinal = 1) 
+OUTER APPLY (SELECT TOP(1) * FROM [contacts].[contact_email] ce
+    WHERE ce.contact_id=c.contact_id ORDER BY ce.display_order,ce.ordinal) AS ce
 LEFT JOIN [contacts].[email] AS em ON(ce.email_id = em.email_id) 
 
 LEFT JOIN [contacts].[contact_address] AS ca ON(c.contact_id = ca.contact_id AND ca.ordinal = 1) 
@@ -88,4 +89,4 @@ LEFT JOIN [contacts].[contact_relationship] AS rg ON(rg.from_contact_id = e.[ent
 LEFT JOIN [entities].[entity_view] AS gre ON (gre.[entity_id] = rg.[to_contact_id])
 
 -- WHERE e.[is_system] = 0
--- WHERE e.[deleted] IS NULL AND e.[is_system] = 0 -- WHERE [contact_id] > 1 
+-- WHERE e.[deleted] IS NULL AND e.[is_system] = 0 -- WHERE [contact_id] > 1

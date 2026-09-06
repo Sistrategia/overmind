@@ -5,7 +5,8 @@ CREATE OR ALTER PROCEDURE [contacts].[contact_email_change]
     @tenant UNIQUEIDENTIFIER=NULL, @expected_entity_version INT=NULL,
     @email_address NVARCHAR(MAX)=NULL, @location_name NVARCHAR(MAX)=NULL, @is_public BIT=0,
     @ordinal INT=NULL OUTPUT, @dbrow_version BIGINT=NULL OUTPUT,
-    @entity_version INT=NULL OUTPUT, @email_id INT=NULL OUTPUT, @supress_event_message BIT=0
+    @entity_version INT=NULL OUTPUT, @email_id INT=NULL OUTPUT, @supress_event_message BIT=0,
+    @display_order INT=NULL OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -25,12 +26,13 @@ BEGIN
         IF @supress_event_message IS NULL THROW 51303, 'Timeline visibility must be explicit.', 1;
         DECLARE @show BIT=1-@supress_event_message;
         EXEC [contacts].[contact_email_write] @operation,@contact_id,@tenant_id,@actor_id,@expected_entity_version,
-            @email_address,@location_name,@is_public,@ordinal OUTPUT,@dbrow_version OUTPUT,@entity_version OUTPUT,@email_id OUTPUT,@show;
+            @email_address,@location_name,@is_public,@ordinal OUTPUT,@dbrow_version OUTPUT,@entity_version OUTPUT,@email_id OUTPUT,@show,@display_order OUTPUT;
         IF @owns=1 COMMIT;
     END TRY
     BEGIN CATCH
         IF @owns=1 AND XACT_STATE()<>0 ROLLBACK;
         SET @dbrow_version=NULL; SET @entity_version=NULL; SET @email_id=NULL; SET @ordinal=NULL;
+        SET @display_order=NULL;
         THROW;
     END CATCH;
 END;

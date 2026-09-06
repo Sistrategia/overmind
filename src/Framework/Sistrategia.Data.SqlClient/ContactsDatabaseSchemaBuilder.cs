@@ -51,12 +51,14 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
 
     public override void CreateSchemaFunctions() {
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_values_ensure.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_email_history_sync.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_email_write.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_email_change.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_email_insert.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_update.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_delete.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_restore.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_move.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_emails_as_of.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_email_read.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_insert.sql");
@@ -103,6 +105,8 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
 
     public override void DropSchemaFunctions() {
         DropProcedureIfExists("contacts", "contact_email_read");
+        DropProcedureIfExists("contacts", "email_move");
+        DropProcedureIfExists("contacts", "contact_email_history_sync");
         DropProcedureIfExists("contacts", "email_restore");
         DropProcedureIfExists("contacts", "email_delete");
         DropProcedureIfExists("contacts", "email_update");

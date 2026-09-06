@@ -6,6 +6,7 @@ WITH EXECUTE AS OWNER
 AS
 BEGIN
     SET NOCOUNT ON;
+    EXEC [data].[audit_isolation_assert];
     IF XACT_STATE() <> 1 THROW 51001, 'An active, committable audit transaction is required.', 1;
     DECLARE @tx BIGINT = CURRENT_TRANSACTION_ID(), @actual BIGINT = NULL;
     DECLARE @resource NVARCHAR(255) = N'overmind:unit:' + CONVERT(NVARCHAR(20), @tx);

@@ -32,7 +32,8 @@ INNER JOIN [entities].[entity] AS mde ON (e.[modified_by] = mde.[entity_id])
 INNER JOIN [contacts].[contact] AS mdc ON (e.[modified_by] = mdc.[contact_id])
 LEFT JOIN [contacts].[contact_person_name] AS mdpn ON(mdc.[contact_id] = mdpn.[contact_id] AND mdpn.[person_name_type_id] = 7) -- alias
 LEFT JOIN [contacts].[person_name] AS mdalias ON(mdpn.[person_name_id] = mdalias.[person_name_id]) 
-LEFT JOIN [contacts].[contact_email] AS mdce ON(mdc.contact_id = mdce.contact_id AND mdce.ordinal = 1) 
+OUTER APPLY (SELECT TOP(1) * FROM [contacts].[contact_email] mdce
+    WHERE mdce.contact_id=mdc.contact_id ORDER BY mdce.display_order,mdce.ordinal) AS mdce
 LEFT JOIN [contacts].[email] AS em ON(mdce.email_id = em.email_id) 
 LEFT JOIN [entities].[entity_metadata] AS emd ON (e.[entity_id] = emd.[entity_id])
-WHERE e.[deleted] IS NULL -- AND e.[is_system] = 0 -- WHERE [contact_id] > 1 
+WHERE e.[deleted] IS NULL -- AND e.[is_system] = 0 -- WHERE [contact_id] > 1

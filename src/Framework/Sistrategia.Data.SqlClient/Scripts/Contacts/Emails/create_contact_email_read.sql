@@ -34,31 +34,43 @@ BEGIN
                 WHERE [entity_id]=@contact_id AND [entity_version]=@compare_entity_version AND [tenant_id]=@tenant_id);
             IF @compare IS NULL THROW 51401, 'Comparison revision does not exist.', 1;
         END;
-        IF NOT EXISTS (SELECT 1 FROM [entities].[entity_history] WHERE [entity_id]=@contact_id AND [dbrow_version]<=@bound)
-            OR NOT EXISTS (SELECT 1 FROM [contacts].[contact_history] WHERE [contact_id]=@contact_id AND [dbrow_version]<=@bound)
+        -- TOP(1)'s row goal can prefer a backwards global-clock scan even with a root index,
+        -- taking ranges on unrelated roots. This locking reader requires root-leading seeks.
+        IF NOT EXISTS (SELECT 1 FROM [entities].[entity_history] WITH (FORCESEEK,INDEX([ix_entity_history_root]))
+            WHERE [entity_id]=@contact_id AND [dbrow_version]<=@bound)
+            OR NOT EXISTS (SELECT 1 FROM [contacts].[contact_history] WITH (FORCESEEK,INDEX([ix_contact_history_root]))
+                WHERE [contact_id]=@contact_id AND [dbrow_version]<=@bound)
             THROW 51402, 'Historical root payload is unavailable for this revision.', 1;
         SELECT @entity_version AS [entity_version],@bound AS [revision_dbrow_version],
             e.[display_name],e.[summary],e.[is_private],e.[deleted],c.[full_name],v.[recorded_at],v.[modified_by]
-        FROM (SELECT TOP(1) * FROM [entities].[entity_history] WHERE [entity_id]=@contact_id AND [dbrow_version]<=@bound ORDER BY [dbrow_version] DESC) e
-        CROSS JOIN (SELECT TOP(1) * FROM [contacts].[contact_history] WHERE [contact_id]=@contact_id AND [dbrow_version]<=@bound ORDER BY [dbrow_version] DESC) c
+        FROM (SELECT TOP(1) * FROM [entities].[entity_history] WITH (FORCESEEK,INDEX([ix_entity_history_root]))
+            WHERE [entity_id]=@contact_id AND [dbrow_version]<=@bound ORDER BY [dbrow_version] DESC) e
+        CROSS JOIN (SELECT TOP(1) * FROM [contacts].[contact_history] WITH (FORCESEEK,INDEX([ix_contact_history_root]))
+            WHERE [contact_id]=@contact_id AND [dbrow_version]<=@bound ORDER BY [dbrow_version] DESC) c
         JOIN [data].[dbrow_version] v ON v.[tenant_id]=@tenant_id AND v.[dbrow_version]=@bound;
 
-        SELECT * FROM [contacts].[contact_emails_as_of](@contact_id,@bound) ORDER BY [ordinal];
+        SELECT * FROM [contacts].[contact_emails_as_of](@contact_id,@bound) ORDER BY [display_order],[ordinal];
         -- Compare revision -> requested revision; compare NULL deliberately yields an empty diff.
         SELECT COALESCE(n.[ordinal],o.[ordinal]) AS [ordinal],
-            CASE WHEN o.[ordinal] IS NULL THEN 'insert' WHEN n.[ordinal] IS NULL THEN 'delete' ELSE 'update' END AS [operation],
+            CASE WHEN o.[ordinal] IS NULL THEN 'insert' WHEN n.[ordinal] IS NULL THEN 'delete'
+                WHEN o.[email_id]=n.[email_id] AND o.[is_public]=n.[is_public]
+                    AND (o.[location_id]=n.[location_id] OR (o.[location_id] IS NULL AND n.[location_id] IS NULL))
+                THEN 'move' ELSE 'update' END AS [operation],
             o.[email_address] AS [old_email_address],n.[email_address] AS [email_address],
             o.[location_name] AS [old_location_name],n.[location_name] AS [location_name],
-            o.[is_public] AS [old_is_public],n.[is_public] AS [is_public]
+            o.[is_public] AS [old_is_public],n.[is_public] AS [is_public],
+            o.[display_order] AS [old_display_order],n.[display_order] AS [display_order]
         FROM [contacts].[contact_emails_as_of](@contact_id,@compare) o
         FULL JOIN [contacts].[contact_emails_as_of](@contact_id,@bound) n ON n.[ordinal]=o.[ordinal]
         WHERE @compare IS NOT NULL AND (o.[ordinal] IS NULL OR n.[ordinal] IS NULL OR o.[email_id]<>n.[email_id]
             OR o.[is_public]<>n.[is_public] OR o.[location_id]<>n.[location_id]
+            OR o.[display_order]<>n.[display_order]
             OR (o.[location_id] IS NULL AND n.[location_id] IS NOT NULL) OR (o.[location_id] IS NOT NULL AND n.[location_id] IS NULL))
         ORDER BY COALESCE(n.[ordinal],o.[ordinal]);
 
         SELECT a.[dbrow_version],a.[action_ordinal],a.[ordinal],a.[operation],e.[email_address],
-            l.[location_name],a.[is_public],a.[show_in_timeline],a.[payload_version],v.[recorded_at],v.[modified_by]
+            l.[location_name],a.[is_public],a.[show_in_timeline],a.[payload_version],v.[recorded_at],v.[modified_by],
+            a.[previous_display_order],a.[display_order]
         FROM [contacts].[contact_email_action] a
         JOIN [contacts].[email] e ON e.[email_id]=a.[email_id]
         LEFT JOIN [contacts].[email_location] l ON l.[location_id]=a.[location_id]

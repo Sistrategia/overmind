@@ -7,8 +7,33 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
-**Latest implementation — email reference family (2026-09-05):** explicitly authorized and implemented.
-Read `docs/adr/0005-email-reference-family.md` and `docs/email-reference-family.md` first. Email lifecycle,
+**Latest implementation — email review corrections (2026-09-05):** explicitly authorized and implemented.
+Read `docs/adr/0006-email-review-corrections-and-saved-order.md` and `docs/email-reference-family.md` first;
+ADR 0005 preserves the initial checkpoint. Stable email ordinal is separate from dense display_order;
+first saved position is principal/default, insertion/restoration append, deletion closes the gap, and
+MoveEmailAsync/MakeEmailPrincipalAsync preserve history/actions (payload v2). Actual contact/actor email views
+follow saved order; login/account email is independent. No frontend ordering UI is implemented yet.
+Root payload histories have root-leading indexes AND the locking reader requires seeks: index presence alone
+still produced 201 range locks per history table in the new regression. Exact-value transaction applocks replace
+catalog miss range locks. Retained child identities supply MAX(ordinal)+1 under the root lock; the separate child
+counter is removed from fresh DDL, with old-table drop cleanup retained. This does not change sequence-only
+global dbrow_version allocation. Native writers enforce READ COMMITTED (RCSI allowed), rechecked on each assertion.
+The C# unit marks queued cancellation before commit admission; issued commit is uncancellable and provider
+failure surfaces as AuditUnitCommitUncertainException with the original error/provisional version. Receipt-based
+retry remains unimplemented. The named RunLocalStoredAuditCommands owns/enrolls business batches, and DDL keeps
+the ordinary runner. email_runtime/memberships intentionally survive schema drop/recreate. tenant_insert requires
+an explicit actor. Constructor actor/tenant fallback, historical type promotion and shared-user lifecycle remain
+separate work. The independent report/probes are preserved unchanged. Run the full suite both normally and --rcsi.
+Concrete integration prerequisite found by the expanded schema-cycle test: legacy user_insert leaves the actual
+seeded user's entity typed as contact, so actor_resolve rejects it with 51201. Tests use the explicitly bootstrapped
+System actor; they do not promote the seed with raw DML. Fix ordinary user construction/type policy before adopting
+the new actor-bound API for application users. This correction pass does not claim to fix that lifecycle.
+Final validation: full SQL/C# runner passed READ COMMITTED with RCSI off and on, zero build warnings/errors;
+all six final-run disposable DBs removed. Actual schema cycle, role membership, reader locks, order/history/actions,
+queued/executing cancellation/disposal and terminated-owned-session commit failure are covered. git diff --check
+and documentation links passed. This correction pass is uncommitted; review checkpoint files are unchanged.
+
+**Initial email reference family (2026-09-05):** Email lifecycle,
 stable child identities, final history, ordered action evidence, historical reader/diff and C# SqlAuditUnit
 are in place for fresh schemas. Native enrollment + private transaction-owned guards prove reuse;
 allocation_transaction_id is an indexed hint, not durable identity. Ambient SQL callers must enroll explicitly.
@@ -18,19 +43,18 @@ The email_runtime role isolates the public capability. System bootstrap and tena
 System ID 1 is reserved explicitly and the actual tenant ID is used. General first-user preallocation, legacy
 constructor fallback/type-promotion policy, role history, migrations and distribution remain separate work.
 Runner: `python tests/sql/run_dbrow_version_tests.py --server localhost` (SQL + C# + disposable DBs).
-Next agreed checkpoint: independent implementation review before porting the pattern to phone.
+The independent implementation review has been received and its correction pass is ADR 0006; phone is not ported yet.
 Review request and targeted questions: `docs/email-reference-family-independent-review-prompt.md`.
 **Independent review delivered (2026-09-05):** `docs/email-reference-family-independent-review.md`, reviewed commit
-`48f2cd9` against baseline `f320fa1`. Verdict: ready after named fixes. Before copying to phone: root-leading indexes
-on entity_history/contact_history (reader range-locks other roots' history; probe-confirmed), define primary/display
-order (contact_view `ordinal = 1` shows NULL after deleting the first email; probe-confirmed), replace the catalog
-miss-path range lock with an exact-value applock (gap contention for the unit's lifetime; probe-confirmed, alternative
-validated), drop `entity_child_sequence` (redundant with identity MAX under root lock). Suite re-run green here;
-RCSI variant also green. Probes: `tests/review/email-reference-family/run_review_probes.py` (disposable DBs only).
+`48f2cd9` against baseline `f320fa1`. Verdict: ready after named fixes. Its four copy-blocking findings are handled
+by ADR 0006 above. The review's assertion that the installed CommitAsync token interrupts an issued commit was
+incorrect: the tested SqlClient 6.0.2/.NET 8 build inherits DbTransaction's precheck + synchronous Commit.
+The explicit commit-admission/uncertain-outcome API is retained on its own merits. Probes:
+`tests/review/email-reference-family/run_review_probes.py` (historical review record; disposable DBs only).
 
-**Schema-cycle follow-up fix:** insert_ernesto_sample_data.sql explicitly enrolls the ambient business-seed
-transaction owned by RunLocalStoredCommands (otherwise CreateSchema fails with 51102). Generic DDL execution
-does not auto-enroll. tests/EmailReference/SchemaCycle.cs now exercises the actual Overmind manager's
+**Schema-cycle follow-up:** the original seed-level fix for 51102 is superseded by the named audited runner
+in ADR 0006; insert_ernesto_sample_data.sql no longer needs an enrollment preamble. Generic DDL execution
+does not auto-enroll. tests/EmailReference/SchemaCycle.cs exercises the actual Overmind manager's
 CreateSchema → DropSchema → CreateSchema path and seed/email history; the expanded suite passed. Rebuild/restart
 the application to load changed embedded SQL. Do not infer full application creation coverage from selected SQL fixtures alone.
 

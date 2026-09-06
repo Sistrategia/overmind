@@ -12,6 +12,7 @@ import re
 import subprocess
 import tempfile
 import uuid
+from email_review_regressions import run as run_review_regressions
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "src/Framework/Sistrategia.Data.SqlClient/Scripts"
@@ -20,6 +21,7 @@ SCRIPTS = ROOT / "src/Framework/Sistrategia.Data.SqlClient/Scripts"
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server", default="localhost")
+    parser.add_argument("--rcsi", action="store_true", help="Run the same complete suite with READ_COMMITTED_SNAPSHOT enabled.")
     args = parser.parse_args()
     database = "OvermindAuditTest_" + uuid.uuid4().hex
     other_database = "OvermindAuditTest_" + uuid.uuid4().hex
@@ -62,6 +64,8 @@ END;
     try:
         sql(f"CREATE DATABASE [{database}];", "master")
         created_databases.append(database)
+        if args.rcsi:
+            sql(f"ALTER DATABASE [{database}] SET READ_COMMITTED_SNAPSHOT ON;", "master")
         print(f"Testing in {database}", flush=True)
         files = [
             "Data/create_data_schema.sql",
@@ -72,6 +76,7 @@ END;
             "Contacts/Addresses/create_address_schema.sql",
             "Security/User/create_security_user_schema.sql",
             "Entities/Events/create_events_schema.sql",
+            "Data/create_audit_isolation_assert.sql",
             "Data/create_audit_unit_begin.sql",
             "Data/create_audit_unit_assert.sql",
             "Data/create_dbrow_version_ensure.sql",
@@ -81,12 +86,14 @@ END;
             "Entities/create_entity_write_lock.sql",
             "Entities/create_entity_version_bump.sql",
             "Contacts/Emails/create_email_values_ensure.sql",
+            "Contacts/Emails/create_contact_email_history_sync.sql",
             "Contacts/Emails/create_contact_email_write.sql",
             "Contacts/Emails/create_contact_email_change.sql",
             "Contacts/Emails/create_contact_email_insert.sql",
             "Contacts/Emails/create_email_update.sql",
             "Contacts/Emails/create_email_delete.sql",
             "Contacts/Emails/create_email_restore.sql",
+            "Contacts/Emails/create_email_move.sql",
             "Contacts/Emails/create_contact_emails_as_of.sql",
             "Contacts/Emails/create_contact_email_read.sql",
             "Contacts/Emails/create_contact_email_history_view.sql",
@@ -96,12 +103,15 @@ END;
             "Security/User/create_system_user_bootstrap.sql",
             "Entities/Events/create_event_create.sql",
             "Security/create_email_runtime_permissions.sql",
+            "Entities/create_entity_view_schema.sql",
+            "Contacts/create_contact_view_schema.sql",
         ]
         setup = "\nGO\n".join(f"CREATE SCHEMA [{s}];" for s in ["data", "entities", "contacts", "security"])
         setup += "\nGO\n" + "\nGO\n".join((SCRIPTS / f).read_text(encoding="utf-8-sig") for f in files)
         sql(setup)
         print(sql((Path(__file__).with_name("dbrow_version_tests.sql")).read_text()), flush=True)
         print(sql((Path(__file__).with_name("email_family_tests.sql")).read_text(encoding="utf-8")), flush=True)
+        print(sql((Path(__file__).with_name("email_order_tests.sql")).read_text(encoding="utf-8")), flush=True)
 
         actor = "71F092F4-3A35-463D-9589-E5EE1373F7D5"
         root2 = "E0000000-0000-0000-0000-000000000002"
@@ -196,6 +206,8 @@ EXEC contacts.contact_email_read @contact_public_key='{root2}',@actor='{actor}',
 """)
         print("PASS concurrency: historical reader waits at the initial root lock and succeeds after release", flush=True)
 
+        run_review_regressions(sql, concurrent, signal, wait_signal, actor)
+
         project = str(ROOT / "tests/EmailReference/EmailReference.csproj")
         subprocess.run(["dotnet", "build", project, "--no-restore", "--nologo", "--verbosity", "quiet"], check=True)
         subprocess.run(["dotnet", "run", "--project", project, "--no-build", "--", args.server, database], check=True)
@@ -203,6 +215,8 @@ EXEC contacts.contact_email_read @contact_public_key='{root2}',@actor='{actor}',
         # Exercise the actual C# schema-builder bootstrap, including a non-1 default tenant ID.
         sql(f"CREATE DATABASE [{other_database}];", "master")
         created_databases.append(other_database)
+        if args.rcsi:
+            sql(f"ALTER DATABASE [{other_database}] SET READ_COMMITTED_SNAPSHOT ON;", "master")
         sql(setup, other_database)
         sql("""
 INSERT data.dboperation_type VALUES (1,'INSERT'),(2,'UPDATE'),(3,'DELETE');
@@ -272,6 +286,8 @@ IF (SELECT COUNT(DISTINCT dbrow_version) FROM data.dbrow_version WHERE modified 
         assert re.fullmatch(r"OvermindAuditTest_[0-9a-f]{32}", cycle_database)
         sql(f"CREATE DATABASE [{cycle_database}];", "master")
         created_databases.append(cycle_database)
+        if args.rcsi:
+            sql(f"ALTER DATABASE [{cycle_database}] SET READ_COMMITTED_SNAPSHOT ON;", "master")
         subprocess.run(["dotnet", "run", "--project", project, "--no-build", "--",
                         args.server, cycle_database, "schema-cycle"], check=True)
     finally:

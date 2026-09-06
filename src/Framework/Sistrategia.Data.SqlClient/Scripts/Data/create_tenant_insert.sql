@@ -2,7 +2,7 @@
 -- Kept separate from ordinary email commands; no application EXECUTE grant.
 CREATE OR ALTER PROCEDURE [data].[tenant_insert]
     @name NVARCHAR(256), @public_key UNIQUEIDENTIFIER=NULL,
-    @created DATETIME2=NULL, @actor_entity_id INT=1,
+    @created DATETIME2=NULL, @actor_entity_id INT,
     @tenant_id INT=NULL OUTPUT, @dbrow_version BIGINT=NULL OUTPUT
 AS
 BEGIN
