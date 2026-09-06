@@ -7,6 +7,18 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Codex session close — 2026-09-05 (latest authoring context):** the user wants time to absorb the redesign;
+the latest completed task was an approachable guide, not another implementation pass. Start human discussion with
+`docs/guide-co/README.md`: eight linked chapters, one contact-edit example, glossary, code/status map; chapters 1–3
+are the first reading path. `docs/guide-cc/README.md` is the other agent's complementary guide; preserve both.
+Guide links/navigation and the C# example signatures were checked; no SQL suite was rerun for documentation.
+Observed clean HEAD before this memory update: `1e0da91`; ordinary construction/review is committed in `c575325`,
+both guides in `fb0fa88`. This memory update itself is saved locally, not committed by Codex.
+The user-construction review was read while writing guide-co, and its open findings were documented, not fixed or
+accepted wholesale. Resume with the user's guide questions or a bounded response to that review before broader
+family work; do not infer authorization to port phone or settled account policies from a resume checklist alone.
+See `docs/dbrow_version-design-session-handoff.md` for the current review boundary and remaining decisions.
+
 **Session close 2026-09-05 — resume checklist.** Everything below is committed. Implemented and green in both isolation
 profiles: audit-unit guards, email family with saved order (ADR 0005/0006), ordinary user construction (ADR 0007).
 Independent reviews delivered: email (`docs/email-reference-family-independent-review.md`, its four fixes are applied)
@@ -43,7 +55,7 @@ exactly one eligible tenant/global definition and its ID is retained in creation
 lookup is scoped to tenant/company category, rejects inactive/ambiguous matches, and writes new company contact
 history. Public self-registration, login uniqueness/authentication policy, full user/role/relationship lifecycle,
 broader legacy constructor hardening and migration remain separate work. email_runtime still denies constructors.
-The previous email correction checkpoint is now committed as a3b715a. This user-construction pass is uncommitted.
+The email correction checkpoint is a3b715a. The user-construction pass and its independent review are now committed in c575325.
 Follow-up review prompt: `docs/user-construction-independent-review-prompt.md` (baseline a3b715a/current worktree).
 Final user-construction validation: full SQL/C# suite passed READ COMMITTED with RCSI off and on, including
 company-reference fixes, competing promotions, historical type and actual seed-user schema-cycle operations.
