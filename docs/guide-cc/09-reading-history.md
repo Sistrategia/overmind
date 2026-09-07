@@ -63,3 +63,7 @@ and globally ordered actions. `ReadDirectoryAsync` is a separate current public-
 private/deleted roots are unavailable. See the [service guide](../contact-service.md).
 The full reader keeps its 16 sets; only its explicit NULL revision now selects current. Existing
 channel/standalone calls retain their specified-revision contracts.
+
+Iteration 5b exposes those same reads over [authenticated HTTP](../contact-http-api.md). Current and
+historical routes keep their service grants; directory filtering still occurs on one coherent snapshot.
+Audit Int64 values travel as decimal strings, while entity revisions/ordinals remain numbers.

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sistrategia.Data;
 using Sistrategia.Overmind.WebAPI.Models;
+using Sistrategia.Overmind.WebAPI.Contacts;
 // using Sistrategia.Overmind.Data.SqlClient.Migrations;
 // using Sistrategia.Overmind.WebAPI.Services;
 // using Sistrategia.Overmind.WebAPI.Utils;
@@ -10,8 +11,7 @@ using Sistrategia.Overmind.WebAPI.Models;
 namespace Sistrategia.Overmind.WebAPI.Controllers;
 
 [ApiController, Route("api/dev")]
-// [Authorize(Roles = "Developer")]
-[AllowAnonymous]
+[Authorize(Policy = ContactApiHosting.SchemaMaintenance)]
 public class DevController : ControllerBase
 {
     private IDatabaseManager DatabaseManager { get; }

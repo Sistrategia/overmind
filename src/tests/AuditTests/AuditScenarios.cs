@@ -28,6 +28,18 @@ public abstract class AuditScenarios
     private Task Run(Func<AuditDatabase, Task> scenario) => AuditDatabase.RunAsync(Rcsi, TestContext, scenario);
 
     [TestMethod]
+    public Task ContactHttpAtomicSaveHistoryAndAllLifecycleCommands() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactHttpCases.AtomicLifecycle(db);
+    });
+
+    [TestMethod]
+    public Task ContactHttpPermissionsVisibilityAndTenantIsolation() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactHttpCases.AccessAndScope(db);
+    });
+
+    [TestMethod]
     public Task ContactServicePersonOrganizationAtomicSaveAndHistory() => Run(async db => {
         await ContactProfileCases.Prepare(db);
         await ContactServiceCases.Acceptance(db);

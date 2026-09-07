@@ -70,7 +70,7 @@ lifecycle, integrated contact service (5a), HTTP boundary (5b), then administrat
 composition starts with phone; listing/search is separately tracked. Iteration 0 implements person-only
 eligibility and the bounded constructor corrections; shared immutable address ownership is decided and
 phone, web links and addresses are implemented with final verification recorded in the testing handoff.
-Iteration 4 implements the declared person/organization profile and protected contact lifecycle. Iteration 5a adds the integrated service; HTTP integration is next (5b). Login uniqueness is explicitly deferred until provisioning.
+Iteration 4 implements the declared person/organization profile and protected contact lifecycle. Iteration 5a adds the integrated service; Iteration 5b now supplies the HTTP boundary. Login uniqueness is explicitly deferred until provisioning.
 The master plan and testing handoff record current completion and verification evidence.
 
 [Glossary](glossary.md) · [Index](README.md)
@@ -82,5 +82,13 @@ all four child families. The host supplies scoped trusted context and an explici
 policy; saves authorize every required permission and use one unit. Current detail contains state,
 history has a separate permission, and directory detail filters private roots/children into a smaller DTO.
 Current revision selection occurs inside the existing read barrier. See the [service guide](../contact-service.md)
-and [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md). Next is HTTP integration (5b);
+and [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md). Iteration 5b now implements HTTP integration;
 discovery/search, provisioning/login policy and migration remain separate.
+
+## HTTP checkpoint (iteration 5b)
+
+`ContactApiHosting` wires real bearer authentication, the signed-claim service adapters and
+`ContactsController`. The [HTTP guide](../contact-http-api.md) covers routes, required issuer/audience
+configuration, exact command JSON, string audit stamps and errors. Schema tools now require opted-in
+Development mode plus their own signed grant. No SQL/audit mechanism changed. Provisioning and its
+login policy are next; live issuer setup, deployment and discovery/search remain separate.

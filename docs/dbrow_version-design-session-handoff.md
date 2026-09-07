@@ -4,6 +4,22 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Iteration 5b complete, 2026-09-07:** authorized over `04a4409`, local/uncommitted.
+[ADR 0015](adr/0015-contact-http-authentication-and-wire-contract.md) and the [HTTP guide](contact-http-api.md)
+record actual bearer validation, required signed actor/tenant and contact grants, five contact routes,
+strict ordered command JSON, coherent service reads and exact Int64 string transport. There is no live
+issuer/token issuance; configuring JWT was a stated implementation assumption after an optional question
+received no reply. Required issuer/audience/HTTPS authority config has no fallback or test keys.
+Current/history/directory permissions and visibility remain the service contract. All Save commands run
+in one unit; responses separate conflicts, validation and uncertain commit without exposing internals
+or promising retry. Development schema tools now require explicit opt-in plus their own signed grant.
+Focused tests passed 7/7, then expanded 7/7 (49 sec); restore/build/discovery passed with zero warnings/errors.
+The full gate passed 108/108 (49 per SQL profile plus ten database-free), zero failures/skips, in
+14 min 49 sec. All 108 disposable databases across three runs have verified removal (216 journal copies,
+zero unresolved); see the [testing record](testing-handoff.md#iteration-5b-contact-http-boundary--2026-09-07). Framework/audit SQL
+and historical probes/fixtures are unchanged. Next is iteration 6, beginning with the deferred login
+uniqueness/tenant-resolution decision. Live issuer/TLS, customer upgrade and remote deployment remain separate.
+
 **Iteration 5a complete, 2026-09-07:** authorized over committed iteration 4
 (`c421d3a`); implementation now committed in `7d99164`, final verification/handoff updates local.
 [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) and
@@ -19,7 +35,7 @@ Known errors map to service outcomes; cancellation and uncertain commit remain d
 Focused tests passed 13/13; final build/discovery passed with zero warnings/errors. Full gate passed
 101/101 (47 per profile plus seven database-free) in 12 min 17 sec, zero failures/skips. All 118 databases
 across three runs have verified removal; see the [testing record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
-Next is 5b HTTP integration, not started; login uniqueness remains deferred until provisioning.
+Next at that checkpoint was 5b HTTP integration, now implemented above; login uniqueness remains deferred until provisioning.
 
 **Iteration 4 complete, 2026-09-07:** authorized over committed iteration 3 (`4f4fd78`),
 local/uncommitted. Read [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) and the

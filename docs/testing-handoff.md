@@ -18,7 +18,7 @@ dotnet build src/overmind.sln -c Release --no-restore
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --list-tests
 ```
 
-**Authoritative full command: both real database profiles and database-free tests**, currently 101 discovered tests (47 per profile, 2 batch-parser tests and one database-free validation scenario each for phone, web link, address, contact profile and contact service):
+**Authoritative full command: both real database profiles and database-free tests**, currently 108 discovered tests (49 per profile and ten database-free tests: two batch-parser tests, five family/service validation tests and three HTTP authentication/transport tests):
 
 ```powershell
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
@@ -26,17 +26,17 @@ dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.ru
 
 The same command works locally, in CI and in an appropriately configured Kudu environment. In scripts, stop on a nonzero restore/build status; preserve the test exit status with `exit $LASTEXITCODE`. Do not pipe away the native exit status. The supplied runsettings fail a zero-test selection and map inconclusive results to failure. No integration test is skipped for missing configuration or privilege. A filtered run is only the selected scope, even when green.
 
-For a backend-only build/test scope, target the project directly: `dotnet test src/tests/AuditTests/AuditTests.csproj -c Release --settings src/tests/audit.runsettings`. This restores/builds the test project and its backend dependencies without requiring a second solution. Both forms run the same tests and require the same SQL configuration. Bare `dotnet test` from the repository root is not the documented command because the single solution lives under `src`.
+For a backend-only build/test scope, target the project directly: `dotnet test src/tests/AuditTests/AuditTests.csproj -c Release --settings src/tests/audit.runsettings`. This restores/builds the test project and its backend/WebAPI dependencies without requiring a second solution. Iteration 5b references the actual WebAPI hosting composition and runs HTTP middleware through TestHost. Both forms run the same tests and require the same SQL configuration. Bare `dotnet test` from the repository root is not the documented command because the single solution lives under `src`.
 
 ```powershell
 # Representative focused existing scenario, RCSI off (one test).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
 
-# Complete integration profile, independently selectable (47 tests each).
+# Complete integration profile, independently selectable (49 tests each).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
 
-# Database-free, LIMITED SCOPE: two batch-parser tests, phone parsing, web-link, address and contact-profile validation/domain state, no SQL behavior verification.
+# Database-free, LIMITED SCOPE: parser/family/service guards and HTTP JWT/wire tests; no SQL behavior verification.
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=Infrastructure'
 ```
 
@@ -115,8 +115,10 @@ Methods in [AuditScenarios.cs](../src/tests/AuditTests/AuditScenarios.cs) are in
 | Iteration 5a: policy grants/denials, current/history separation, public/private projections and valid cross-tenant target rejection | `ContactServiceAuthorizationAndVisibility` |
 | Iteration 5a: invalid C#/SQL input, late-command rollback, failed creation, SQL attention cancellation and whole rollback | `ContactServiceValidationRollbackAndCancellation` |
 | Iteration 5a: choose current revision inside root barrier; pause after four families and observe mixed service writer blocking | `ContactServiceCurrentReaderBlocksMixedWriter` |
+| Iteration 5b: actual authenticated HTTP person/organization create, mixed Save/history, every command discriminator, ordering, stale token and late SQL rollback | `ContactHttpAtomicSaveHistoryAndAllLifecycleCommands` |
+| Iteration 5b: actual HTTP grants, directory filtering, denied later command, spoofed context rejection and valid other-tenant actor isolation | `ContactHttpPermissionsVisibilityAndTenantIsolation` |
 
-Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. `AddressValidationTests.AddressRepresentationsAndExactDomainState` covers alternate street representations, widths, Unicode rejection and exact domain state. `ContactProfileValidationTests.ContactProfileExactFieldsAndCategoryValidation` adds exact profile widths, Unicode, required names and category-specific validation. `ContactServiceValidationTests.ContactServiceRejectsMissingContextAndDeniedCommandsBeforeConnection` verifies missing context, per-command preauthorization and bounded request rejection before opening SQL. These do not substitute for SQL audit tests.
+Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. `AddressValidationTests.AddressRepresentationsAndExactDomainState` covers alternate street representations, widths, Unicode rejection and exact domain state. `ContactProfileValidationTests.ContactProfileExactFieldsAndCategoryValidation` adds exact profile widths, Unicode, required names and category-specific validation. `ContactServiceValidationTests.ContactServiceRejectsMissingContextAndDeniedCommandsBeforeConnection` verifies missing context, per-command preauthorization and bounded request rejection before opening SQL. `ContactHttpValidationTests` adds three in-process tests for actual JWT validation, strict/streamed JSON and OpenAPI/Int64, and sanitized service/uncertain-commit response mapping. They use ephemeral signing keys/static metadata and no real issuer or SQL connection. These do not substitute for SQL audit tests.
 
 The four original SQL fixtures retain their scenario sequences. The original review-probe integration replaced supplied promotion contact names with explicit NULL and added fixture-shape assertions without production changes; iteration 0 subsequently adds the production corrections documented here. [SchemaFiles.cs](../src/tests/AuditTests/SchemaFiles.cs) retains the runner's production script list and dependency order, with files copied from production source at build time. `SeedAsync(1..4)` loads allocation → email → saved order → user construction **on the current test's database**, with a fresh SQL connection per fixture as before. Tests requiring only email stop at stage 2. Saved-order and user-reader cases intentionally run after their own SQL fixture stage. The native concurrency schedule remains grouped because its roots progress through revisions 1–4; the C# shared-unit and lifetime sequences retain their intentional within-scenario state. No test depends on another discovered test.
 
@@ -568,3 +570,48 @@ bootstrap's additional database). Removal includes post-DROP absence checks; no 
 prefix scan was needed. `git diff --check` and changed-document relative links passed. Fresh-schema/local
 SQL Server verification only; HTTP/authentication integration, customer upgrades, remote deployment and
 independent review execution remain separate.
+
+## Iteration 5b contact HTTP boundary — 2026-09-07
+
+Authorized over `04a4409`; local/uncommitted. [ADR 0015](adr/0015-contact-http-authentication-and-wire-contract.md)
+and the [HTTP guide](contact-http-api.md) define bearer validation, signed context/grants, strict JSON
+commands, exact Int64 transport and intentional HTTP outcomes. The application/test projects add
+JwtBearer 8.0.30 and TestHost 8.0.30 respectively; restored IdentityModel token packages resolve to 7.7.3.
+The SDK, SQL client, database framework, SQL scripts, original fixtures and historical probes are unchanged.
+
+Two new scenarios run through the real production HTTP composition and SQL service under both RCSI
+profiles: person/organization create with four families, mixed Save/history/actions, all 23 command
+discriminators, order, lifecycle, stale-token rejection and failing-last-command whole rollback; then
+grants, hidden/public data, denied later commands, rejected context spoofing and valid cross-tenant
+actors attempting the wrong root. Existing service reader concurrency and audit lifetime coverage remain
+in the full gate. The HTTP tests do not replace authentication with a permissive fake header scheme.
+
+Three database-free TestHost tests cover real JWT signature/issuer/audience/lifetime rejection,
+unsigned and ambiguous/missing identity claims, guarded development routes and missing startup config;
+strict/duplicate/unknown JSON, known/unknown-length 1 MiB limits, wrong content type, OpenAPI command
+schemas and long.MaxValue string transport; and sanitized service failure/uncertain-commit mapping.
+The last test injects the actual service exception type to isolate the HTTP response and proves no
+replay. It is not a second real commit-failure experiment; the existing terminated-session unit test
+remains that evidence. A disconnected external client/TLS listener is not simulated by these tests.
+
+Test tokens use ephemeral in-process RSA keys and static metadata in place of network discovery.
+All normal bearer signature/issuer/audience/lifetime and application-claim validation still runs.
+Neither secrets nor a live issuer are configured in the repository. Fresh TestServer instances and
+request scopes are disposed after each scenario; SQL resources remain owned by AuditDatabase.
+
+| Run | Result | Scope |
+| --- | --- | --- |
+| Initial focused | **7/7**, **45 sec** | Four real HTTP/SQL cases and three database-free HTTP cases. |
+| Expanded focused | **7/7**, **49 sec** | Adds unsigned/duplicate-tenant tokens, streamed size bounds, media type, OpenAPI schema and cancellation-response checks; zero failures/skips. |
+| Final full gate | **108/108**, **14 min 49 sec** | All 49 SQL scenarios per RCSI profile and ten database-free; zero failures/skips. |
+
+Restore/build/discovery passed with zero warnings/errors. No production/test source changed after
+the final build/full-run start. All **117** SQL files copied to test output match source. Ignored evidence:
+`artifacts/test-results/iteration-5b/{focused,focused-2,full}/`, `discovery.txt`, `verify-evidence.ps1` and
+final `verification.json`. Resource reconciliation passed for all **108** distinct databases across
+the three runs: 216 original/attached journal copies, zero unresolved resources. The full run owns
+100 databases (50 per profile, including bootstrap's additional database); each focused run owns four.
+Every resource has intent, creation, engine identity and verified removal. The runner records removal
+only after its post-DROP absence check succeeds. `git diff --check` and changed-document links passed.
+Fresh-schema/local SQL Server and in-process HTTP verification only; live identity-provider metadata,
+key rotation, external TLS/proxy setup, remote CI/deployment and customer upgrades remain unexecuted.

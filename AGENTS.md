@@ -7,6 +7,32 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Iteration 5b complete — 2026-09-07:** authorized over `04a4409`, local/uncommitted.
+Read [docs/contact-http-api.md](docs/contact-http-api.md) and [ADR 0015](docs/adr/0015-contact-http-authentication-and-wire-contract.md).
+ContactApiHosting/ContactsController expose create, atomic Save, current detail, revision/diff/actions and
+directory detail. Standard JwtBearer 8.0.30 validates signature/issuer/audience/lifetime with HTTPS metadata;
+required Authority/Issuer/Audience config has no fallback or checked-in keys. Exactly one signed
+overmind_actor/overmind_tenant GUID supplies service context; repeated overmind_contact grants are
+permission:contact-guid or permission:* within that tenant. JSON/query actor/tenant fields reject,
+X-Actor/X-Tenant do not override claims, and SQL independently validates actor/tenant. No login/token
+issuance or live issuer is configured. Configurable JWT was the stated assumption after the optional
+authentication question received no reply, not an explicit choice of identity provider by the author.
+Strict camelCase JSON rejects duplicate/unknown fields and maps 23 kind-discriminated service commands.
+One HTTP Save is one service Save; body bound 1 MiB/depth 32 includes unknown Content-Length. Int64
+responses are decimal strings; INT revisions/ordinals stay numbers. ProblemDetails distinguishes 400/401/
+403/404/409 and 500 commit_uncertain/storage without internals or automatic retry; disconnect is not proof
+of rollback. Contact responses are no-store. Swagger documents request bodies/alternatives/bearer auth.
+Dev schema tools now require opted-in Development mode AND overmind_schema_admin=true; no anonymous bypass.
+Focused HTTP tests passed 7/7, then expanded 7/7 (49 sec), including real JWT middleware, all command
+dispatch, both SQL profiles, cross-tenant scope, streamed size limits, OpenAPI and Int64 precision.
+Restore/build/discovery passed with zero warnings/errors. Full gate passed 108/108 (49 per profile plus
+ten database-free), zero failures/skips, in 14 min 49 sec. All 108 disposable databases across three runs
+have matching intent/creation/identity/verified-removal evidence (216 journal copies, zero unresolved). Evidence:
+artifacts/test-results/iteration-5b/ (ignored). All 117 copied SQL scripts match source. Framework/audit SQL,
+historical probes and fixtures are unchanged. Next is iteration 6, starting with login uniqueness and
+tenant-resolution policy before provisioning exposure. No live issuer/TLS/remote deployment or customer
+migration was exercised. Preserve the user's commit workflow; do not commit on their behalf.
+
 **Iteration 5a complete — 2026-09-07:** authorized over committed iteration 4
 (`c421d3a`); implementation is now committed in `7d99164`. Final verification/handoff updates remain local.
 Read [docs/contact-service.md](docs/contact-service.md) and
@@ -32,7 +58,7 @@ with zero warnings/errors. The full gate passed 101/101 (47 per RCSI profile plu
 creation, engine identity and verified removal: 236 journal copies, zero unresolved resources.
 Evidence: artifacts/test-results/iteration-5a/ (ignored), including verification.json. All 117 copied SQL
 files match source. Historical probes and original fixtures are unchanged. Guides, plan and handoffs
-are updated. Next is iteration 5b HTTP integration; it has not started. Login
+are updated. Next at that checkpoint was iteration 5b, now implemented above. Login
 uniqueness remains deferred until provisioning. Fresh schemas only; no customer upgrade or deployment.
 Do not commit on the author's behalf.
 

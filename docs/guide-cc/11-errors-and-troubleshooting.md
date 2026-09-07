@@ -159,3 +159,10 @@ Conflict, Dependency or HistoryUnavailable; unknown provider/invariant failures 
 SqlClient attention errors. `AuditUnitCommitUncertainException` stays distinct and retains its original
 error/provisional stamp. No automatic retry is performed. See [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md).
 HTTP response mapping and authentication-derived context remain iteration 5b.
+
+## HTTP outcomes (iteration 5b)
+
+The [HTTP guide](../contact-http-api.md) maps authentication to 401, grants to 403, missing data to 404,
+validation to 400, stale/dependency/history-coverage conflicts to distinct 409 codes, and uncertain
+commit to 500/commit_uncertain. Problem responses omit internal exceptions and never advise automatic
+retry. A disconnected caller may have no acknowledgement even after commit succeeds.

@@ -41,4 +41,6 @@ Iteration 3 adds the [address family](../address-family.md) and [ADR 0012](../ad
 
 Iteration 4 adds [contact profiles and lifecycle](../contact-profile-and-lifecycle.md): exact structured-name history, explicit profile replacement, protected soft delete/restore, strict creation and a coherent full reader. [ADR 0013](../adr/0013-contact-profiles-names-and-root-lifecycle.md) records the scope. Iteration 5a now composes these operations through the integrated service.
 
-Iteration 5a adds the [integrated contact service](../contact-service.md): ordered atomic saves, coherent current/historical reads, trusted actor/tenant context, explicit contact grants and a separate directory projection. [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md) defines the boundary. HTTP integration (5b) is next.
+Iteration 5a adds the [integrated contact service](../contact-service.md): ordered atomic saves, coherent current/historical reads, trusted actor/tenant context, explicit contact grants and a separate directory projection. [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md) defines the boundary. Iteration 5b now supplies the HTTP boundary.
+
+Iteration 5b adds the [contact HTTP API](../contact-http-api.md) and [ADR 0015](../adr/0015-contact-http-authentication-and-wire-contract.md): validated bearer JWTs, signed actor/tenant/grants, strict ordered Save payloads and deliberate error responses. No token issuance or live issuer is configured. Iteration 6 begins with the deferred login/provisioning decisions.

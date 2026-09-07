@@ -11,7 +11,7 @@ Register your scoped `IContactContextAccessor` and `IContactAuthorizer`, then ca
 Both host dependencies are required; there is no allow-all fallback. The context accessor returns
 `ContactActorContext(authenticatedActor, resolvedTenant)`. Derive these from trusted application or
 authenticated context, never the contact request body. Use the `contact_runtime` database capability.
-Iteration 5b will supply the HTTP integration; no endpoints are registered by this helper.
+Iteration 5b supplies the HTTP integration in the WebAPI; this service helper itself registers no endpoints.
 
 The policy receives the context, target public key and required capability. It can grant individual
 contacts. Creation needs Create; initial child commands also need Edit. Profile/child saves need Edit,
@@ -104,4 +104,4 @@ and never blindly replays the request. The existing audit unit does not cancel a
 the service does not turn a confirmed commit into cancellation by checking the token afterward.
 
 See the [verification record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
-Next is iteration 5b, the HTTP boundary. Login uniqueness stays deferred until provisioning.
+Iteration 5b now adds the [HTTP boundary](contact-http-api.md). Login uniqueness stays deferred until provisioning.

@@ -68,3 +68,8 @@ for the particular contact. SQL still checks actor/tenant validity. Full current
 payloads and directory projection have separate permissions; directory visibility additionally hides
 private/deleted roots and private child associations. See [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md).
 No default allow policy or HTTP authentication integration is installed by this service.
+
+Iteration 5b supplies those adapters from validated JWT claims: exactly one overmind_actor and
+overmind_tenant, with signed per-contact or tenant-scoped grants. External provider IDs require an
+explicit mapping to database public keys. There is no request-body tenant selector or System fallback.
+See the [HTTP guide](../contact-http-api.md); login/token issuance remains separate.

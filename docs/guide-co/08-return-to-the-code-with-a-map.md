@@ -50,7 +50,7 @@ gates and a persons/organizations-first roadmap. Iteration 0's constructor corre
 [ADR 0008](../adr/0008-constructor-corrections.md). Iteration 1 now adds phone and composed email/phone
 reads; the [phone guide](../phone-family.md) and ADRs 0009–0010 describe the new contracts and verification.
 Iteration 2 adds [web links](../web-link-family.md); iteration 3 adds [immutable addresses](../address-family.md), scoped immutable catalogs and four-family reads/saves. Iteration 4 now adds [profiles and contact lifecycle](../contact-profile-and-lifecycle.md), exact structured names and the full reader.
-Iteration 5a now adds the integrated service; the HTTP boundary remains planned for 5b.
+Iteration 5a now adds the integrated service; iteration 5b now adds the HTTP boundary.
 
 At this guide's checkpoint, the email lifecycle is the complete reference family for the declared fresh-schema boundary: insert, update, delete, restore, saved moves, history, actions, reader/diff, unit ownership and restricted database access. Ordinary administrative user creation and contact promotion now preserve type history and make constructed users eligible actors.
 
@@ -94,3 +94,11 @@ inside one coherent read. Required host context/authorization and separate curre
 responses establish the boundary for HTTP iteration 5b. [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md)
 records omission/clearing, command order, error and uncertain-commit behavior. Legacy mutable domain
 graphs are not silently treated as complete service snapshots; explicit request/state DTOs are used.
+
+## HTTP boundary (iteration 5b)
+
+The [HTTP guide](../contact-http-api.md) connects the same Save and coherent reader to routes. Real JWT
+validation supplies the actor/tenant; signed grants decide contact access. Bodies cannot choose either
+identity. Current detail, historical detail and directory projection retain their different permissions.
+The boundary reports conflicts and uncertain commit distinctly and never splits a Save or replays it.
+The next implementation checkpoint is user provisioning, after deciding login uniqueness.

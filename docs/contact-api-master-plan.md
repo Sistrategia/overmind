@@ -1,9 +1,9 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, iterations 0–5a complete. Iteration 5b is next; it has not started.
-Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0014 describe the implemented foundation.
+Updated: 2026-09-07, iterations 0–5b complete. Iteration 6 is next and has not started.
+Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0015 describe the implemented foundation.
 
-The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–5a on 2026-09-07; later iterations remain planned.
+The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–5b on 2026-09-07; later iterations remain planned.
 
 ## Decisions already made
 
@@ -48,7 +48,7 @@ The order below is a proposal. Contact integration begins with the second family
 | 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Complete; [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) |
 | 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Complete; [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) |
 | 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Complete; [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) |
-| 5b | Contact HTTP API | Endpoints apply authentication-derived context, authorization, visibility, validation and tested conflict/error responses to the completed service. | Planned |
+| 5b | Contact HTTP API | Endpoints apply authentication-derived context, authorization, visibility, validation and tested conflict/error responses to the completed service. | Complete; [ADR 0015](adr/0015-contact-http-authentication-and-wire-contract.md) |
 | 6 | Administrative user provisioning | New-person/account and existing-person promotion use the contact API contracts, chosen login policy and explicit authorization. | Planned |
 
 Paginated listing/search is a separately tracked contact-discovery deliverable after the service contracts stabilize. It remains part of the broader contact roadmap but does not block coherent detail/history, atomic Save or administrative provisioning. Do not describe the broader contact surface as complete while discovery is still pending.
@@ -154,6 +154,8 @@ Define service-level validation, conflict and uncertain-commit outcomes. If auto
 Acceptance example: create a person with all four child families, then change their name, phone and address in one Save. Read both revisions, inspect the combined diff/actions, demonstrate stale-token rejection and prove that a failing final command rolls back the entire Save. Repeat relevant operations for an organization, verify the reader against a concurrent writer, and exercise allowed/denied service access. This iteration can complete without HTTP.
 
 ### 5b. Contact HTTP boundary
+
+The implemented contract is [ADR 0015](adr/0015-contact-http-authentication-and-wire-contract.md); the [HTTP guide](contact-http-api.md) gives configuration, claims, payloads and responses.
 
 Expose the completed service operations through HTTP with authentication-derived actor context and explicitly resolved tenant, authorization, the chosen visibility semantics, request validation and intentional status/error responses. Client-supplied actor GUIDs are not authentication; user-facing tenant omission must not silently route requests to the SQL default tenant. Wire the trusted context and authorization contracts from 5a to the selected authentication integration.
 
@@ -327,8 +329,33 @@ guards and actual schema/DI integration using the normal seeded actor. Final bui
 zero warnings/errors. The full gate passed **101/101** in **12 min 17 sec**, both RCSI profiles,
 zero failures/skips. All **118** disposable databases across three runs have matching intent, creation,
 engine identity and verified removal; see the [testing record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
-Next is **iteration 5b: contact HTTP boundary**, not started. Login uniqueness remains deferred
+Next at that checkpoint was iteration 5b, now implemented below. Login uniqueness remains deferred
 until provisioning. Customer upgrades, discovery/search, deployment and independent review are separate.
+
+## Iteration 5b execution record — 2026-09-07
+
+Authorized over `04a4409`; local/uncommitted. [ADR 0015](adr/0015-contact-http-authentication-and-wire-contract.md)
+and the [HTTP guide](contact-http-api.md) define validated JWT authentication, signed database actor/tenant
+claims and per-contact/tenant-scoped grants. Configurable JWT was the stated assumption after an optional
+question received no reply; no particular provider, live issuer or token issuance is claimed.
+
+Delivered five contact routes for create, atomic ordered Save, current detail, historical revision/diff
+and limited directory detail. The wire contract rejects unknown/duplicate/spoofed fields, bounds streamed
+bodies and preserves Int64 stamps as strings. The same service read/write boundary enforces coherence,
+privacy and full rollback. Responses distinguish validation, missing data, authorization, stale tokens,
+dependencies and uncertain commit, with no automatic retries or internal diagnostics exposed.
+Development schema operations now require explicit Development opt-in and a separate signed grant.
+OpenAPI includes authentication, request bodies and all 23 command alternatives.
+
+Initial focused tests passed 7/7; expanded focused verification passed **7/7 in 49 sec**, including real
+JWT middleware, every command kind, both SQL profiles, cross-tenant requests, streamed limits and bigint
+precision. Restore/build/discovery passed with zero warnings/errors. The full gate passed **108/108** in
+**14 min 49 sec**, both RCSI profiles, zero failures/skips. All **108** disposable databases across three
+runs have verified removal (216 journal copies, zero unresolved); details are in the
+[testing handoff](testing-handoff.md#iteration-5b-contact-http-boundary--2026-09-07).
+No SQL/audit mechanism, historical probe or original fixture changed. Next is **iteration 6**, beginning
+with the explicitly deferred login uniqueness/tenant-resolution decision. Listing/search, live issuer
+setup, deployment and customer migrations remain separate work.
 
 ## Deferred work
 
