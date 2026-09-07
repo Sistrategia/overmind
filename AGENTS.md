@@ -8,7 +8,8 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 ## Active design thread (RESUME HERE)
 
 **Iteration 5a complete — 2026-09-07:** authorized over committed iteration 4
-(`c421d3a`); local/uncommitted. Read [docs/contact-service.md](docs/contact-service.md) and
+(`c421d3a`); implementation is now committed in `7d99164`. Final verification/handoff updates remain local.
+Read [docs/contact-service.md](docs/contact-service.md) and
 [ADR 0014](docs/adr/0014-integrated-contact-service-and-access-boundary.md). IContactService/SqlContactService
 and scoped AddSqlContactService compose the declared person/organization profile and all four families.
 Requests have no actor/tenant inputs: required host IContactContextAccessor supplies explicit trusted

@@ -5,7 +5,8 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 ## Resume here
 
 **Iteration 5a complete, 2026-09-07:** authorized over committed iteration 4
-(`c421d3a`), local/uncommitted. [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) and
+(`c421d3a`); implementation now committed in `7d99164`, final verification/handoff updates local.
+[ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) and
 the [service guide](contact-service.md) define IContactService/SqlContactService, scoped registration,
 required trusted context and per-contact capabilities. Ordered saves compose profile and all four
 families in one unit and return committed final revision/child identities. Omitted commands preserve

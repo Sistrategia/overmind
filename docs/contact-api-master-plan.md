@@ -302,7 +302,8 @@ Service/HTTP, discovery, customer upgrades and independent review execution were
 
 ## Iteration 5a execution record — 2026-09-07
 
-Authorized over committed iteration 4 (`c421d3a`); implementation remains local/uncommitted.
+Authorized over committed iteration 4 (`c421d3a`); implementation is now committed in `7d99164`.
+Final verification/handoff updates remain local.
 [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) and the
 [service guide](contact-service.md) define IContactService/SqlContactService, scoped registration,
 explicit trusted actor/tenant context and required contact-capability authorization. No permissive

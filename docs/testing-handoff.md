@@ -526,7 +526,8 @@ remote CI/deployment, service/HTTP and independent review execution remain unexe
 
 ## Iteration 5a integrated contact service — 2026-09-07
 
-Authorized over committed iteration 4 (`c421d3a`); local/uncommitted. [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md)
+Authorized over committed iteration 4 (`c421d3a`); implementation now committed in `7d99164`, with final
+verification/handoff updates local. [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md)
 and the [service guide](contact-service.md) define explicit host actor/tenant context and contact
 capabilities, ordered atomic Save, committed identities/tokens and separate current/history/directory
 responses. Current revision selection occurs inside the existing full reader's root barrier; result
