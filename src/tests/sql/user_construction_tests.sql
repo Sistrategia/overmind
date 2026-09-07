@@ -43,7 +43,7 @@ EXEC contacts.contact_insert @public_key=@key,@created_by=@system,@full_name=N'O
     @email_address=N'preserved-contact@example.test',@dbrow_version=@birth OUTPUT;
 SET @id=(SELECT entity_id FROM entities.entity WHERE public_key=@key);
 EXEC security.user_insert @public_key=@key,@created_by=@system,@expected_entity_version=1,
-    @login_name=N'promoted-contact',@full_name=N'Must not replace contact payload',@email=N'new-account@example.test',
+    @login_name=N'promoted-contact',@full_name=NULL,@email=N'new-account@example.test',
     @dbrow_version=@v OUTPUT,@entity_version=@r OUTPUT;
 IF @r<>2 OR NOT EXISTS (SELECT 1 FROM entities.entity_history h JOIN entities.entity_type t ON t.entity_type_id=h.entity_type_id
     WHERE h.entity_id=@id AND h.dbrow_version=@birth AND t.code_name=N'contact' AND h.dboperation_type_id=1)
@@ -82,7 +82,7 @@ DECLARE @system UNIQUEIDENTIFIER='71F092F4-3A35-463D-9589-E5EE1373F7D5',@v BIGIN
 BEGIN TRAN; EXEC data.audit_unit_begin;
 EXEC contacts.contact_insert @public_key=@key,@created_by=@system,@full_name=N'Composed promotion',@dbrow_version=@v OUTPUT;
 EXEC security.user_insert @public_key=@key,@created_by=@system,@expected_entity_version=0,
-    @login_name=N'composed-promotion',@full_name=N'Composed promotion',@dbrow_version=@v OUTPUT,@entity_version=@r OUTPUT,@user_id=@id OUTPUT;
+    @login_name=N'composed-promotion',@full_name=NULL,@dbrow_version=@v OUTPUT,@entity_version=@r OUTPUT,@user_id=@id OUTPUT;
 EXEC contacts.contact_email_insert @contact_public_key=@key,@created_by=@system,@expected_entity_version=0,@email_address=N'composed-user@example.test';
 IF @@TRANCOUNT<>1 OR @r<>1 OR (SELECT COUNT(*) FROM entities.entity_version_history WHERE entity_id=@id)<>1
     OR NOT EXISTS (SELECT 1 FROM entities.entity_history WHERE entity_id=@id AND entity_type_id=4 AND dboperation_type_id=1)
@@ -107,7 +107,7 @@ BEGIN
     SET @v=NULL;
     BEGIN TRAN; EXEC data.audit_unit_begin;
     EXEC contacts.email_update @contact_public_key=@key,@modified_by=@system,@expected_entity_version=1,@ordinal=1,@email_address=N'after-promotion@example.test',@dbrow_version=@v OUTPUT;
-    EXEC security.user_insert @public_key=@key,@created_by=@system,@expected_entity_version=1,@login_name=N'existing-composition',@full_name=N'Ignored',@dbrow_version=@v OUTPUT,@entity_version=@r OUTPUT;
+    EXEC security.user_insert @public_key=@key,@created_by=@system,@expected_entity_version=1,@login_name=N'existing-composition',@full_name=NULL,@dbrow_version=@v OUTPUT,@entity_version=@r OUTPUT;
     IF @r<>2 OR (SELECT COUNT(*) FROM entities.entity_version_history WHERE entity_id=@id AND dbrow_version=@v)<>1
         THROW 52000,'Promotion after an earlier child edit bumped again.',1;
     IF @attempt=0

@@ -7,8 +7,41 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
-**Backend testing migration — 2026-09-06:** current commands, coverage map, execution evidence and the pending
-return-session verification checklist are in [docs/testing-handoff.md](docs/testing-handoff.md). Use
+**User-account eligibility clarified by the author — 2026-09-06:** ordinary user accounts belong to human
+person contacts. Companies/organizations and groups may be business parties, owners or represented by people,
+but must not themselves receive ordinary login accounts or become the identity attributed with database writes.
+Apply this rule to both new-user construction and existing-contact promotion; current SQL does not enforce it yet.
+P4 is now a decided policy with pending implementation/tests, not an open choice. Preserve the reserved System
+bootstrap identity as an existing technical exception; future agent/bot/application identities need an explicit
+separate contract and are not company accounts. This discussion records policy only; no production fix was requested.
+
+**Historical review probes — 2026-09-06:** test-only coverage integration over `d660dd4` is described in
+[docs/testing-handoff.md#historical-review-probe-coverage](docs/testing-handoff.md#historical-review-probe-coverage).
+The inventory classifies email A–G and user P1–P9/P3b against current code, with precise unresolved recipes.
+Three new scenarios run under both RCSI profiles (38 tests total): savepoint allocation rejection, actual C#
+opposite-root deadlock/whole rollback/fresh-unit retry, and promotion-before-email composition. Positive promotion
+fixtures use NULL contact-name input; staged System fixture checks no longer silently repair its type.
+Production SQL and archived probe contents are unchanged. Constructor defects/policies, event occurrence time,
+account phone, explicit root-lifecycle operations and seed-role evidence remain separate work, not accepted behavior.
+[src/tests/review/README.md](src/tests/review/README.md) records provenance. Codex's independent follow-up is complete:
+no blocking integration issue; restore/build/discovery, all 6 focused cases and the full 38-test gate passed,
+zero failures/skips or build warnings/errors. Full run: 3 min 34 sec. All 44 focused/full databases reconcile
+through creation, identity and verified removal. Evidence: `artifacts/test-results/review-probes-return-20260906-01/`
+(ignored). Both possible deadlock victims occurred across runs; rollback/history/invalidation/fresh retry passed.
+No production or test changes were needed by this review; unresolved production recipes remain unexecuted here.
+The migration's earlier completed verification below remains a dated completed checkpoint.
+The integration author's final local restore/build/discovery and full gate passed: 38/38, zero failures/skips or build warnings/errors,
+3 min 24 sec. All 38 final-run databases (19 per profile) removed; all 92 databases across this task's executions
+have matching intent/create/identity/removal evidence in `artifacts/test-results/review-probes/` (ignored).
+
+**Backend testing migration — 2026-09-06:** current commands, coverage map, execution evidence and the completed
+return-session verification checklist are in [docs/testing-handoff.md](docs/testing-handoff.md). Codex independently
+reviewed `efacebb..d660dd4`: no blocking local-workflow migration defect; restore/build/discovery passed, followed by
+the focused test and all 32 tests (15 per RCSI profile plus 2 parser tests), zero failures/skips and build warnings/errors.
+Empty selection and missing SQL configuration both correctly returned exit 1. All 33 focused/full-run databases have
+matching creation/identity/removal records and successful post-DROP absence checks. Evidence:
+`artifacts/test-results/return-session-20260906-01/` (ignored). Remote CI/Kudu and SQL-auth validation remain unexecuted.
+Use
 `dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger "trx;LogFileName=audit.trx" --results-directory artifacts/test-results`
 after its documented configuration/restore/build. MSTest/VSTest tests replace maintained Python/sqlcmd orchestration
 and the console harness; old commands below are historical. Production mechanisms and independent review probes

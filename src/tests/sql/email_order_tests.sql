@@ -4,11 +4,15 @@ IF OBJECT_ID('entities.entity_child_sequence') IS NOT NULL THROW 52000,'Redundan
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id=OBJECT_ID('entities.entity_history') AND name='ix_entity_history_root')
     OR NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id=OBJECT_ID('contacts.contact_history') AND name='ix_contact_history_root')
     THROW 52000,'Root payload reconstruction indexes are missing.',1;
--- Baseline fixtures use an entity-only System; the real application views join its contact/user.
+-- Stage 1 creates a user-typed entity only. Enrich this synthetic actor for the view joins.
+-- Actual System/account bootstrap is verified separately by the application schema-cycle tests.
 IF NOT EXISTS (SELECT 1 FROM contacts.contact WHERE contact_id=1)
     INSERT contacts.contact (contact_id,contact_type_id,full_name) VALUES (1,1,N'System');
 IF NOT EXISTS (SELECT 1 FROM security.[user] WHERE user_id=1)
     INSERT security.[user] (user_id,login_name) VALUES (1,N'system');
+IF NOT EXISTS (SELECT 1 FROM entities.entity e JOIN contacts.contact c ON c.contact_id=e.entity_id
+    JOIN security.[user] u ON u.user_id=e.entity_id WHERE e.entity_id=1 AND e.entity_type_id=4)
+    THROW 52000,'Complete view fixture actor is missing.',1;
 DECLARE @actor UNIQUEIDENTIFIER='71F092F4-3A35-463D-9589-E5EE1373F7D5',
     @key UNIQUEIDENTIFIER='E0000000-0000-0000-0000-000000000020', @id INT, @o INT, @v BIGINT;
 EXEC contacts.contact_insert @public_key=@key,@created_by=@actor,@full_name=N'Ordered emails',@email_address=N'order-a@example.test';

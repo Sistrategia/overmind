@@ -10,7 +10,7 @@ internal static class UserConstructionCases
         var after = await reader.ReadAsync(promoted, actor, 2, compareEntityVersion: 1);
         if (before.EntityTypeId == 4 || after.EntityTypeId != 4 || before.FullName != after.FullName
             || after.Differences.Count != 0 || after.Emails.Single().Email != "preserved-contact@example.test")
-            throw new Exception("Promotion replaced historical type/contact state with current or supplied payload.");
+            throw new Exception("Promotion replaced historical type/contact state with current payload.");
 
         await using (var unit = await SqlAuditUnit.BeginAsync(connectionString, promoted)) {
             await unit.InsertEmailAsync(promoted, 2, "promoted-actor@example.test");

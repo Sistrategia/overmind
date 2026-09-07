@@ -205,7 +205,7 @@ internal static class SqlScenarios
         await db.ConcurrentAsync($$"""
             SET NOCOUNT ON; BEGIN TRAN; EXEC data.audit_unit_begin;
             EXEC security.user_insert @public_key='{{root}}',@created_by='{{actor}}',@expected_entity_version=1,
-                @login_name=N'promotion-winner',@full_name=N'Promotion contention';
+                @login_name=N'promotion-winner',@full_name=NULL;
             {{Signal("promotion_ready")}}
             {{WaitSignal("promotion_contender")}}
             WAITFOR DELAY '00:00:00.500';

@@ -31,6 +31,24 @@ public abstract class AuditScenarios
     public Task AllocationCompositionAndGuards() => Run(db => db.SeedAsync(1));
 
     [TestMethod]
+    public Task RolledBackSavepointCannotReuseAllocation() => Run(async db => {
+        await db.SeedAsync(1);
+        await ReviewProbeCases.SavepointOwnership(db);
+    });
+
+    [TestMethod]
+    public Task OppositeRootDeadlockRollsBackAndRequiresFreshUnit() => Run(async db => {
+        await db.SeedAsync();
+        await DeadlockCases.RunAsync(db, Actor);
+    });
+
+    [TestMethod]
+    public Task PromotionThenEmailSharesRevisionAndRollsBackTogether() => Run(async db => {
+        await db.SeedAsync();
+        await ReviewProbeCases.PromotionThenEmail(db);
+    });
+
+    [TestMethod]
     public Task EmailLifecycleIdentityHistoryAndPermissions() => Run(db => db.SeedAsync());
 
     [TestMethod]

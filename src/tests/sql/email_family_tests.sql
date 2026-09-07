@@ -3,7 +3,10 @@
 SET NOCOUNT ON;
 IF NOT EXISTS (SELECT 1 FROM entities.entity_type WHERE entity_type_id=4)
     INSERT entities.entity_type VALUES (4,'user','security','user','user_view');
-UPDATE entities.entity SET entity_type_id=4 WHERE entity_id=1;
+-- Verify the type supplied by the allocation fixture; do not repair it to bypass actor checks.
+IF NOT EXISTS (SELECT 1 FROM entities.entity
+    WHERE entity_id=1 AND entity_type_id=4 AND public_key='71F092F4-3A35-463D-9589-E5EE1373F7D5')
+    THROW 52000,'Fixture System entity lacks its user type.',1;
 INSERT data.dboperation_type VALUES (3,'DELETE');
 GO
 CREATE PROCEDURE dbo.expect_email_error @statement NVARCHAR(MAX), @number INT AS
