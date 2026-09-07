@@ -58,6 +58,10 @@ The full command runs both real RCSI profiles through MSTest/VSTest, with indepe
 
 ## The next step
 
-Phone, by the recipe in Chapter 10, after the four small decisions the second review lists. Then address. Then root lifecycle (delete and undelete), which is the customer-visible feature the vocabulary has promised since the first generation.
+Use the [contact/API master plan](../contact-api-master-plan.md), added 2026-09-07, for the proposed
+iterations: bounded corrections, phone, web links, immutable addresses, person/organization profile and
+lifecycle, integrated contact API, then administrative provisioning. Person-only account eligibility and
+shared immutable address ownership are decided; enforcement and new family work remain pending.
+The plan records remaining decisions and completion gates without claiming implementation.
 
 [Glossary](glossary.md) · [Index](README.md)

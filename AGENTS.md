@@ -7,6 +7,18 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Contact/API master plan — 2026-09-07:** start with
+[docs/contact-api-master-plan.md](docs/contact-api-master-plan.md). The author requested an iterative plan:
+bounded constructor corrections, phone, web links, addresses, person/organization profile and lifecycle,
+integrated contact API, then administrative user provisioning. Iterations are planned, not implemented;
+this request authorized planning/documentation only. Address ownership is decided: shared immutable complete
+values, geographic catalog FKs and optional text on the value; `contact_address` contains references/order
+and required association metadata, not address text. Separate catalogs for address lines remain optional.
+Focus persons/organizations first. Groups remain parties/holders of organizations or people that may carry
+contact information; dedicated group work is deferred. Favor unobtrusive tenant resolution for current
+single-tenant or non-shared-user applications; shared-user tenant switching is future discussion, and login
+uniqueness/normalization remains undecided. Source review checkpoint `bb2b2c2`; no SQL tests rerun by planning.
+
 **User-account eligibility clarified by the author — 2026-09-06:** ordinary user accounts belong to human
 person contacts. Companies/organizations and groups may be business parties, owners or represented by people,
 but must not themselves receive ordinary login accounts or become the identity attributed with database writes.

@@ -4,6 +4,14 @@ Updated: 2026-09-05. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Current planning entry point, 2026-09-07:** [Contact and user provisioning master plan](contact-api-master-plan.md)
+records the author's shared immutable address decision, persons/organizations-first scope and proposed
+iterations through a complete contact API and administrative provisioning. The plan is not implementation
+evidence. Person-only ordinary account eligibility was settled on 2026-09-06; older sections that call it
+an open organizational-account policy are historical. Login uniqueness remains undecided. The testing
+return-session verification referenced below is completed in the newer testing handoff. This planning pass
+changed documentation only and did not rerun SQL tests.
+
 **Testing infrastructure, 2026-09-06:** use [testing-handoff.md](testing-handoff.md) for current .NET/MSTest commands,
 configuration, coverage continuity, migration execution evidence and the pending return-session verification checklist.
 The maintained Python/sqlcmd runner and console entry point have been replaced by `src/overmind.sln` and

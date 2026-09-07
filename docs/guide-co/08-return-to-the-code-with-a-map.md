@@ -44,6 +44,11 @@ One naming trap from the sibling projects: CFUS uses `entity_history` for its th
 
 ## Where the implementation stands
 
+For the next work, use the [contact/API master plan](../contact-api-master-plan.md), added 2026-09-07.
+It records shared immutable addresses and a persons/organizations-first roadmap; those iterations are
+planned, not implemented. Person-only account eligibility is now decided, with enforcement pending;
+the older open-policy wording below describes this guide's original checkpoint.
+
 At this guide's checkpoint, the email lifecycle is the complete reference family for the declared fresh-schema boundary: insert, update, delete, restore, saved moves, history, actions, reader/diff, unit ownership and restricted database access. Ordinary administrative user creation and contact promotion now preserve type history and make constructed users eligible actors.
 
 The actual application create/drop/create cycle is tested. It uses the normally constructed seed user for email work. The implementing and independent-review reports record passing SQL/C# runs with RCSI off and on. The runner creates and removes generated disposable databases. These results are existing evidence; writing this guide did not run the suite again.
