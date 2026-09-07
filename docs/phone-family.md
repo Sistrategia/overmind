@@ -119,3 +119,7 @@ commands; new integrations should use PhoneInput/PhoneParser and the returned hi
 
 Iteration 4 adds the [full contact reader](contact-profile-and-lifecycle.md) for the declared profile
 and all four child families. Existing channel/standalone reader shapes remain unchanged.
+
+Iteration 5a adds the [integrated service](contact-service.md), which owns trusted context/access
+checks, ordered atomic saves and current/historical reads across the profile and all four families.
+The earlier direct unit/reader examples remain valid backend APIs. HTTP integration is iteration 5b.

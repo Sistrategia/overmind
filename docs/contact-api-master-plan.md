@@ -1,9 +1,9 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, iterations 0–4 complete. Iteration 5a is next; it has not started.
-Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0013 describe the implemented foundation.
+Updated: 2026-09-07, iterations 0–4 complete. Iteration 5a is implemented and undergoing its final full gate.
+Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0014 describe the implemented foundation.
 
-The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–4 on 2026-09-07; later iterations remain planned.
+The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–5a on 2026-09-07; later iterations remain planned.
 
 ## Decisions already made
 
@@ -47,7 +47,7 @@ The order below is a proposal. Contact integration begins with the second family
 | 2 | Complete web-link family | SQL/C# lifecycle, ordering, visibility, history and mixed-family composition work. | Complete; [ADR 0011](adr/0011-web-link-values-and-contact-associations.md) |
 | 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Complete; [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) |
 | 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Complete; [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) |
-| 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Planned |
+| 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Implemented; final gate running; [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) |
 | 5b | Contact HTTP API | Endpoints apply authentication-derived context, authorization, visibility, validation and tested conflict/error responses to the completed service. | Planned |
 | 6 | Administrative user provisioning | New-person/account and existing-person promotion use the contact API contracts, chosen login policy and explicit authorization. | Planned |
 
@@ -140,6 +140,8 @@ Define soft delete/restore semantics and give root snapshots explicit validated 
 For organization relationships, prefer explicit contact identity over names. Decide whether employment/representation belongs in v1. If included, specify cardinality, owning aggregate, locking, history and historical display of the referenced party. Dedicated group membership/hierarchy remains deferred. Preserve legacy behavior outside the new capability without claiming it has acquired these guarantees.
 
 ### 5a. Integrated contact service and coherent reader
+
+The implemented contract is [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md); the [service guide](contact-service.md) gives setup and usage. The criteria below remain the scope of this iteration.
 
 Create service contracts for person/organization creation, supported profile changes, child operations, current detail, historical revision/diff and lifecycle operations. Align domain models and response DTOs with saved order, visibility and revision tokens. The service takes trusted authenticated actor context and always passes its explicitly resolved tenant to the database. Define and test contact-level authorization and visibility decisions here; HTTP authentication supplies this context in 5b, not from request-body actor identifiers.
 
@@ -295,8 +297,36 @@ Final focused tests passed **15/15**; the full gate passed **90/90**, both RCSI 
 **11 min 13 sec**, zero failures/skips or build warnings/errors. All **128** disposable databases
 across seven runs have matching intent/create/identity/removal evidence, with verified post-DROP absence.
 See the [testing record](testing-handoff.md#iteration-4-contact-profiles-and-lifecycle--2026-09-07).
-Fresh-schema/local SQL Server verification only. Next is **iteration 5a: integrated contact service**;
-service/HTTP, discovery, customer upgrades and independent review execution are not delivered here.
+Fresh-schema/local SQL Server verification only. Next at that checkpoint was iteration 5a, implemented below.
+Service/HTTP, discovery, customer upgrades and independent review execution were outside iteration 4.
+
+## Iteration 5a execution record — 2026-09-07
+
+Authorized over committed iteration 4 (`c421d3a`); implementation remains local/uncommitted.
+[ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) and the
+[service guide](contact-service.md) define IContactService/SqlContactService, scoped registration,
+explicit trusted actor/tenant context and required contact-capability authorization. No permissive
+production policy or HTTP registration is installed; the host supplies both context and grants.
+
+One ordered Save composes profile and all four families through one unit/original expected token,
+returning committed final revision and command-indexed child identities. Omitted commands preserve
+state; Replace supplies complete declared fields and NULL clears optional values. No whole-list
+replacement, automatic replay or durable receipt is claimed. New-child ordinals are returned after
+commit; initial order follows insertion order. Domain/state DTOs preserve stable ordinal, saved order
+and visibility without silently round-tripping the older mutable Contact graph.
+
+Current detail contains declared state only; historical detail additionally requires history access.
+Directory detail is a separate projection that hides private/deleted roots, private channels, personal
+profile fields and history/actions. Current revision selection happens inside the full reader's existing
+root barrier; prior result-set shapes remain compatible. Known failures map to service categories while
+cancellation and uncertain commit retain distinct outcomes. SQL still enforces active actor/tenant scope.
+
+Focused verification passed **13/13** including all service scenarios in both RCSI profiles, database-free
+guards and actual schema/DI integration using the normal seeded actor. Final build/discovery passed with
+zero warnings/errors. The **101-test full gate is running**; its completion and resource reconciliation
+will be recorded in the [testing record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
+Next after verification is **iteration 5b: contact HTTP boundary**. Login uniqueness remains deferred
+until provisioning. Customer upgrades, discovery/search, deployment and independent review are separate.
 
 ## Deferred work
 

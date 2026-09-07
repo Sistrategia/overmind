@@ -39,4 +39,6 @@ Iteration 2 adds the [web-link family](../web-link-family.md) and [ADR 0011](../
 
 Iteration 3 adds the [address family](../address-family.md) and [ADR 0012](../adr/0012-immutable-address-values-and-geographic-catalogs.md): complete immutable addresses, scoped immutable geography and coherent four-family reads/saves. Iteration 4 now implements the declared person/organization profile and contact lifecycle.
 
-Iteration 4 adds [contact profiles and lifecycle](../contact-profile-and-lifecycle.md): exact structured-name history, explicit profile replacement, protected soft delete/restore, strict creation and a coherent full reader. [ADR 0013](../adr/0013-contact-profiles-names-and-root-lifecycle.md) records the scope. The integrated service (5a) is next.
+Iteration 4 adds [contact profiles and lifecycle](../contact-profile-and-lifecycle.md): exact structured-name history, explicit profile replacement, protected soft delete/restore, strict creation and a coherent full reader. [ADR 0013](../adr/0013-contact-profiles-names-and-root-lifecycle.md) records the scope. Iteration 5a now composes these operations through the integrated service.
+
+Iteration 5a adds the [integrated contact service](../contact-service.md): ordered atomic saves, coherent current/historical reads, trusted actor/tenant context, explicit contact grants and a separate directory projection. [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md) defines the boundary. HTTP integration (5b) is next.

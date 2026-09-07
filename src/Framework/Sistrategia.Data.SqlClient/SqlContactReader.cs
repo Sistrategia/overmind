@@ -23,6 +23,14 @@ internal sealed record ContactReadParts(ContactChannelsRevision Channels, Contac
 /// <summary>Declared profile plus all child families under one server-owned root barrier.</summary>
 public sealed class SqlContactReader(string connectionString)
 {
+    public async Task<ContactRevision> ReadCurrentAsync(Guid contact, Guid authenticatedActor, Guid tenant,
+        CancellationToken cancellationToken = default) {
+        var result = await new SqlContactChannelsReader(connectionString).ReadCoreAsync(contact, authenticatedActor,
+            null, tenant, null, cancellationToken, includeProfile: true);
+        return new(result.Channels, result.Profile ?? throw new InvalidOperationException("Missing complete profile history."),
+            result.Differences, result.Actions);
+    }
+
     public async Task<ContactRevision> ReadAsync(Guid contact, Guid authenticatedActor, int entityVersion, Guid tenant,
         int? compareEntityVersion = null, CancellationToken cancellationToken = default) {
         var result = await new SqlContactChannelsReader(connectionString).ReadCoreAsync(contact, authenticatedActor,

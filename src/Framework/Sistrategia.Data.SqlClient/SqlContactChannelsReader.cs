@@ -44,7 +44,7 @@ public sealed class SqlContactChannelsReader(string connectionString)
         return (await ReadCoreAsync(contact, authenticatedActor, entityVersion, tenant, compareEntityVersion, cancellationToken)).Channels;
     }
 
-    internal async Task<ContactReadParts> ReadCoreAsync(Guid contact, Guid authenticatedActor, int entityVersion,
+    internal async Task<ContactReadParts> ReadCoreAsync(Guid contact, Guid authenticatedActor, int? entityVersion,
         Guid? tenant, int? compareEntityVersion, CancellationToken cancellationToken, bool includeProfile = false) {
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -52,7 +52,7 @@ public sealed class SqlContactChannelsReader(string connectionString)
         command.Parameters.Add("@contact_public_key", SqlDbType.UniqueIdentifier).Value = contact;
         command.Parameters.Add("@actor", SqlDbType.UniqueIdentifier).Value = authenticatedActor;
         command.Parameters.Add("@tenant", SqlDbType.UniqueIdentifier).Value = (object?)tenant ?? DBNull.Value;
-        command.Parameters.Add("@entity_version", SqlDbType.Int).Value = entityVersion;
+        command.Parameters.Add("@entity_version", SqlDbType.Int).Value = (object?)entityVersion ?? DBNull.Value;
         command.Parameters.Add("@compare_entity_version", SqlDbType.Int).Value = (object?)compareEntityVersion ?? DBNull.Value;
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var email = await SqlContactEmailReader.ReadRowsAsync(reader, cancellationToken);

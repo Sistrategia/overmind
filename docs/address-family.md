@@ -75,7 +75,7 @@ var addressesOnly = await new SqlContactAddressReader(connectionString)
 The composed reader holds one root barrier and reads 13 SQL result sets: root followed by
 state/diff/actions for email, phone, web links and addresses. Earlier standalone APIs keep their
 four-set shapes; the address-only API also has four. Internal readers include private values and
-flags. Root/profile history is still partial, and service/HTTP authorization remains later work.
+flags. The later full reader includes the declared profile/name history; iteration 5a adds service authorization. HTTP integration remains later work.
 
 ## SQL, constructors and permissions
 
@@ -101,8 +101,12 @@ preserve persisted ordinals and leave allocation of new ones to the database.
 
 The [testing handoff](testing-handoff.md#iteration-3-immutable-addresses--2026-09-07) records focused
 and full results, concurrency schedules and disposable-database reconciliation. Iteration 4 now delivers the declared
-person/organization profile and contact lifecycle; the integrated service (5a) is next. Official catalog loading/search,
-customer migration, service/HTTP, and user provisioning remain separate work.
+person/organization profile and contact lifecycle; iteration 5a adds the integrated service. Official catalog loading/search,
+customer migration, HTTP, and user provisioning remain separate work.
 
 Iteration 4 adds the [full contact reader](contact-profile-and-lifecycle.md) for the declared profile
 and all four child families. Existing channel/standalone reader shapes remain unchanged.
+
+Iteration 5a adds the [integrated service](contact-service.md), which owns trusted context/access
+checks, ordered atomic saves and current/historical reads across the profile and all four families.
+The earlier direct unit/reader examples remain valid backend APIs. HTTP integration is iteration 5b.

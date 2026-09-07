@@ -4,6 +4,22 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Iteration 5a implemented; final gate running, 2026-09-07:** authorized over committed iteration 4
+(`c421d3a`), local/uncommitted. [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) and
+the [service guide](contact-service.md) define IContactService/SqlContactService, scoped registration,
+required trusted context and per-contact capabilities. Ordered saves compose profile and all four
+families in one unit and return committed final revision/child identities. Omitted commands preserve
+state; Replace clears omitted optional fields. No automatic retry, receipt or whole-list replacement.
+Current detail excludes history/actions; historical detail requires an additional grant. Directory
+detail uses a separate filtered projection, hiding private/deleted roots and private channels. The
+full reader selects the current version inside its root barrier and keeps its 16 result sets.
+SQL actor/tenant checks still apply; no permissive host policy or HTTP registration is installed.
+Known errors map to service outcomes; cancellation and uncertain commit remain distinct.
+Focused tests passed 13/13; final build/discovery passed with zero warnings/errors. Full gate is running
+with 101 tests (47 per profile plus seven database-free). Complete verification and resource reconciliation
+through the [testing record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
+Next after the gate is 5b HTTP integration; login uniqueness remains deferred until provisioning.
+
 **Iteration 4 complete, 2026-09-07:** authorized over committed iteration 3 (`4f4fd78`),
 local/uncommitted. Read [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) and the
 [profile/lifecycle guide](contact-profile-and-lifecycle.md). Strict person/organization creation and
@@ -19,7 +35,7 @@ private helpers or legacy constructors. Existing constructors/bootstrap capture 
 Final focused tests passed 15/15; full gate passed 90/90 in 11 min 13 sec, both RCSI profiles, zero
 failures/skips or build warnings/errors. All 128 databases across seven executions have verified removal;
 see the [testing record](testing-handoff.md#iteration-4-contact-profiles-and-lifecycle--2026-09-07).
-Next is iteration 5a integrated contact service, not started. Login uniqueness remains deferred until
+Next at that checkpoint was iteration 5a, now implemented above. Login uniqueness remains deferred until
 provisioning. Fresh schemas only; customer upgrades, service/HTTP and independent review remain separate.
 
 **Iteration 3 complete, 2026-09-07:** authorized over `06d177d`; local/uncommitted. Read

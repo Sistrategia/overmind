@@ -150,3 +150,12 @@ rollback. See [ADR 0012](../adr/0012-immutable-address-values-and-geographic-cat
 
 Deleted/locked edits still use 51203 and stale/missing entry versions use 51206. All command failures
 require whole-unit rollback; profile/lifecycle commands do not create a separate transaction inside a unit.
+
+## Service outcomes (iteration 5a)
+
+`ContactServiceException.Failure` maps known database guards to Validation, Forbidden, NotFound,
+Conflict, Dependency or HistoryUnavailable; unknown provider/invariant failures remain Storage.
+`OperationCanceledException` means the operation was cancelled before confirmed commit, including
+SqlClient attention errors. `AuditUnitCommitUncertainException` stays distinct and retains its original
+error/provisional stamp. No automatic retry is performed. See [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md).
+HTTP response mapping and authentication-derived context remain iteration 5b.

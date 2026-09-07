@@ -99,7 +99,11 @@ private helpers and legacy constructors remain restricted.
 ## Verification and next work
 
 See the [testing record](testing-handoff.md#iteration-4-contact-profiles-and-lifecycle--2026-09-07).
-The plan, both explanatory guides and handoffs now point to this profile contract. Next is iteration
-5a, the integrated service with authorization and save contracts, followed by HTTP and provisioning.
+The plan, both explanatory guides and handoffs point to this profile contract. Iteration 5a now adds
+the integrated service with authorization and save contracts; HTTP and provisioning follow.
 This iteration does not publish endpoints or implement relationship/account lifecycle, discovery,
 customer migrations or login uniqueness.
+
+Iteration 5a adds the [integrated service](contact-service.md), which owns trusted context/access
+checks, ordered atomic saves and current/historical reads across the profile and all four families.
+The earlier direct unit/reader examples remain valid backend APIs. HTTP integration is iteration 5b.

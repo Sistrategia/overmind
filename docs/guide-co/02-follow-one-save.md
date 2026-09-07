@@ -95,3 +95,11 @@ A transaction whose commit outcome becomes uncertain is a different case from a 
 For the user, the successful outcome remains simple: one Save produced revision 4 of Lina's contact. The additional records let us explain it later.
 
 [← Chapter 1](01-the-design-you-already-know.md) · [Next: Ask history a question →](03-ask-history-a-question.md)
+
+## Calling this through the service
+
+Iteration 5a now owns these steps in `IContactService.SaveAsync`: resolve trusted context, authorize
+the requested contact operations, open one unit, execute the ordered profile/child commands and return
+committed identities/revision only after commit succeeds. A late failure rolls back the whole Save.
+Omitting commands preserves state; Replace supplies complete declared values, with NULL clearing optional
+fields. The [service guide](../contact-service.md) shows a person creation and a mixed profile/phone/address Save.

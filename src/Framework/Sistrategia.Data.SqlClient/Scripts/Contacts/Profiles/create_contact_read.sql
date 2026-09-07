@@ -4,6 +4,7 @@
 -- Created / Last Update: 2026-Sep-07. Version: 8.0.0.0. See ADR 0013.
 
 -- Complete declared profile and all four channel families, one read transaction.
+-- Explicit NULL @entity_version selects current while holding the coordinator's root barrier (ADR 0014).
 CREATE OR ALTER PROCEDURE [contacts].[contact_read]
     @contact_public_key UNIQUEIDENTIFIER,
     @actor UNIQUEIDENTIFIER,

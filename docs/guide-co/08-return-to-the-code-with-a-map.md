@@ -50,7 +50,7 @@ gates and a persons/organizations-first roadmap. Iteration 0's constructor corre
 [ADR 0008](../adr/0008-constructor-corrections.md). Iteration 1 now adds phone and composed email/phone
 reads; the [phone guide](../phone-family.md) and ADRs 0009–0010 describe the new contracts and verification.
 Iteration 2 adds [web links](../web-link-family.md); iteration 3 adds [immutable addresses](../address-family.md), scoped immutable catalogs and four-family reads/saves. Iteration 4 now adds [profiles and contact lifecycle](../contact-profile-and-lifecycle.md), exact structured names and the full reader.
-The integrated service and HTTP boundary remain planned.
+Iteration 5a now adds the integrated service; the HTTP boundary remains planned for 5b.
 
 At this guide's checkpoint, the email lifecycle is the complete reference family for the declared fresh-schema boundary: insert, update, delete, restore, saved moves, history, actions, reader/diff, unit ownership and restricted database access. Ordinary administrative user creation and contact promotion now preserve type history and make constructed users eligible actors.
 
@@ -85,3 +85,12 @@ The earlier analyses and review exchanges preserve how the reasoning evolved. Th
 For a first human review, revisit Mariana's Save and check three things against the code: both commands share one unit, Lina gets one revision, and reconstruction plus actions explain the result. Then inspect the failure cases that could invalidate those guarantees. That gives the many files a small, concrete purpose.
 
 [← Chapter 7](07-disconnected-branches-and-migrations.md) · [Return to contents](README.md) · [Glossary →](glossary.md)
+
+## Integrated service (iteration 5a)
+
+Start with the [service guide](../contact-service.md) for application code. It combines profile and
+all four child families into one Save, returns committed tokens/identities and selects current detail
+inside one coherent read. Required host context/authorization and separate current/history/directory
+responses establish the boundary for HTTP iteration 5b. [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md)
+records omission/clearing, command order, error and uncertain-commit behavior. Legacy mutable domain
+graphs are not silently treated as complete service snapshots; explicit request/state DTOs are used.

@@ -28,6 +28,36 @@ public abstract class AuditScenarios
     private Task Run(Func<AuditDatabase, Task> scenario) => AuditDatabase.RunAsync(Rcsi, TestContext, scenario);
 
     [TestMethod]
+    public Task ContactServicePersonOrganizationAtomicSaveAndHistory() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactServiceCases.Acceptance(db);
+    });
+
+    [TestMethod]
+    public Task ContactServiceAllFamilyOrderingAndRootLifecycle() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactServiceCases.LifecycleAndOrdering(db);
+    });
+
+    [TestMethod]
+    public Task ContactServiceAuthorizationAndVisibility() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactServiceCases.AccessAndVisibility(db);
+    });
+
+    [TestMethod]
+    public Task ContactServiceValidationRollbackAndCancellation() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactServiceCases.ValidationAndCancellation(db);
+    });
+
+    [TestMethod]
+    public Task ContactServiceCurrentReaderBlocksMixedWriter() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactServiceCases.CurrentReaderConcurrency(db);
+    });
+
+    [TestMethod]
     public Task ContactProfileLifecycleNamesAndComposition() => Run(async db => {
         await ContactProfileCases.Prepare(db);
         await ContactProfileCases.Lifecycle(db);

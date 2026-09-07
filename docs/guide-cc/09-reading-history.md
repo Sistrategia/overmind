@@ -44,7 +44,7 @@ Reading the same thing from a legacy view was the L2 finding in the source intak
 
 ## What it does and does not reconstruct
 
-The email-only call reconstructs email and the root's payload, with historical type. The combined call adds phone state/diff/actions under the same bound and barrier. Addresses, names and roles still lack full reconstruction. Each call reconstructs one aggregate at one revision, not the whole tenant at a point in time; Chapter 3 explains why the ledger cannot promise the latter.
+The email-only call reconstructs email and the root's payload, with historical type. The combined call adds phone state/diff/actions under the same bound and barrier. The later full reader reconstructs addresses and declared profile/names too; relationships and account/role configuration remain outside it. Each call reconstructs one aggregate at one revision, not the whole tenant at a point in time; Chapter 3 explains why the ledger cannot promise the latter.
 
 For migrated data, absence of history may mean "unknown" rather than "empty". The migration design (ADR 0004) carries coverage information; the reader itself does not yet expose it.
 
@@ -53,3 +53,13 @@ For migrated data, absence of history may mean "unknown" rather than "empty". Th
 The read holds a shared lock on the root for its duration and blocks writers of that same contact for a few milliseconds. With the root-leading indexes in place it touches only this contact's history rows. A snapshot-isolation reader that blocks nothing is a possible later profile.
 
 Next: [10. Porting a family](10-porting-a-family.md)
+
+## Service reads (iteration 5a)
+
+`IContactService.ReadCurrentAsync` selects the current revision inside the same root barrier and returns
+declared profile/name and all four child-family states. It requires ReadDetail and excludes action/diff
+payloads. `ReadRevisionAsync` requires ReadDetail plus ReadHistory, and returns the historical comparison
+and globally ordered actions. `ReadDirectoryAsync` is a separate current public-channel projection;
+private/deleted roots are unavailable. See the [service guide](../contact-service.md).
+The full reader keeps its 16 sets; only its explicit NULL revision now selects current. Existing
+channel/standalone calls retain their specified-revision contracts.

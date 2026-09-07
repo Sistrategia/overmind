@@ -7,6 +7,32 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Iteration 5a implemented; final gate running — 2026-09-07:** authorized over committed iteration 4
+(`c421d3a`); local/uncommitted. Read [docs/contact-service.md](docs/contact-service.md) and
+[ADR 0014](docs/adr/0014-integrated-contact-service-and-access-boundary.md). IContactService/SqlContactService
+and scoped AddSqlContactService compose the declared person/organization profile and all four families.
+Requests have no actor/tenant inputs: required host IContactContextAccessor supplies explicit trusted
+context and IContactAuthorizer grants per-contact Create/Edit/Delete/Restore/ReadDetail/ReadHistory/ReadDirectory.
+There is no production allow-all policy or HTTP wiring. Required command permissions are all checked
+before the unit; policies must not infer write access from an unlocked mutable profile snapshot.
+One ordered Save uses one unit/original expected token and returns committed final revision, nullable
+unit stamp and command-indexed retained child identities. Omitted commands preserve state; Replace
+supplies all declared fields, with NULL clearing. No whole-list replacement, intra-request references
+to newly allocated child ordinals, automatic retry or idempotency receipt is implemented.
+Current detail returns state only; historical detail additionally requires history access. Directory
+detail is a separate current public-channel projection and hides private/deleted roots, personal profile
+and history/actions. Current revision selection is inside the full reader's existing root barrier;
+the 16-set full reader and earlier specified-revision reader shapes remain intact. ContactServiceException
+classifies known errors; SQL attention on cancelled requests becomes OperationCanceledException;
+AuditUnitCommitUncertainException passes through unchanged. SQL runtime capability remains contact_runtime.
+Focused tests passed 13/13 including actual schema/DI/normal actor; final Release build/discovery passed
+with zero warnings/errors. The 101-test full gate (47 per RCSI profile plus seven database-free) is running.
+Resume by checking its TRX and reconciling journals before marking complete. Evidence:
+artifacts/test-results/iteration-5a/ (ignored). All 117 copied SQL files match source. Historical probes
+and original fixtures are unchanged. Next after verification is iteration 5b HTTP integration; login
+uniqueness remains deferred until provisioning. Fresh schemas only; no customer upgrade or deployment.
+Do not commit on the author's behalf.
+
 **Iteration 4 complete — 2026-09-07:** authorized over committed iteration 3 (`4f4fd78`),
 local/uncommitted. Read [docs/contact-profile-and-lifecycle.md](docs/contact-profile-and-lifecycle.md)
 and [ADR 0013](docs/adr/0013-contact-profiles-names-and-root-lifecycle.md). Strict contact_change and
@@ -28,7 +54,7 @@ across seven runs have matching intent/create/identity/removal evidence and post
 All 117 copied production SQL files match source. Evidence and corrected early failures are recorded in
 [testing handoff](docs/testing-handoff.md#iteration-4-contact-profiles-and-lifecycle--2026-09-07),
 artifacts/test-results/iteration-4/ (ignored). Historical probes/fixtures are unchanged. Both guides,
-master plan and handoffs are updated. Next is iteration 5a integrated contact service; it has not started.
+master plan and handoffs are updated. Next at that checkpoint was iteration 5a, implemented above.
 Login uniqueness remains deferred until provisioning. Fresh schemas only; no customer migration,
 service/HTTP, deployment or independent review execution is claimed. Do not commit on the author's behalf.
 

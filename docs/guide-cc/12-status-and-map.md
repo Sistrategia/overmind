@@ -15,6 +15,7 @@ Implemented in the working tree, tested by the disposable-database suite in both
 | Web-link family | Exact immutable URLs; contact-owned type, label, display text and visibility; lifecycle/order/history/diffs/actions; `WebLinkInput`, web-link `SqlAuditUnit` methods, `SqlContactWebLinkReader` and composed reads. [Web-link guide](../web-link-family.md). |
 | Address family | Complete immutable values and scoped immutable geographic catalogs; lifecycle/order/history/diffs/actions; `AddressInput`, address `SqlAuditUnit` methods, `SqlContactAddressReader` and composed thirteen-set reads. [Address guide](../address-family.md). |
 | Profile and contact lifecycle | Exact immutable names and complete relational profile history; `contact_change`, `contact_read`, `ContactProfileInput`, contact commands on `SqlAuditUnit`, `SqlContactReader`; protected soft delete/restore and explicit root snapshot operations. [Profile guide](../contact-profile-and-lifecycle.md). |
+| Integrated contact service | `IContactService`, `SqlContactService`, scoped registration, required trusted context/contact policy, ordered atomic saves and distinct current/history/directory responses. [Service guide](../contact-service.md). |
 | Users | `security.user_insert` (create and promote), `user_history` and `user_history_create`, `system_user_bootstrap` |
 | Constructor corrections | Person-only ordinary accounts; unsupported promotion-input rejection; private `contact_company_lookup` with collation-compatible miss protection; actor public-key seeks; occurrence time and actual seed initial-role evidence ([ADR 0008](../adr/0008-constructor-corrections.md)) |
 | Roles and grants | `email_runtime` retains email-only capability; opt-in `contact_channels_runtime` adds phone, web links, addresses and combined reads/writes. The additional opt-in `contact_runtime` role grants profile/lifecycle and full reads. All deny direct data access and private components. |
@@ -69,7 +70,17 @@ lifecycle, integrated contact service (5a), HTTP boundary (5b), then administrat
 composition starts with phone; listing/search is separately tracked. Iteration 0 implements person-only
 eligibility and the bounded constructor corrections; shared immutable address ownership is decided and
 phone, web links and addresses are implemented with final verification recorded in the testing handoff.
-Iteration 4 implements the declared person/organization profile and protected contact lifecycle. The integrated service is next (5a). Login uniqueness is explicitly deferred until provisioning.
+Iteration 4 implements the declared person/organization profile and protected contact lifecycle. Iteration 5a adds the integrated service; HTTP integration is next (5b). Login uniqueness is explicitly deferred until provisioning.
 The master plan and testing handoff record current completion and verification evidence.
 
 [Glossary](glossary.md) · [Index](README.md)
+
+## Integrated service checkpoint (iteration 5a)
+
+`IContactService`, `SqlContactService` and `AddSqlContactService` now compose the declared profile and
+all four child families. The host supplies scoped trusted context and an explicit contact-capability
+policy; saves authorize every required permission and use one unit. Current detail contains state,
+history has a separate permission, and directory detail filters private roots/children into a smaller DTO.
+Current revision selection occurs inside the existing read barrier. See the [service guide](../contact-service.md)
+and [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md). Next is HTTP integration (5b);
+discovery/search, provisioning/login policy and migration remain separate.

@@ -59,3 +59,12 @@ Login uniqueness remains unenforced and explicitly deferred by the author until 
 For the full reasoning: [tenant/actor/catalog policy](../adr/0003-tenant-actor-and-catalog-policy.md), [ordinary construction](../adr/0007-ordinary-user-construction-and-type-history.md) and its [independent review](../user-construction-independent-review.md).
 
 [← Chapter 4](04-why-the-write-path-has-more-steps.md) · [Next: What the audit costs →](06-what-the-audit-costs.md)
+
+## The service access boundary
+
+Iteration 5a requires the host to resolve one authenticated actor and explicit tenant per call through
+`IContactContextAccessor`; its request DTOs contain neither identity. `IContactAuthorizer` grants capabilities
+for the particular contact. SQL still checks actor/tenant validity. Full current detail, historical
+payloads and directory projection have separate permissions; directory visibility additionally hides
+private/deleted roots and private child associations. See [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md).
+No default allow policy or HTTP authentication integration is installed by this service.

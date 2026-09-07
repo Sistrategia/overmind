@@ -44,6 +44,14 @@ BEGIN
         BEGIN
             THROW 51202, 'Target contact does not exist in this tenant.', 1;
         END
+        -- Full-contact current reads resolve the revision while holding the same root barrier.
+        -- Existing family readers continue to require an explicit revision.
+        IF @include_profile=1 AND @entity_version IS NULL
+        BEGIN
+            SELECT @entity_version = [entity_version]
+            FROM [entities].[entity]
+            WHERE [entity_id] = @contact_id AND [tenant_id] = @tenant_id;
+        END
         SET @bound=(SELECT [dbrow_version] FROM [entities].[entity_version_history]
             WHERE [entity_id]=@contact_id AND [entity_version]=@entity_version AND [tenant_id]=@tenant_id);
         IF @bound IS NULL

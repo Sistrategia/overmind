@@ -18,7 +18,7 @@ dotnet build src/overmind.sln -c Release --no-restore
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --list-tests
 ```
 
-**Authoritative full command: both real database profiles and database-free tests**, currently 90 discovered tests (42 per profile, 2 batch-parser tests and one database-free validation scenario each for phone, web link, address and contact profile):
+**Authoritative full command: both real database profiles and database-free tests**, currently 101 discovered tests (47 per profile, 2 batch-parser tests and one database-free validation scenario each for phone, web link, address, contact profile and contact service):
 
 ```powershell
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
@@ -32,7 +32,7 @@ For a backend-only build/test scope, target the project directly: `dotnet test s
 # Representative focused existing scenario, RCSI off (one test).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
 
-# Complete integration profile, independently selectable (42 tests each).
+# Complete integration profile, independently selectable (47 tests each).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
 
@@ -104,15 +104,19 @@ Methods in [AuditScenarios.cs](../src/tests/AuditTests/AuditScenarios.cs) are in
 | Iteration 3: contact/user initial address, full widths, promotion/orphan rejection, tenant/stale checks and permissions | `AddressConstructionAndPermissions` |
 | Iteration 3: pause before address component after preceding three families, observe root-barrier writer blocking and coherent state | `AddressComposedReaderHoldsFourFamilies` |
 | Iteration 3: same-value miss blocking/reuse and distinct catalog/address progress before holder commit | `AddressCatalogMissConcurrencyAndDistinctProgress` |
-
 | Iteration 4: initial profile/all four families, exact names, clearing/no-op/revert, soft delete/restore and explicit history operations | `ContactProfileLifecycleNamesAndComposition` |
 | Iteration 4: input/native rejection, whole rollback, actor/tenant/stale checks, runtime grants and unavailable profile coverage | `ContactProfileValidationRollbackAndPermissions` |
 | Iteration 4: promotion/profile composition, protected accounts/relationships, exact legacy names and preserved company data | `ContactProfileDependenciesAndLegacyNames` |
 | Iteration 4: actual blocked deletion/promotion in both orders and failed company-reference construction after deletion | `ContactProfileDeletionPromotionAndRelationshipRaces` |
 | Iteration 4: pause before profile component after four child families, observe writer blocking, verify coherent before/after | `ContactProfileReaderHoldsAllFamilies` |
 | Iteration 4: same-name miss blocking/reuse and unrelated name progress before holder commit | `ContactProfileNameMissConcurrencyAndDistinctProgress` |
+| Iteration 5a: person/organization create with four families, mixed save, old/current history/diff/actions, stale token and failing-last-command rollback | `ContactServicePersonOrganizationAtomicSaveAndHistory` |
+| Iteration 5a: all child lifecycle/order dispatch, root delete/restore, retained ordinals and saved positions | `ContactServiceAllFamilyOrderingAndRootLifecycle` |
+| Iteration 5a: policy grants/denials, current/history separation, public/private projections and valid cross-tenant target rejection | `ContactServiceAuthorizationAndVisibility` |
+| Iteration 5a: invalid C#/SQL input, late-command rollback, failed creation, SQL attention cancellation and whole rollback | `ContactServiceValidationRollbackAndCancellation` |
+| Iteration 5a: choose current revision inside root barrier; pause after four families and observe mixed service writer blocking | `ContactServiceCurrentReaderBlocksMixedWriter` |
 
-Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. `AddressValidationTests.AddressRepresentationsAndExactDomainState` covers alternate street representations, widths, Unicode rejection and exact domain state. `ContactProfileValidationTests.ContactProfileExactFieldsAndCategoryValidation` adds exact profile widths, Unicode, required names and category-specific validation. These do not substitute for SQL audit tests.
+Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. `AddressValidationTests.AddressRepresentationsAndExactDomainState` covers alternate street representations, widths, Unicode rejection and exact domain state. `ContactProfileValidationTests.ContactProfileExactFieldsAndCategoryValidation` adds exact profile widths, Unicode, required names and category-specific validation. `ContactServiceValidationTests.ContactServiceRejectsMissingContextAndDeniedCommandsBeforeConnection` verifies missing context, per-command preauthorization and bounded request rejection before opening SQL. These do not substitute for SQL audit tests.
 
 The four original SQL fixtures retain their scenario sequences. The original review-probe integration replaced supplied promotion contact names with explicit NULL and added fixture-shape assertions without production changes; iteration 0 subsequently adds the production corrections documented here. [SchemaFiles.cs](../src/tests/AuditTests/SchemaFiles.cs) retains the runner's production script list and dependency order, with files copied from production source at build time. `SeedAsync(1..4)` loads allocation → email → saved order → user construction **on the current test's database**, with a fresh SQL connection per fixture as before. Tests requiring only email stop at stage 2. Saved-order and user-reader cases intentionally run after their own SQL fixture stage. The native concurrency schedule remains grouped because its roots progress through revisions 1–4; the C# shared-unit and lifetime sequences retain their intentional within-scenario state. No test depends on another discovered test.
 
@@ -519,3 +523,43 @@ Ignored evidence: `artifacts/test-results/iteration-4/{schema,schema-2,schema-3,
 `discovery.txt`, `verify-evidence.ps1` and `verification.json`. `git diff --check` and changed-document
 relative links passed. Fresh-schema/local SQL Server verification only; customer upgrade/backfill,
 remote CI/deployment, service/HTTP and independent review execution remain unexecuted.
+
+## Iteration 5a integrated contact service — 2026-09-07
+
+Authorized over committed iteration 4 (`c421d3a`); local/uncommitted. [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md)
+and the [service guide](contact-service.md) define explicit host actor/tenant context and contact
+capabilities, ordered atomic Save, committed identities/tokens and separate current/history/directory
+responses. Current revision selection occurs inside the existing full reader's root barrier; result
+set counts and specified-revision family readers remain compatible.
+
+Five new SQL scenarios run under both RCSI profiles. They cover person/organization creation with
+all four families, mixed profile/phone/address Save, old/current revisions and combined diff/actions,
+stale-token rejection and rollback after a failing final command. Other cases exercise all child
+lifecycle/order commands, root delete/restore, complete retention/order, omitted commands, clearing,
+no-ops, all-or-nothing authorization, private/public projection, separate detail/history permission,
+valid actors attempting another tenant's target, invalid context and actual blocked SQL cancellation.
+The current reader test pauses after the four child components and observes a mixed service writer
+blocked on its root before verifying coherent before/after state. No timing-only assumption is used.
+
+One new database-free test proves missing context and denied later commands reject before any SQL
+connection, and exercises null/empty/oversized command requests and pre-cancellation. Actual schema-cycle
+coverage resolves the service through scoped DI and uses the normally constructed seed actor to create
+and read a complete organization. Historical SQL fixtures and archived review probes are unchanged.
+The existing full suite retains actual terminated-session uncertain-commit and unit-lifetime coverage;
+the service preserves that exception type and does not add a separate commit implementation or retry.
+
+| Run | Result | Scope/correction |
+| --- | --- | --- |
+| Initial focused | 9/11, 1 min 26 sec | All non-cancellation cases passed. SqlClient reported blocked-command attention as SqlException; the service now normalizes it to cancellation when the request token is cancelled, preserving the separate uncertain-commit path. |
+| Corrected focused | **13/13**, **1 min 55 sec** | Ten service SQL cases, database-free guards and both actual schema cycles; zero failures/skips. |
+| Final full gate | Running | Expected 101 tests: 47 SQL scenarios per RCSI profile and seven database-free tests. |
+
+Final Release build/discovery passed with zero warnings/errors; no dependency changed. All **117**
+production SQL files copied into the final test output match source hashes. The final build additionally
+classifies concurrent unique-key collisions as Conflict and documents SQL NULL current-version selection.
+No production/test source changed after that build and the start of the full gate.
+
+Ignored evidence: `artifacts/test-results/iteration-5a/{focused,focused-2,full}/`, `discovery.txt`,
+`verify-evidence.ps1` and final `verification.json`. Full execution and cleanup reconciliation are pending
+completion of the running gate. Fresh-schema/local SQL Server verification only; HTTP/authentication
+integration, customer upgrades, remote deployment and independent review execution remain separate.

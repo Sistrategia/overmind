@@ -1,5 +1,8 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
+using Sistrategia.Data.SqlClient.Contacts;
+using Overmind.AuditTests;
 using Sistrategia.Data;
 using Sistrategia.Data.SqlClient;
 using Sistrategia.Overmind.Data.SqlClient;
@@ -111,6 +114,18 @@ internal static class SchemaCycle
         using var command=new SqlCommand("SELECT person_first_name FROM contacts.contact_view WHERE public_key=@key;",connection);
         command.Parameters.AddWithValue("@key",created.PublicKey);
         if ((string?)await command.ExecuteScalarAsync()!="ERNESTO ") throw new Exception("Current contact view changed exact name spelling.");
+        var services = new ServiceCollection();
+        services.AddScoped<IContactContextAccessor>(_ => new ContactServiceCases.Context(new(actor, tenant)));
+        services.AddScoped<IContactAuthorizer>(_ => new ContactServiceCases.Policy());
+        services.AddSqlContactService(connectionString);
+        using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
+        using var scope = provider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IContactService>();
+        var organization = await service.CreateAsync(new(new(2, "Service organization"), ContactServiceCases.Initial(true)));
+        var detail = await service.ReadCurrentAsync(organization.PublicKey);
+        if (detail.EntityVersion != 1 || detail.Profile.ContactTypeId != 2 || detail.Addresses.Count != 1 ||
+            detail.Phones.Count != 1 || detail.Emails.Count != 1 || detail.WebLinks.Count != 1)
+            throw new Exception("Actual schema service did not create/read the complete declared contact.");
     }
 
     private static async Task AssertPrincipalAsync(string connectionString) {
