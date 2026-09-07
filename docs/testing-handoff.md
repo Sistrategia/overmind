@@ -18,7 +18,7 @@ dotnet build src/overmind.sln -c Release --no-restore
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --list-tests
 ```
 
-**Authoritative full command: both real database profiles and database-free tests**, currently 53 discovered tests (25 per profile, 2 batch-parser tests and 1 phone-parser scenario):
+**Authoritative full command: both real database profiles and database-free tests**, currently 64 discovered tests (30 per profile, 2 batch-parser tests, 1 phone-parser scenario and 1 web-link validation/domain scenario):
 
 ```powershell
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
@@ -32,11 +32,11 @@ For a backend-only build/test scope, target the project directly: `dotnet test s
 # Representative focused existing scenario, RCSI off (one test).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
 
-# Complete integration profile, independently selectable (25 tests each).
+# Complete integration profile, independently selectable (30 tests each).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
 
-# Database-free, LIMITED SCOPE: two batch-parser tests and phone parsing, no SQL behavior verification.
+# Database-free, LIMITED SCOPE: two batch-parser tests, phone parsing and web-link validation/domain state, no SQL behavior verification.
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=Infrastructure'
 ```
 
@@ -92,6 +92,11 @@ Methods in [AuditScenarios.cs](../src/tests/AuditTests/AuditScenarios.cs) are in
 | Iteration 1: contact/user construction, full widths, malformed native payloads, stale/tenant errors, private helper denial and opt-in read capability | `PhoneConstructionAndReaderPermissions` |
 | Iteration 1: pause between family components, observe writer blocked behind root barrier, verify coherent before/after states | `PhoneComposedReaderHoldsRootAcrossFamilies` |
 | Iteration 1: actual blocked same-number miss and distinct-number progress before holder commit | `PhoneCanonicalMissConcurrencyAndDistinctProgress` |
+| Iteration 2: exact URL/metadata, shared-value isolation, no-op/revert, order, delete/restore, final history, standalone/composed reads and mixed action order | `WebLinkLifecycleAndExactHistoricalValues` |
+| Iteration 2: invalid URL/metadata, native SQL rejection, mixed save rollback and no dictionary leaks | `WebLinkValidationAndMixedRollback` |
+| Iteration 2: contact/user construction and widths, promotion/orphan rejection, stale/tenant failures, private helper denial and runtime capability | `WebLinkConstructionAndPermissions` |
+| Iteration 2: pause before web-link results after email/phone, observe writer blocking and coherent before/after three-family state | `WebLinkComposedReaderHoldsAllFamilies` |
+| Iteration 2: blocked same-URL miss, differing association metadata, distinct URL progress before holder commit | `WebLinkExactMissConcurrencyAndDistinctProgress` |
 
 Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. These do not substitute for SQL audit tests.
 
@@ -380,3 +385,36 @@ For races reuse `db.ConcurrentAsync`, `Signal` and `WaitSignal` in `AuditDatabas
 - [x] Confirm cleanup of that returning run's exact owned databases using its journals and the executed post-DROP server-state assertions.
 
 Completed by the returning implementation agent's own inspection and executions recorded above, independently of the migration author's earlier runs. Revalidate affected coverage after future code changes; this is a dated checkpoint, not a claim about later revisions.
+
+## Iteration 2 web links — 2026-09-07
+
+Authorized implementation over `00c72f2`; local working tree, not committed by this task.
+The author confirmed stable ordinal identity and separate display_order position. [ADR 0011](adr/0011-web-link-values-and-contact-associations.md)
+and the [web-link guide](web-link-family.md) define exact immutable HTTP/HTTPS URLs, association metadata,
+the trusted URI-validation boundary and the composed reader's appended web-link result sets.
+
+Five inherited SQL scenarios run under RCSI off and on; one new database-free scenario validates
+URI policy and domain identity/order/visibility change tracking. The actual application schema cycle
+also performs a normally constructed seed user's mixed email/web-link save and reconstructs all
+three channel families. Existing email/phone tests and historical review probes remain intact.
+
+| Run | Result | Scope |
+| --- | --- | --- |
+| Initial sandbox schema run | 0/2; connection failed before CREATE | Windows SqlClient encryption unavailable in the sandbox; no SQL logic executed. |
+| Local schema run | 2/2 | Same encrypted integrated-auth configuration outside the sandbox; real create/drop/recreate. |
+| Focused | 11/11 | Five web-link scenarios under both profiles and database-free validation/domain state. |
+| Final full gate | **64/64**, **6 min 38 sec** | All 30 SQL scenarios per profile and four database-free tests; includes added historical replacement and actual schema-cycle mixed-save assertions. |
+
+Final build/discovery passed, zero warnings/errors; final tests have zero failures/skips. No package
+dependency changed. All **74 distinct created databases** across successful-connect runs have matching
+intent/create/engine-identity/removal evidence, with post-DROP absence checks. The two exact names from
+the initial connection failures had intent-only records; a separate read-only query against
+`sys.databases` verified both absent. There was no recovery deletion or broad prefix scan.
+Final full run owns 62 databases (31 per profile, including bootstrap's additional database).
+
+Ignored evidence: `artifacts/test-results/iteration-2/{schema,schema-local,focused,full}/`;
+`schema/absence-verification.json`, `verify-evidence.py` and `verification.json`. Reconciliation covers
+76 exact names / 152 original-and-attachment journal copies, zero unresolved resources. All 81
+production SQL files present in final test output match source hashes. `git diff --check` passed.
+Fresh-schema/local SQL Server verification only; no customer upgrade, remote CI/deployment,
+independent review execution, full contact HTTP API or provisioning claim.

@@ -4,10 +4,10 @@ Previous: [8. Actors, tenants and users](08-actors-tenants-and-users.md) · [Ind
 
 ## One call, one revision
 
-Iteration 1 adds `SqlContactChannelsReader` for one coherent email/phone read and merged action order.
+Iterations 1–2 add `SqlContactChannelsReader` for one coherent email/phone/web-link read and merged action order.
 The email-only API below retains its behavior. Both delegate transaction ownership to the shared
 coordinator, which holds the root barrier before invoking private family components. See the
-[phone/composed-reader guide](../phone-family.md) for the seven-set contract and C# example.
+[web-link/composed-reader guide](../web-link-family.md) for the ten-set contract and C# example.
 
 ```csharp
 var history  = new SqlContactEmailReader(connectionString);

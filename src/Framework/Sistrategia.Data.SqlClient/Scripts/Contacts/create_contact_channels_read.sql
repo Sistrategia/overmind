@@ -12,5 +12,5 @@ BEGIN
     EXEC [contacts].[contact_channels_read_core]
         @contact_public_key=@contact_public_key, @actor=@actor, @entity_version=@entity_version,
         @tenant=@tenant, @compare_entity_version=@compare_entity_version,
-        @include_email=1, @include_phone=1;
+        @include_email=1, @include_phone=1, @include_web_link=1;
 END;

@@ -46,6 +46,7 @@ public class WebLinkCollection : IEnumerable<WebLink>
                 webLink.LinkType = value.LinkType;
                 webLink.LocationName = value.LocationName;
                 webLink.DisplayText = value.DisplayText;
+                webLink.IsPublic = value.IsPublic;
             }
         }
     }
@@ -91,7 +92,8 @@ public class WebLinkCollection : IEnumerable<WebLink>
             throw new ArgumentNullException(nameof(webLink));
 
         entityList.Add(webLink);
-        webLink.Ordinal = entityList.IndexOf(webLink) + 1;
+        // New identity is allocated only by the audited writer; retain loaded identities.
+        webLink.DisplayOrder ??= entityList.Count;
     }
 
     /// <summary>
@@ -108,9 +110,9 @@ public class WebLinkCollection : IEnumerable<WebLink>
             throw new ArgumentNullException(nameof(linkType));
 
         var webLink = new WebLink {
-            Url = url.Trim(),
-            LinkType = linkType.ToLowerInvariant(),
-            LocationName = locationName?.Trim()
+            Url = url,
+            LinkType = linkType,
+            LocationName = locationName
         };
         Add(webLink);
         return webLink;

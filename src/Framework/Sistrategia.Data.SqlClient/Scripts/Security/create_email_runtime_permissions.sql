@@ -53,3 +53,16 @@ DENY EXECUTE ON [contacts].[contact_phone_read_rows] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_phone_write] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_phone_history_sync] TO [email_runtime];
 DENY EXECUTE ON [contacts].[phone_values_ensure] TO [email_runtime];
+
+-- The contact-channel capability includes web links; email-only capability remains unchanged.
+DENY EXECUTE ON [contacts].[web_link_values_ensure] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_web_link_history_sync] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_web_link_write] TO [email_runtime];
+GRANT EXECUTE ON [contacts].[contact_web_link_change] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[contact_web_link_insert] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[web_link_update] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[web_link_delete] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[web_link_restore] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[web_link_move] TO [contact_channels_runtime];
+DENY EXECUTE ON [contacts].[contact_web_link_read_rows] TO [email_runtime];
+GRANT EXECUTE ON [contacts].[contact_web_link_read] TO [contact_channels_runtime];

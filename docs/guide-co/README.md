@@ -34,3 +34,5 @@ This guide teaches the model. The [primary design](../dbrow_version-allocation-d
 Those documents serve different purposes; you do not need to read them chronologically. Chapter 8 gives you a small selection for each kind of question, including the latest review's unresolved findings.
 
 **Begin with [The design you already know →](01-the-design-you-already-know.md).**
+
+Iteration 2 adds the [web-link family](../web-link-family.md) and [ADR 0011](../adr/0011-web-link-values-and-contact-associations.md): exact URLs, saved order/history and composed email/phone/web-link reads and saves.

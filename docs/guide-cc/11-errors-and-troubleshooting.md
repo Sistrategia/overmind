@@ -106,3 +106,15 @@ All custom errors are `THROW` with numbers in the 51000 range, grouped by layer.
 3. Treat a failed unit as gone. Discard every output value, roll back, start a new unit.
 
 Next: [12. Status and map](12-status-and-map.md)
+
+## Web-link additions (iteration 2)
+
+| Error | Meaning | Response |
+| --- | --- | --- |
+| 51800 | Missing, overlong or structurally invalid HTTP/HTTPS URL | Validate with WebLinkInput; preserve the accepted value without silent rewriting. |
+| 51801 / 51817 | Label exceeds 100 / display text exceeds 256 UTF-16 units | Correct input; SQL accepts wide parameters so it can reject before truncation. |
+| 51818 | Constructor web-link metadata supplied without a URL | Supply a complete initial link or omit its metadata. |
+| 51819 | Invalid link-type token | Use NULL or 1–50 lowercase ASCII letters, digits, underscores or hyphens. |
+
+Other 518xx lifecycle/order/catalog-lock errors mirror the email/phone guards. Any command error
+requires whole-unit rollback; an expired optimistic token is not fixed by retrying inside that unit.

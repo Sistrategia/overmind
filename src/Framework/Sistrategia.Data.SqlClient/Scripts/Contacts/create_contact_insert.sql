@@ -66,6 +66,11 @@ CREATE OR ALTER PROCEDURE [contacts].[contact_insert] (
     ,@auto_create_person_company    BIT = 1	 
     ,@supress_event_message         BIT = 0	 
     ,@phone_data                    NVARCHAR(MAX) = NULL
+    ,@web_link_url NVARCHAR(MAX) = NULL
+    ,@web_link_type NVARCHAR(MAX) = NULL
+    ,@web_link_location_name NVARCHAR(MAX) = NULL
+    ,@web_link_display_text NVARCHAR(MAX) = NULL
+    ,@web_link_is_public BIT = NULL
 )
 AS
 BEGIN
@@ -329,6 +334,35 @@ BEGIN
 
             INSERT INTO [contacts].[contact_address] ([contact_id],[ordinal],[address_id],[location_id])
             VALUES (@contact_id, 1, @address_id, @address_location_id)
+        END
+
+        IF @web_link_url IS NULL AND (@web_link_type IS NOT NULL OR @web_link_location_name IS NOT NULL
+            OR @web_link_display_text IS NOT NULL OR @web_link_is_public IS NOT NULL)
+        BEGIN
+            THROW 51818, 'Initial web-link metadata requires a URL.', 1;
+        END
+        IF @web_link_url IS NOT NULL
+        BEGIN
+            DECLARE @web_link_actor INT=(SELECT [modified_by] FROM [data].[dbrow_version]
+                WHERE [tenant_id]=@tenant_id AND [dbrow_version]=@dbrow_version);
+            DECLARE @web_link_ordinal INT=NULL, @web_link_revision INT, @web_link_id INT;
+            SET @web_link_is_public=COALESCE(@web_link_is_public,0);
+            EXEC [contacts].[contact_web_link_write]
+                @operation = 'insert',
+                @contact_id = @contact_id,
+                @tenant_id = @tenant_id,
+                @actor_entity_id = @web_link_actor,
+                @expected_entity_version = 0,
+                @url = @web_link_url,
+                @link_type = @web_link_type,
+                @location_name = @web_link_location_name,
+                @display_text = @web_link_display_text,
+                @is_public = @web_link_is_public,
+                @ordinal = @web_link_ordinal OUTPUT,
+                @dbrow_version = @dbrow_version OUTPUT,
+                @entity_version = @web_link_revision OUTPUT,
+                @web_link_id = @web_link_id OUTPUT,
+                @show_in_timeline = 0;
         END
 
         IF @phone_number IS NOT NULL OR @phone_area_code IS NOT NULL OR @numbers_only IS NOT NULL OR @full_phone IS NOT NULL

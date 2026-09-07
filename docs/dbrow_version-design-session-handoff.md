@@ -4,6 +4,16 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Iteration 2 complete, 2026-09-07:** authorized over `00c72f2`. The author retained ordinal identity
+and display_order position. [ADR 0011](adr/0011-web-link-values-and-contact-associations.md) and the
+[web-link guide](web-link-family.md) describe exact immutable URLs, association metadata, full lifecycle,
+constructor integration and ten-set composed reads across email/phone/web links. Final build/discovery
+and full gate passed 64/64, both RCSI profiles, zero failures/skips or build warnings/errors, 6 min 38 sec.
+All 74 created databases have verified removal; two initial connection-failure intent names were
+separately verified absent. See the [testing record](testing-handoff.md#iteration-2-web-links--2026-09-07).
+Next is iteration 3, immutable addresses; not started. Login scope remains deferred until provisioning.
+The earlier checkpoint below retains its original verification evidence.
+
 **Iteration 1 implementation, 2026-09-07:** the author approved canonical international phone identity,
 preserved input, optional LADA decomposition and qualified numbering geography, then authorized iteration 1.
 [ADR 0009](adr/0009-phone-values-parsing-and-numbering-geography.md),
@@ -14,7 +24,7 @@ All 142 distinct disposable databases across seven runs have verified removal re
 [testing handoff](testing-handoff.md#iteration-1-phone-and-composed-reader--2026-09-07).
 No phone-derived geography is copied into contact addresses. Optional geographic-ID mapping tables are empty
 pending a sourced dataset. The new opt-in contact_channels_runtime role preserves email-only capability.
-Next after the iteration's completion is web links; no later iteration has started.
+Next at that checkpoint was web links, now delivered in iteration 2 above.
 
 **Iteration 0 complete, 2026-09-07:** the author authorized the bounded corrections in the
 [master plan](contact-api-master-plan.md); [ADR 0008](adr/0008-constructor-corrections.md) is the current

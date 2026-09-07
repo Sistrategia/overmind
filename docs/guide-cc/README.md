@@ -35,3 +35,5 @@ This guide is the easy entry. The precise contracts live in the ADRs under `docs
 For the current .NET test commands and migration verification evidence, start with the [testing handoff](../testing-handoff.md), updated 2026-09-06. It also contains the pending verification checklist for the returning implementation session.
 
 Start with [Chapter 1](01-from-old-to-new.md).
+
+Iteration 2 adds the [web-link family](../web-link-family.md) and [ADR 0011](../adr/0011-web-link-values-and-contact-associations.md): exact URLs, saved order/history and composed email/phone/web-link reads and saves.

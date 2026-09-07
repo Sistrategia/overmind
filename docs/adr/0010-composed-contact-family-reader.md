@@ -2,6 +2,10 @@
 
 Date: 2026-09-07. Status: implemented and verified for fresh schemas.
 
+The seven-set description below records iteration 1. [ADR 0011](0011-web-link-values-and-contact-associations.md)
+extends the composed API to ten sets and the contact-channel role to web links in iteration 2;
+the ownership/barrier contract and standalone email/phone shapes are unchanged.
+
 The public email-only reader retains its own SERIALIZABLE transaction and four result sets.
 A composed email/phone coordinator uses the same root resolution, shared clustered root-key
 barrier and revision bounds, acquired once before any family reconstruction. Private family

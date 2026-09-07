@@ -58,7 +58,12 @@ CREATE OR ALTER PROCEDURE [security].[user_insert]
     @expected_entity_version INT = NULL,
     @entity_version INT = NULL OUTPUT,
     @phone_data NVARCHAR(MAX) = NULL,
-    @user_id INT = NULL OUTPUT
+    @user_id INT = NULL OUTPUT,
+    @web_link_url NVARCHAR(MAX) = NULL,
+    @web_link_type NVARCHAR(MAX) = NULL,
+    @web_link_location_name NVARCHAR(MAX) = NULL,
+    @web_link_display_text NVARCHAR(MAX) = NULL,
+    @web_link_is_public BIT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -160,6 +165,8 @@ BEGIN
                 OR @person_job_title IS NOT NULL OR @person_company IS NOT NULL
                 OR @person_gender_code IS NOT NULL OR @person_birth_date IS NOT NULL
                 OR @person_marital_status IS NOT NULL OR @email_location_name IS NOT NULL
+                OR @web_link_url IS NOT NULL OR @web_link_type IS NOT NULL OR @web_link_location_name IS NOT NULL
+                OR @web_link_display_text IS NOT NULL OR @web_link_is_public IS NOT NULL
                 OR @phone_data IS NOT NULL OR @phone_location_name IS NOT NULL OR @phone_number IS NOT NULL
                 OR @phone_area_code IS NOT NULL OR @phone_extension IS NOT NULL
                 OR @numbers_only IS NOT NULL OR @full_phone IS NOT NULL
@@ -232,6 +239,11 @@ BEGIN
                 @email_address = @email,
                 @phone_location_name = @phone_location_name,
                 @phone_data = @phone_data,
+                @web_link_url = @web_link_url,
+                @web_link_type = @web_link_type,
+                @web_link_location_name = @web_link_location_name,
+                @web_link_display_text = @web_link_display_text,
+                @web_link_is_public = @web_link_is_public,
                 @phone_number = @phone_number,
                 @phone_area_code = @phone_area_code,
                 @phone_extension = @phone_extension,

@@ -7,6 +7,26 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Iteration 2 complete — 2026-09-07:** authorized over `00c72f2`, local/uncommitted.
+The author explicitly retained ordinal identity and display_order position. Read
+[docs/web-link-family.md](docs/web-link-family.md) and [ADR 0011](docs/adr/0011-web-link-values-and-contact-associations.md).
+Web links use exact immutable HTTP/HTTPS URL values (2048 UTF-16 units), hash candidates plus full
+binary/length equality and transaction miss locks. Type (50 lowercase ASCII token), display text (256),
+label reference (100) and restrictive visibility belong to the contact association. No URL rewriting.
+WebLinkInput validates inside SqlAuditUnit admission; native adapters must use equivalent complete URI
+validation before SQL structural guards. Full lifecycle/order/history/diff/actions, constructor/promotion
+integration and checked FKs are implemented. The composed reader now returns ten sets across email,
+phone and web links under one root barrier. Standalone email/phone shapes remain unchanged; a standalone
+web-link SQL/C# reader is added. contact_channels_runtime adds web links; email_runtime stays email-only.
+Domain WebLink tracks order/visibility and exact values; collection insertion no longer allocates ordinal.
+Final build/discovery and full gate passed 64/64 (30 per RCSI profile plus four database-free), zero
+failures/skips or build warnings/errors, 6 min 38 sec. All 74 created databases have verified removal;
+two initial sandbox encryption-failure intent names separately verified absent. Evidence:
+artifacts/test-results/iteration-2/ (ignored), including verification.json and absence-verification.json
+under schema/. All 81 copied production SQL scripts match source. Both guides, plan and handoffs updated.
+Next is iteration 3 immutable addresses; not started. Login uniqueness remains deferred to provisioning.
+Fresh schemas only; no customer migration, HTTP, independent review execution or sibling-project change.
+
 **Iteration 1 complete — 2026-09-07:** authorized after the author's phone discussion,
 over committed iteration 0 (`78e2d9e`). Read [docs/phone-family.md](docs/phone-family.md),
 [ADR 0009](docs/adr/0009-phone-values-parsing-and-numbering-geography.md) and

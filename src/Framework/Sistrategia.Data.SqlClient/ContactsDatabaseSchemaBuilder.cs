@@ -29,7 +29,7 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Addresses.create_address_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Phones.create_phone_numbering_schema.sql");
-        // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_schema.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_schema.sql");
         // // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.create_contact_load_schema.sql");
 
         // // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Customers.create_customer_schema.sql");
@@ -73,6 +73,18 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Phones.create_contact_phones_as_of.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_email_read_rows.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Phones.create_contact_phone_read_rows.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_values_ensure.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_contact_web_link_history_sync.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_contact_web_link_write.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_contact_web_link_change.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_contact_web_link_insert.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_update.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_delete.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_restore.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_move.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_contact_web_links_as_of.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_contact_web_link_read_rows.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_contact_web_link_read.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.create_contact_channels_read_core.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Phones.create_contact_phone_read.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.create_contact_channels_read.sql");
@@ -121,6 +133,19 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void DropSchemaFunctions() {
+        DropProcedureIfExists("contacts", "contact_web_link_read");
+        DropProcedureIfExists("contacts", "contact_web_link_read_rows");
+        DropFunctionIfExists("contacts", "contact_web_links_as_of");
+        DropProcedureIfExists("contacts", "web_link_move");
+        DropProcedureIfExists("contacts", "web_link_restore");
+        DropProcedureIfExists("contacts", "web_link_delete");
+        DropProcedureIfExists("contacts", "web_link_update");
+        DropProcedureIfExists("contacts", "contact_web_link_insert");
+        DropProcedureIfExists("contacts", "contact_web_link_change");
+        DropProcedureIfExists("contacts", "contact_web_link_write");
+        DropProcedureIfExists("contacts", "contact_web_link_history_sync");
+        DropProcedureIfExists("contacts", "web_link_values_ensure");
+
         DropProcedureIfExists("contacts", "contact_email_read");
         DropProcedureIfExists("contacts", "contact_channels_read");
         DropProcedureIfExists("contacts", "contact_phone_read");
@@ -200,6 +225,13 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void DropSchemaTables() {
+        DropTableIfExists("contacts", "contact_web_link_action");
+        DropTableIfExists("contacts", "contact_web_link_history");
+        DropTableIfExists("contacts", "contact_web_link");
+        DropTableIfExists("contacts", "contact_web_link_identity");
+        DropTableIfExists("contacts", "web_link_location");
+        DropTableIfExists("contacts", "web_link");
+
 
         // DropTableIfExists("documents", "contact_documents");
         // DropTableIfExists("documents", "contact_document_role");

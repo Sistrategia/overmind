@@ -99,8 +99,16 @@ internal static class SchemaCycle
         await using (var unit = await SqlAuditUnit.BeginAsync(connectionString, user)) {
             var added = await unit.InsertEmailAsync(user, 1, "card-principal@example.test");
             await unit.MakeEmailPrincipalAsync(user, 1, added.Ordinal);
+            await unit.InsertWebLinkAsync(user, 1, new("https://example.test/secondary", "website"));
+            var principalLink = await unit.InsertWebLinkAsync(user, 1, new("https://example.test/principal", "website", "Profile"));
+            await unit.MakeWebLinkPrincipalAsync(user, 1, principalLink.Ordinal);
             await unit.CommitAsync();
         }
+        var channels = await new SqlContactChannelsReader(connectionString).ReadAsync(user, user, 2, compareEntityVersion: 1);
+        if (channels.WebLinks.Count != 2 || channels.WebLinks[0].Url != "https://example.test/principal"
+            || channels.WebLinkActions.Count != 3 || channels.EmailRevision.Emails[0].Email != "card-principal@example.test"
+            || channels.Phones.Count != 1)
+            throw new Exception("Actual schema cycle lost composed channels or saved principal order.");
         await using (var unit = await SqlAuditUnit.BeginAsync(connectionString, actor)) {
             await unit.InsertEmailAsync(actor, 1, "actor-secondary@example.test");
             var principal = await unit.InsertEmailAsync(actor, 1, "actor-principal@example.test");

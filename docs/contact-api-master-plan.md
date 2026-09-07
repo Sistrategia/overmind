@@ -1,9 +1,9 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, iterations 0 and 1 complete. Iteration 2 onward has not started.
-Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0010 describe the implemented foundation.
+Updated: 2026-09-07, iterations 0–2 complete. Iteration 3 onward has not started.
+Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0011 describe the implemented foundation.
 
-The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0 and 1 on 2026-09-07; later iterations remain planned.
+The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–2 on 2026-09-07; later iterations remain planned.
 
 ## Decisions already made
 
@@ -20,7 +20,7 @@ The goal is to grow the email reference into a coherent contact API for persons 
 | Phone identity and parsing | Complete international identity; preserve raw input and versioned interpretation separately. Explicit country for national/split input, optional LADA decomposition and qualified numbering geography. See [ADR 0009](adr/0009-phone-values-parsing-and-numbering-geography.md). |
 | Delivery scope | Build on fresh-schema SQL Server support first. Customer upgrades, synchronization and additional providers remain separate deliverables. Preserve the portable behavioral contracts. |
 
-Email's existing stable ordinal plus separate saved order is the proposed convention for the new child lists: first saved item is default, insert/restore append, and delete closes gaps. Family-specific deviations, if needed, must be explicit. Labels and visibility are association metadata, not part of the shared address's identity; confirm their precise address representation in iteration 3.
+The author explicitly retained stable ordinal identity plus separate display_order position as the convention for the new child lists: first saved item is default, insert/restore append, and delete closes gaps. Family-specific deviations, if needed, must be explicit. Labels and visibility are association metadata, not part of the shared address's identity; confirm their precise address representation in iteration 3.
 
 ## Starting position
 
@@ -44,7 +44,7 @@ The order below is a proposal. Contact integration begins with the second family
 | --- | --- | --- | --- |
 | 0 | Bounded correction pass and current baseline | Constructor findings in scope have atomic rejection/concurrency regressions; existing full gate passes. | Complete; [ADR 0008](adr/0008-constructor-corrections.md) |
 | 1 | Complete phone family and shared reader boundary | As-of/diff/actions and C# reads prove email/phone state at the same revision; mixed saves have one revision, global action order and whole rollback. | Complete; [ADRs 0009](adr/0009-phone-values-parsing-and-numbering-geography.md)/[0010](adr/0010-composed-contact-family-reader.md) |
-| 2 | Complete web-link family | SQL/C# lifecycle, ordering, visibility, history and mixed-family composition work. | Planned |
+| 2 | Complete web-link family | SQL/C# lifecycle, ordering, visibility, history and mixed-family composition work. | Complete; [ADR 0011](adr/0011-web-link-values-and-contact-associations.md) |
 | 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Planned |
 | 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Planned |
 | 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Planned |
@@ -219,7 +219,25 @@ removal records; [testing evidence](testing-handoff.md#iteration-1-phone-and-com
 Geographic-ID mapping tables are deliberately empty pending a sourced dataset; parser metadata already
 provides qualified numbering-region/area grouping. Fresh schemas only; no customer migration, phone UI,
 HTTP API, account-phone workflow or independent review execution is claimed. Login uniqueness remains
-deferred until provisioning. Next is iteration 2, web links; it has not started.
+deferred until provisioning. Next at that checkpoint was iteration 2, now authorized and implemented below.
+
+## Iteration 2 execution record — 2026-09-07
+
+Authorized over `00c72f2`, after the author confirmed ordinal identity and display_order position.
+[ADR 0011](adr/0011-web-link-values-and-contact-associations.md) records exact immutable HTTP/HTTPS
+URLs, contact-owned type/display text/label/visibility and the validation boundary. Full lifecycle,
+historical state/diffs/actions, constructor/promotion integration, grants and C# commands/readers are
+implemented. The shared reader adds web links after email/phone under the same root barrier.
+Domain objects retain exact values and stop allocating ordinal identities in collection insertion.
+The [usage guide](web-link-family.md) describes the ten-result-set composed reader and native contract.
+
+Focused web-link tests passed 11/11; the initial real schema cycle passed 2/2. The final full gate
+passed **64/64**, both RCSI profiles, zero failures/skips or build warnings/errors, **6 min 38 sec**.
+All **74 created databases** have verified removal evidence; two initial sandbox connection-failure
+intent names were separately checked absent. See the [testing record](testing-handoff.md#iteration-2-web-links--2026-09-07).
+Next is iteration 3, immutable addresses; it has
+not started. Login uniqueness remains deferred until provisioning. Fresh schemas only; no HTTP,
+customer upgrade, sibling-project change or independent review execution is claimed.
 
 ## Planning revision record
 

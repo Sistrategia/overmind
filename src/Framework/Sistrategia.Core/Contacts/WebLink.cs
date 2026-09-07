@@ -41,11 +41,23 @@ public class WebLink
     }
 
     /// <summary>
-    /// The ordinal position of this web link within the contact's collection.
+    /// Stable local identity of this web-link association, retained across moves and restoration.
     /// </summary>
     public int? Ordinal {
         get { return CurrentData.Ordinal; }
         set { CurrentData.Ordinal = value; }
+    }
+
+    /// <summary>One-based saved position; position 1 is principal.</summary>
+    public int? DisplayOrder {
+        get => CurrentData.DisplayOrder;
+        set => CurrentData.DisplayOrder = value;
+    }
+
+    /// <summary>Directory-display eligibility, subject to application authorization.</summary>
+    public bool IsPublic {
+        get => CurrentData.IsPublic;
+        set => CurrentData.IsPublic = value;
     }
 
     /// <summary>
@@ -53,7 +65,7 @@ public class WebLink
     /// </summary>
     public string? Url {
         get { return CurrentData.Url; }
-        set { CurrentData.Url = value?.Trim(); }
+        set { CurrentData.Url = value; }
     }
 
     /// <summary>
@@ -61,7 +73,7 @@ public class WebLink
     /// </summary>
     public string? LinkType {
         get { return CurrentData.LinkType; }
-        set { CurrentData.LinkType = value?.ToLowerInvariant()?.Trim(); }
+        set { CurrentData.LinkType = value; }
     }
 
     /// <summary>
@@ -69,7 +81,7 @@ public class WebLink
     /// </summary>
     public string? LocationName {
         get { return CurrentData.LocationName; }
-        set { CurrentData.LocationName = value?.Trim(); }
+        set { CurrentData.LocationName = value; }
     }
 
     /// <summary>
@@ -77,7 +89,7 @@ public class WebLink
     /// </summary>
     public string? DisplayText {
         get { return CurrentData.DisplayText; }
-        set { CurrentData.DisplayText = value?.Trim(); }
+        set { CurrentData.DisplayText = value; }
     }
 
     /// <summary>
@@ -110,6 +122,8 @@ public class WebLink
 
         public Guid? ContactPublicKey;
         public int? Ordinal;
+        public int? DisplayOrder;
+        public bool IsPublic;
         public string? Url;
         public string? LinkType;
         public string? LocationName;
@@ -119,6 +133,8 @@ public class WebLink
             return new WebLinkData {
                 ContactPublicKey = ContactPublicKey,
                 Ordinal = Ordinal,
+                DisplayOrder = DisplayOrder,
+                IsPublic = IsPublic,
                 Url = Url,
                 LinkType = LinkType,
                 LocationName = LocationName,
@@ -129,6 +145,8 @@ public class WebLink
         public void CopyValuesFrom(WebLinkData source) {
             ContactPublicKey = source.ContactPublicKey;
             Ordinal = source.Ordinal;
+            DisplayOrder = source.DisplayOrder;
+            IsPublic = source.IsPublic;
             Url = source.Url;
             LinkType = source.LinkType;
             LocationName = source.LocationName;
@@ -139,6 +157,8 @@ public class WebLink
             if (other is null) return false;
             return ContactPublicKey == other.ContactPublicKey
                 && Ordinal == other.Ordinal
+                && DisplayOrder == other.DisplayOrder
+                && IsPublic == other.IsPublic
                 && Url == other.Url
                 && LinkType == other.LinkType
                 && LocationName == other.LocationName
@@ -150,7 +170,7 @@ public class WebLink
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(ContactPublicKey, Ordinal, Url, LinkType, LocationName, DisplayText);
+            return HashCode.Combine(ContactPublicKey, Ordinal, Url, LinkType, LocationName, DisplayText, DisplayOrder, IsPublic);
         }
     }
 
