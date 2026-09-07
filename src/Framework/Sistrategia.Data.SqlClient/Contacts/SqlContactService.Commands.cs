@@ -2,7 +2,7 @@ namespace Sistrategia.Data.SqlClient.Contacts;
 
 public sealed partial class SqlContactService
 {
-    private static async Task<(int Version, ContactCommandIdentity? Identity)> ApplyAsync(SqlAuditUnit unit,
+    internal static async Task<(int Version, ContactCommandIdentity? Identity)> ApplyAsync(SqlAuditUnit unit,
         Guid contact, int expected, ContactCommand command, int index, CancellationToken cancellationToken) {
         switch (command) {
             case ReplaceContactProfile c:

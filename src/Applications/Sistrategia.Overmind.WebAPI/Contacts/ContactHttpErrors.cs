@@ -23,7 +23,9 @@ public static class ContactHttpErrors
     }
 
     public static async Task Boundary(HttpContext context, RequestDelegate next) {
-        if (!context.Request.Path.StartsWithSegments("/api/contacts")) { await next(context); return; }
+        if (!context.Request.Path.StartsWithSegments("/api/contacts") && !context.Request.Path.StartsWithSegments("/api/users")) {
+            await next(context); return;
+        }
         context.Response.Headers.CacheControl = "no-store";
         try { await next(context); }
         catch (Exception error) when (!context.Response.HasStarted) {

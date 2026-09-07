@@ -30,7 +30,7 @@ System User is entity 1, public key `71F092F4-…`, type `user`, `is_system = 1`
 
 **Promotion.** The caller passes the existing contact's public key and its `expected_entity_version`. The constructor locks the root before allocating, refuses a contact that already has an account (51601), is of another entity type (51600), is in another tenant (51202) or is deleted or locked (51203). Only person contacts qualify (51605 on organization/group attempts, also enforced for new accounts). Unsupported contact-detail inputs fail with 51606; pass the legacy required `@full_name=NULL` and account inputs. The constructor then adds the account, sets the entity type, bumps the aggregate once and writes root/account history. Earlier contact state remains untouched. [ADR 0008](../adr/0008-constructor-corrections.md) explains default-valued constructor switches and atomic rejection.
 
-Account email (`security.user.email`) is separate from the contact's email list. On a new account the same address becomes both the first contact email and the account email; afterwards, editing, moving or deleting contact emails never changes login, account email or its confirmation status.
+Account email (`security.user.email`) is separate from the contact's email list. The legacy new-user constructor can initialize both from one address. Iteration 6's provisioning API accepts accountEmail separately and adds contact emails only through explicit commands; editing, moving or deleting those children never changes login, account email or its confirmation status.
 
 **Initial role.** `@user_primary_role` must name exactly one definition that is either global or belongs to this tenant. Unknown, other-tenant or ambiguous names fail (51602); the chosen id is recorded in the creation event's arguments.
 
@@ -41,8 +41,18 @@ Account email (`security.user.email`) is separate from the contact's email list.
 ## What is deferred, and why it matters to you
 
 - **Public self-registration.** The old `@created_by = @public_key` trick that rebound the actor after the insert still exists in the legacy `entity_insert`, but the ordinary constructor never reaches it. A proper self-registration API with reserved entity ids is designed in ADR 0003 and not implemented.
-- **Login uniqueness.** Two accounts can share a login today. The author explicitly deferred scope/normalization until provisioning on 2026-09-07; enforce the chosen contract before exposing that API.
+- **Login uniqueness.** The earlier deferral is resolved by iteration 6: SQL enforces case-insensitive uniqueness within the account's owning tenant. Separate tenants can reuse a login. Authentication itself remains separate.
 - **Account and role lifecycle.** Update, lock, delete, restore, role changes: not implemented, no history writers yet.
 - **Other identity kinds.** Ordinary accounts are person-only. System remains an explicit technical bootstrap; future agent/application identities need a separate contract.
 
 Next: [9. Reading history](09-reading-history.md)
+
+## Later checkpoint: administrative provisioning, iteration 6
+
+The author selected tenant-scoped case-insensitive logins and local password setup. The account's
+tenant is now constrained to its entity, and tenant/login uniqueness is enforced in SQL. Signed
+provisioning and exact-role grants authorize the two new service/HTTP operations; ordinary contact
+editing grants alone do not. Creation and promotion compose contact edits inside the same audit unit.
+The password becomes an Identity V3 salted hash, excluded from general history and responses. Read
+the [provisioning guide](../user-provisioning-api.md); login/token issuance, invitations and recovery
+are still separate work.

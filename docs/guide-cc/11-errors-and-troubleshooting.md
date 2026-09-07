@@ -166,3 +166,9 @@ The [HTTP guide](../contact-http-api.md) maps authentication to 401, grants to 4
 validation to 400, stale/dependency/history-coverage conflicts to distinct 409 codes, and uncertain
 commit to 500/commit_uncertain. Problem responses omit internal exceptions and never advise automatic
 retry. A disconnected caller may have no acknowledgement even after commit succeeds.
+
+Iteration 6 also maps provisioning failures through this HTTP boundary. SQL 51607 is invalid login;
+51608 is missing/oversized backend password hash. Duplicate tenant/login constraints (2601/2627), stale
+revisions and existing-account conflicts become 409. Invalid person categories or role definitions
+become 400; missing provisioning or exact-role grants become 403 before writes. Password hashes and
+plaintext never appear in the response. See [ADR 0016](../adr/0016-tenant-logins-and-administrative-provisioning.md).

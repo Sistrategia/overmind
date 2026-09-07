@@ -24,6 +24,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     public override void CreateSchemaTables() {
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.Application.create_security_application_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.Role.create_security_role_schema.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_login_name_is_valid.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_user_history_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.UserRole.create_security_user_role_schema.sql");
@@ -42,6 +43,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_user_history_create.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_system_user_bootstrap.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_insert.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_user_provision.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.create_email_runtime_permissions.sql");
         // // //RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_create.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Security.User.create_security_user_update_password.sql");
@@ -82,6 +84,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         DropProcedureIfExists("security", "password_reset_token_insert");
         DropProcedureIfExists("security", "user_update_password");
         DropProcedureIfExists("security", "user_create");
+        DropProcedureIfExists("security", "user_provision");
         DropProcedureIfExists("security", "user_insert");
         DropProcedureIfExists("security", "user_history_create");
         DropProcedureIfExists("security", "user_update_lockout");
@@ -100,6 +103,7 @@ internal class SecurityDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         DropTableIfExists("security", "user_role");
         DropTableIfExists("security", "user_history");
         DropTableIfExists("security", "user");
+        DropFunctionIfExists("security", "login_name_is_valid");
         DropTableIfExists("security", "role_localized");
         DropTableIfExists("security", "role");
         DropTableIfExists("security", "application_localized");

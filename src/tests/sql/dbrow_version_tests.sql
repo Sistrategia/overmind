@@ -187,15 +187,16 @@ IF (SELECT COUNT(*) FROM entities.entity_version_history WHERE dbrow_version=@v)
     THROW 52000, 'Bootstrap company did not reuse the same ledger.', 1;
 
 -- User failure after nested contact success must roll back every layer.
+-- NULL login now rejects before construction; a duplicate exercises the late unique constraint.
 SET @public=NEWID(); SET @v=NULL;
 DECLARE @before INT=(SELECT COUNT(*) FROM data.dbrow_version);
 BEGIN TRY
     EXEC security.user_insert @public_key=@public, @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',
-     @login_name=NULL, @full_name='Failed user', @dbrow_version=@v OUTPUT;
-    THROW 52000, 'Expected user NOT NULL failure.', 1;
+     @login_name=N'NEW-USER', @full_name='Failed user', @dbrow_version=@v OUTPUT;
+    THROW 52000, 'Expected late user login uniqueness failure.', 1;
 END TRY
 BEGIN CATCH
-    IF ERROR_NUMBER() <> 515 THROW;
+    IF ERROR_NUMBER() NOT IN (2601,2627) THROW;
 END CATCH;
 IF @@TRANCOUNT <> 0 OR EXISTS (SELECT 1 FROM entities.entity WHERE public_key=@public)
  OR (SELECT COUNT(*) FROM data.dbrow_version) <> @before

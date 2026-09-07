@@ -7,6 +7,35 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Iteration 6 complete — 2026-09-07:** authorized over `a8cf783`; local/uncommitted.
+The author selected tenant-scoped, case-insensitive logins (generally email-shaped) AND local password
+setup. Read [docs/user-provisioning-api.md](docs/user-provisioning-api.md) and
+[ADR 0016](docs/adr/0016-tenant-logins-and-administrative-provisioning.md). These resolve the earlier login
+deferral and supersede the unaccepted credential-free proposal. Login spelling is retained; the fixed
+Latin1_General_100_CI_AS_KS_WS_SC column and tenant/login unique index define comparison, with no C#
+uppercase identity key or mailbox rewriting. Required account tenant has a composite FK to its entity.
+Ordinary constructor and System bootstrap are updated. New user_provision wrapper is restricted to
+provisioning_runtime; direct legacy construction/table access stays denied to that runtime.
+CreateAsync/PromoteAsync and POST /api/users, /api/users/{contact}/promote compose contact commands and
+account creation in one SqlAuditUnit. The exact initial role ID is separately authorized/locked and kept
+in the creation event. Signed overmind_provision contact/* and overmind_assign_role exact decimal IDs
+are distinct from contact grants. New person needs Create; explicit contact edits need Edit.
+Local passwords require 15–128 UTF-16 units, not all whitespace; Identity V3 PBKDF2-HMAC-SHA512 uses
+220,000 iterations and internal random salt. Identity.Core is updated 8.0.16→8.0.30. No secret is returned
+or written to general history/events; DTO string formatting redacts account input. No login/token
+issuance, invitations, password recovery or first-login forced change is implemented. Tenant must be
+resolved before any future login lookup. Issuer integration does not automatically use local hashes.
+Final focused gate passed 9/9 in 1 min 59 sec after expanded 11/11; build/discovery zero warnings/errors.
+Full gate passed 115/115 (52 per profile plus eleven database-free), zero failures/skips, in 14 min 52 sec.
+All 144 disposable databases across six development/final runs have verified removal (288 journal copies,
+zero unresolved); evidence artifacts/test-results/iteration-6/ is ignored. All 119 copied SQL scripts
+match source. The database-free selection uses TestCategory!=FullAudit and discovers all eleven cases.
+No production/test source changed after the final build/focused gate. Maintained fixtures
+adapt late-failure/tenant/login inputs; archived probes stay unchanged. Actual schema cycle includes new
+provisioning and persisted capability membership. No customer migration/live issuer/deployment tested.
+No next iteration is authorized beyond this master plan; choose subsequent bounded work with the author.
+Preserve their commit workflow; do not commit on their behalf.
+
 **Iteration 5b complete — 2026-09-07:** authorized over `04a4409`, local/uncommitted.
 Read [docs/contact-http-api.md](docs/contact-http-api.md) and [ADR 0015](docs/adr/0015-contact-http-authentication-and-wire-contract.md).
 ContactApiHosting/ContactsController expose create, atomic Save, current detail, revision/diff/actions and

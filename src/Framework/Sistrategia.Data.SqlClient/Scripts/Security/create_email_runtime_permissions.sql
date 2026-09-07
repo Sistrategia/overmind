@@ -99,3 +99,18 @@ DENY EXECUTE ON [contacts].[contact_names_replace] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_history_snapshot] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_profile_prepare] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_profile_read_rows] TO [email_runtime];
+
+-- Administrative provisioning is a separate, opt-in trusted-backend capability.
+IF DATABASE_PRINCIPAL_ID(N'provisioning_runtime') IS NULL
+BEGIN
+    CREATE ROLE [provisioning_runtime] AUTHORIZATION [dbo];
+END
+IF NOT EXISTS (
+    SELECT 1 FROM sys.database_role_members
+    WHERE role_principal_id = DATABASE_PRINCIPAL_ID(N'contact_runtime')
+        AND member_principal_id = DATABASE_PRINCIPAL_ID(N'provisioning_runtime')
+)
+BEGIN
+    ALTER ROLE [contact_runtime] ADD MEMBER [provisioning_runtime];
+END
+GRANT EXECUTE ON [security].[user_provision] TO [provisioning_runtime];

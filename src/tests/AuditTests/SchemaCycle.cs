@@ -2,6 +2,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Sistrategia.Data.SqlClient.Contacts;
+using Sistrategia.Data.SqlClient.Security;
 using Overmind.AuditTests;
 using Sistrategia.Data;
 using Sistrategia.Data.SqlClient;
@@ -21,6 +22,7 @@ internal static class SchemaCycle
         } catch (SqlException error) when (error.Number == 2812) { }
         manager.CreateSchema();
         await AssertSeedAsync(connectionString);
+        await AssertProvisioningAsync(connectionString);
         await AssertBusinessRunnerAsync(database, connectionString);
         await AssertPrincipalAsync(connectionString);
         await AssertProfileAsync(connectionString);
@@ -30,6 +32,7 @@ internal static class SchemaCycle
                 CREATE USER email_deployment_test WITHOUT LOGIN;
                 ALTER ROLE email_runtime ADD MEMBER email_deployment_test;
                 ALTER ROLE contact_runtime ADD MEMBER email_deployment_test;
+                ALTER ROLE provisioning_runtime ADD MEMBER email_deployment_test;
                 -- Simulate the removed checkpoint table: drop must still clean up an older dev schema.
                 CREATE TABLE entities.entity_child_sequence (entity_id INT REFERENCES entities.entity(entity_id));
                 """, connection);
@@ -45,11 +48,14 @@ internal static class SchemaCycle
                     THROW 52000, 'DropSchema removed deployment role membership.', 1;
                 IF COALESCE(IS_ROLEMEMBER('contact_runtime','email_deployment_test'),0)<>1
                     THROW 52000, 'DropSchema removed contact capability membership.', 1;
+                IF COALESCE(IS_ROLEMEMBER('provisioning_runtime','email_deployment_test'),0)<>1
+                    THROW 52000, 'DropSchema removed provisioning capability membership.', 1;
                 """, connection);
             await command.ExecuteNonQueryAsync();
         }
         manager.CreateSchema();
         await AssertSeedAsync(connectionString);
+        await AssertProvisioningAsync(connectionString);
         await using (var connection = new SqlConnection(connectionString)) {
             await connection.OpenAsync();
             using var command = new SqlCommand("""
@@ -57,12 +63,25 @@ internal static class SchemaCycle
                     THROW 52000,'Recreation lost deployment role membership.',1;
                 IF COALESCE(IS_ROLEMEMBER('contact_runtime','email_deployment_test'),0)<>1
                     THROW 52000,'Recreation lost contact capability membership.',1;
+                IF COALESCE(IS_ROLEMEMBER('provisioning_runtime','email_deployment_test'),0)<>1
+                    THROW 52000,'Recreation lost provisioning capability membership.',1;
                 IF OBJECT_ID('entities.entity_child_sequence') IS NOT NULL
                     THROW 52000,'Recreation restored the removed counter table.',1;
                 """, connection);
             await command.ExecuteNonQueryAsync();
         }
         Console.WriteLine("PASS C#: real schema cycle, explicit business runner/rollback, contact-card and actor email, login independence, deployment role and legacy cleanup");
+    }
+
+    private static async Task AssertProvisioningAsync(string connectionString) {
+        var actor = Guid.Parse("97A45AEE-EF87-4EFF-98D5-E51195A6669A");
+        var tenant = Guid.Parse("908E5A8C-0372-4EDC-ADDF-011E059091ED");
+        await using var unit = await SqlAuditUnit.BeginAsync(connectionString, actor, tenant);
+        var contact = await unit.CreateContactAsync(new(1, "Provisioned after actual schema creation"));
+        var hash = ProvisioningPassword.CreateHasher().HashPassword(new object(), UserProvisioningCases.Password);
+        var account = await unit.ProvisionUserAsync(contact.PublicKey, 0, "schema-provision@example.test", hash);
+        if (account.EntityVersion != 1) throw new Exception("Actual schema provisioning created an intermediate revision.");
+        await unit.CommitAsync();
     }
 
     private static async Task AssertBusinessRunnerAsync(SqlDatabase database, string connectionString) {

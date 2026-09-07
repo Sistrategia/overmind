@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Sistrategia.Data.SqlClient.Contacts;
+using Sistrategia.Data.SqlClient.Security;
 using Sistrategia.Data.SqlClient.Extensions;
 using Sistrategia.Overmind.Data.SqlClient;
 
@@ -23,6 +24,8 @@ public static class ContactApiHosting
             throw new InvalidOperationException("ContactAuthentication:Authority must be an HTTPS metadata authority.");
         builder.Services.AddSistrategiaSqlDatabase<OvermindSqlDatabaseManager>(builder.Configuration);
         builder.Services.AddSqlContactService(Required(builder.Configuration, "ConnectionStrings:DefaultConnection"));
+        builder.Services.AddSqlUserProvisioning(Required(builder.Configuration, "ConnectionStrings:DefaultConnection"));
+        builder.Services.AddScoped<IUserProvisioningAuthorizer, JwtProvisioningAuthorizer>();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IContactContextAccessor, HttpContactContext>();
         builder.Services.AddScoped<IContactAuthorizer, JwtContactAuthorizer>();

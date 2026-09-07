@@ -54,7 +54,7 @@ The ordinary-user review confirmed correct type history, one revision per unit a
 
 The company-name convenience lookup now protects concurrent misses using tenant-scoped locks compatible with the existing database name comparison. It rechecks the complete name, so a lock-bucket collision adds waiting without merging different companies. Existing ambiguous names are still rejected; a name has not become a universal company identity.
 
-Login uniqueness remains unenforced and explicitly deferred by the author until provisioning. General account/role lifecycle and contact-family expansion remain later work. [ADR 0008](../adr/0008-constructor-corrections.md) records the corrections and their limits; chapter 8 provides the updated status map.
+Login uniqueness was deferred in iteration 0 and is now enforced by iteration 6's tenant-scoped case-insensitive contract below. General account/role lifecycle remains later work. [ADR 0008](../adr/0008-constructor-corrections.md) records the earlier corrections and their limits; chapter 8 provides the updated status map.
 
 For the full reasoning: [tenant/actor/catalog policy](../adr/0003-tenant-actor-and-catalog-policy.md), [ordinary construction](../adr/0007-ordinary-user-construction-and-type-history.md) and its [independent review](../user-construction-independent-review.md).
 
@@ -73,3 +73,13 @@ Iteration 5b supplies those adapters from validated JWT claims: exactly one over
 overmind_tenant, with signed per-contact or tenant-scoped grants. External provider IDs require an
 explicit mapping to database public keys. There is no request-body tenant selector or System fallback.
 See the [HTTP guide](../contact-http-api.md); login/token issuance remains separate.
+
+## Provisioning and login identity, iteration 6
+
+The author has now settled the earlier login deferral: uniqueness is per tenant and ignores case.
+`Ernesto@example.test` and `ernesto@example.test` conflict within one tenant; independent tenants may
+reuse that login. The new account tenant column must match its entity through a composite FK. The
+application resolves tenant before login lookup, so a single-tenant person need not type a tenant name.
+The [provisioning API](../user-provisioning-api.md) also sets a local initial password using a standard
+salted hash and authorizes the selected role separately. That credential is not written into business
+history. Account creation is implemented; login/token issuance and recovery remain future work.

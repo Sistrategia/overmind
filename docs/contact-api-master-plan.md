@@ -1,9 +1,9 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, iterations 0–5b complete. Iteration 6 is next and has not started.
-Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0015 describe the implemented foundation.
+Updated: 2026-09-07, iterations 0–6 complete for their declared scopes. Choose subsequent work from the deferred roadmap below.
+Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0016 describe the implemented foundation.
 
-The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–5b on 2026-09-07; later iterations remain planned.
+The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–6 on 2026-09-07; their declared implementation and verification gates are complete.
 
 ## Decisions already made
 
@@ -49,7 +49,7 @@ The order below is a proposal. Contact integration begins with the second family
 | 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Complete; [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) |
 | 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Complete; [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) |
 | 5b | Contact HTTP API | Endpoints apply authentication-derived context, authorization, visibility, validation and tested conflict/error responses to the completed service. | Complete; [ADR 0015](adr/0015-contact-http-authentication-and-wire-contract.md) |
-| 6 | Administrative user provisioning | New-person/account and existing-person promotion use the contact API contracts, chosen login policy and explicit authorization. | Planned |
+| 6 | Administrative user provisioning | New-person/account and existing-person promotion use the contact API contracts, chosen login policy and explicit authorization. | Complete; [ADR 0016](adr/0016-tenant-logins-and-administrative-provisioning.md) |
 
 Paginated listing/search is a separately tracked contact-discovery deliverable after the service contracts stabilize. It remains part of the broader contact roadmap but does not block coherent detail/history, atomic Save or administrative provisioning. Do not describe the broader contact surface as complete while discovery is still pending.
 
@@ -57,13 +57,13 @@ Paginated listing/search is a separately tracked contact-discovery deliverable a
 
 | When | Decision to resolve | Current position |
 | --- | --- | --- |
-| Iteration 0 discussion | Login uniqueness scope and its tenant-resolution assumptions | **Author explicitly deferred until provisioning, 2026-09-07.** No login constraint or account tenant column is added in iteration 0. Decide and enforce the policy before provisioning exposure. |
+| Iteration 0 discussion | Login uniqueness scope and its tenant-resolution assumptions | **Author selected tenant-scoped, case-insensitive logins in iteration 6, 2026-09-07.** The earlier iteration 0 deferral is resolved; [ADR 0016](adr/0016-tenant-logins-and-administrative-provisioning.md) specifies comparison and the owner-consistent tenant column/constraint. |
 | Before the iteration 0 company fix | Company-name equality and serialization | **Selected in iteration 0:** retain database-collation equality and use tenant-scoped CHECKSUM synchronization buckets with full-predicate recheck. Collisions only add waiting. See ADR 0008 for seeks, collation-drift rejection, tests and tradeoffs. |
 | Before iteration 1 reader implementation | Shared consistent read boundary | Selected: one coordinator-owned SERIALIZABLE transaction and root barrier, private family components and existing as-of functions; [ADR 0010](adr/0010-composed-contact-family-reader.md). |
 | Before iteration 1 phone DDL | Complete phone value identity and derived matching | Selected with the author: E.164 identity, calling code/national strings, preserved input, backend parsing and optional metadata decomposition. Geographic catalog FKs belong to a separate versioned prefix-to-many-places map; no address inheritance. |
 | Before iteration 1 public contracts | Meaning of `is_public` | Directory-display eligibility, subject to root privacy and application authorization; restrictive default. Trusted internal readers retain flags and data. No anonymous endpoint in iteration 1; HTTP enforcement remains in 5b. |
 | Before iteration 3 | Address fields, catalog hierarchy and historical labels | Selected in iteration 3: lines or structured street per value, exact full-field identity, explicit partial scopes and immutable catalog labels; [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md). |
-| Before iterations 4 and 6 | Profile/lifecycle/relationship scope; provisioning/activation scope | Iteration 4 selects explicit profile replacement, protected soft delete/restore, no category conversion or relationship editing. Provisioning scope remains for iteration 6; groups/shared-user membership remain deferred. |
+| Before iterations 4 and 6 | Profile/lifecycle/relationship scope; provisioning/activation scope | Iteration 4 selects explicit profile replacement, protected soft delete/restore, no category conversion or relationship editing. Iteration 6 adds administrative creation/promotion, authorized initial roles and author-requested local password setup. Login/token issuance, invitations and shared-user membership remain deferred. |
 
 ### 0. Corrections before expanding the public constructor boundary
 
@@ -164,6 +164,11 @@ Verify unauthenticated and unauthorized requests, cross-tenant attempts, private
 Track paginated listing and search separately: define filters, stable pagination, tenant/visibility filtering and indexes after service DTOs stabilize. They remain pending contact capabilities, not requirements for passing 5a's audit-mechanism gate or beginning provisioning.
 
 ### 6. Administrative user provisioning
+
+The implemented contract is [ADR 0016](adr/0016-tenant-logins-and-administrative-provisioning.md); the
+[provisioning guide](user-provisioning-api.md) covers the two endpoints, grants and initial passwords.
+The author selected tenant-scoped, case-insensitive logins and local password setup. The earlier
+[preparation proposal](user-provisioning-iteration-6-preparation.md) is retained as dated context.
 
 Provide two clear operations: create a new person with an account, and promote an existing person using its expected revision. Promotion accepts account inputs; callers can compose explicit contact edits in the same unit when authorized. Preserve previous contact history and the existing one-revision promotion behavior.
 
@@ -356,6 +361,26 @@ runs have verified removal (216 journal copies, zero unresolved); details are in
 No SQL/audit mechanism, historical probe or original fixture changed. Next is **iteration 6**, beginning
 with the explicitly deferred login uniqueness/tenant-resolution decision. Listing/search, live issuer
 setup, deployment and customer migrations remain separate work.
+
+## Iteration 6 execution record — 2026-09-07
+
+Authorized over `a8cf783`; implementation remains local/uncommitted. The author selected tenant-scoped,
+case-insensitive logins, generally email-shaped, and local password setup. [ADR 0016](adr/0016-tenant-logins-and-administrative-provisioning.md)
+and the [usage guide](user-provisioning-api.md) record the final contract. Account tenant is constrained
+to its owning entity; a fixed column collation and tenant/login unique index enforce login identity.
+The service supplies two atomic person/account creation and promotion operations, including explicit
+contact edits, a salted Identity V3 local password hash and separately authorized exact initial role.
+HTTP adds signed provisioning/role grants, strict secret-aware input and committed receipts; login/token
+issuance is still separate. System bootstrap, create/drop registration and runtime grants are integrated.
+
+Restore/build/discovery passed with zero warnings/errors; 115 tests are discovered. Focused constructor,
+provisioning and schema-cycle verification passed 11/11; final password/HTTP refinements passed 9/9
+in 1 min 59 sec. The full gate passed **115/115 in 14 min 52 sec**, zero failures/skips, both RCSI profiles.
+All **144** disposable databases across six runs have verified removal (288 journal copies, zero unresolved);
+see the [testing record](testing-handoff.md#iteration-6-administrative-provisioning--2026-09-07). Maintained fixtures
+were adapted for explicit tenant/login constraints without weakening late-rollback or role assertions;
+archived review probes remain unchanged. All milestones in this master plan now meet their declared gates.
+Choose the next bounded scope from the deferred work below.
 
 ## Deferred work
 

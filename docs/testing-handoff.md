@@ -18,7 +18,7 @@ dotnet build src/overmind.sln -c Release --no-restore
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --list-tests
 ```
 
-**Authoritative full command: both real database profiles and database-free tests**, currently 108 discovered tests (49 per profile and ten database-free tests: two batch-parser tests, five family/service validation tests and three HTTP authentication/transport tests):
+**Authoritative full command: both real database profiles and database-free tests**, currently 115 discovered tests (52 per profile and eleven database-free tests: two batch-parser tests, five family/service validation tests and four HTTP authentication/transport tests):
 
 ```powershell
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
@@ -32,12 +32,12 @@ For a backend-only build/test scope, target the project directly: `dotnet test s
 # Representative focused existing scenario, RCSI off (one test).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
 
-# Complete integration profile, independently selectable (49 tests each).
+# Complete integration profile, independently selectable (52 tests each).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
 
 # Database-free, LIMITED SCOPE: parser/family/service guards and HTTP JWT/wire tests; no SQL behavior verification.
-dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=Infrastructure'
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory!=FullAudit'
 ```
 
 Use a fresh results directory per CI run. Reusing a `LogFileName` overwrites the prior TRX. TRX contains test failures, SQL error numbers/batch locations and captured scenario output; resource journals are also attached. Failed cleanup fails the test, reports `CLEANUP FAILED`, and preserves the original scenario error alongside cleanup exceptions. Inspect failures and skipped counts, not just process startup or a results file's existence.
@@ -615,3 +615,54 @@ Every resource has intent, creation, engine identity and verified removal. The r
 only after its post-DROP absence check succeeds. `git diff --check` and changed-document links passed.
 Fresh-schema/local SQL Server and in-process HTTP verification only; live identity-provider metadata,
 key rotation, external TLS/proxy setup, remote CI/deployment and customer upgrades remain unexecuted.
+
+## Iteration 6 administrative provisioning — 2026-09-07
+
+Authorized over `a8cf783`, local/uncommitted. The author selected tenant-scoped, case-insensitive
+logins and local password setup. [ADR 0016](adr/0016-tenant-logins-and-administrative-provisioning.md)
+and the [API guide](user-provisioning-api.md) define the declared scope. Identity.Core changes from
+8.0.16 to 8.0.30; Identity V3 uses PBKDF2-HMAC-SHA512 with 220,000 iterations. Test adapter/SDK/SqlClient
+and the audit-unit allocation/lifetime mechanisms are unchanged.
+
+Three new SQL scenarios run in both profiles: atomic person/account creation and promotion with
+contact edits, history, exact-role evidence, local hash-format/verification/random-salt checks and
+restricted capability; case-insensitive tenant login identity, Unicode equivalence, duplicate
+constructor enforcement, owner/tenant FK, actual competing-login/promotion blocking and unrelated-key
+progress; and real HTTP provisioning/role/edit grants, secret-safe strict JSON, tenant isolation,
+password setup, stale/missing roots and successful new-person/promotion receipts. Existing full-suite
+actor/bootstrap, constructor company/role races, reader coherence and audit cancellation tests remain.
+
+The new database-free test covers OpenAPI's password write-only flag and 21 command alternatives,
+record diagnostic redaction, unsigned-token and forged-hash rejection, and user-route uncertain-commit
+mapping without retry. That last assertion injects the service exception; the existing audit-unit test
+remains evidence for actual terminated-session commit failure. TestHost retains real JWT middleware
+with ephemeral test signing keys/static metadata. No live issuer or external TLS listener is tested.
+
+The actual schema cycle now provisions with the ordinary seeded actor after each creation and preserves
+provisioning_runtime membership through drop/recreate. Maintained fixtures change only as required by
+the contract: synthetic account supplies owner tenant; NULL-login late failure becomes duplicate-login
+late failure; old spaced login aliases become hyphenated aliases with matching assertions. Historical
+review probes remain unchanged. Early failures below are retained, not hidden by overwriting TRX files.
+
+| Run | Result | Scope / correction |
+| --- | --- | --- |
+| Initial schema | 0/4, four failures | Fixed-column collation exposed mixed-collation COALESCE in actor email view; corrected presentation fallback explicitly. |
+| Initial focused | 2/8, six failures | Old fixture expected late NULL-column error; new validation rejected earlier. Replaced with duplicate-login late constraint failure. Both actual schema cycles passed. |
+| Focused 2 | 5/9, four failures | Corrected new test's fixture contact entity-type ID (2), and isolated FK rejection from an earlier duplicate-login violation. No production correction for these assertions. |
+| Expanded focused | **11/11**, **2 min 9 sec** | New provisioning, ordinary constructor compatibility and real schema cycle, both profiles. |
+| Final focused | **9/9**, **1 min 59 sec** | Final 220,000 hash-work-factor assertion, uncertain HTTP commit mapping, provisioning and schema cycle; zero failures/skips. |
+| Final full gate | **115/115**, **14 min 52 sec** | All 52 cases per SQL profile and eleven database-free; zero failures/skips. |
+
+Restore/build/discovery passed with zero warnings/errors. Source was frozen after the final build and
+focused run before starting the full gate. Evidence is under ignored `artifacts/test-results/iteration-6/`:
+separate TRX/resource directories for every run, discovery.txt, verify-evidence.ps1 and verification.json.
+All 119 production SQL files copied into the final build match source. Resource reconciliation passed:
+**144 distinct databases**, **288 original/attached journal copies**, **six runs**, zero unresolved resources.
+The full run owns 106 databases (53 per profile, including bootstrap's additional database); the five
+development/focused runs own 38 combined. Every database has intent, creation, engine identity and
+verified removal; the runner records removal only after its post-DROP absence check succeeds.
+`git diff --check` and changed-document links passed. Database-free discovery confirms eleven cases with
+`TestCategory!=FullAudit`; the narrower Infrastructure category omitted HTTP/service tests and its
+documented command has been corrected. Fresh-schema/local SQL Server only;
+populated customer migration, production load, live login/issuer/TLS, remote CI/deployment and recovery
+remain outside this verification.

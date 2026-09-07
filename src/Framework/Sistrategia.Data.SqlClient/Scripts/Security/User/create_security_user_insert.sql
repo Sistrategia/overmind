@@ -21,7 +21,7 @@ CREATE OR ALTER PROCEDURE [security].[user_insert]
     @image_url NVARCHAR(1024) = NULL,
     @thumbnail_url NVARCHAR(1024) = NULL,
     @is_private BIT = 0,
-    @login_name NVARCHAR(256),
+    @login_name NVARCHAR(MAX),
     @full_name NVARCHAR(256),
     @contact_type_id INT = 1,
     @person_title NVARCHAR(MAX) = NULL,
@@ -65,7 +65,9 @@ CREATE OR ALTER PROCEDURE [security].[user_insert]
     @web_link_display_text NVARCHAR(MAX) = NULL,
     @web_link_is_public BIT = NULL,
     @address_data NVARCHAR(MAX) = NULL,
-    @address_is_public BIT = NULL
+    @address_is_public BIT = NULL,
+    @initial_role_id INT = NULL,
+    @require_existing_contact BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -121,8 +123,17 @@ BEGIN
             THROW 51300, 'Account email must contain 1 to 256 UTF-16 code units.', 1;
         END
 
+        IF [security].[login_name_is_valid](@login_name) = 0
+        BEGIN
+            THROW 51607, 'Login requires 1 to 256 UTF-16 code units without whitespace or controls.', 1;
+        END
+
         -- Resolve by public key, then validate the actual root's tenant under its write lock.
         SELECT @contact_id = [entity_id] FROM [entities].[entity] WHERE [public_key] = @public_key;
+        IF @require_existing_contact = 1 AND @contact_id IS NULL
+        BEGIN
+            THROW 51202, 'Contact does not exist.', 1;
+        END
         IF @contact_id IS NOT NULL
         BEGIN
             EXEC [entities].[entity_write_lock]
@@ -275,6 +286,20 @@ BEGIN
         END
 
         DECLARE @role_id INT = NULL, @role_matches INT;
+        IF @initial_role_id IS NOT NULL
+        BEGIN
+            IF @user_primary_role IS NOT NULL
+            BEGIN
+                THROW 51602, 'Choose an initial role ID or legacy name, not both.', 1;
+            END
+            SELECT @role_id = [role_id]
+            FROM [security].[role] WITH (HOLDLOCK, FORCESEEK)
+            WHERE [role_id] = @initial_role_id AND ([tenant_id] = @tenant_id OR [tenant_id] IS NULL);
+            IF @role_id IS NULL
+            BEGIN
+                THROW 51602, 'Initial role must identify an eligible definition.', 1;
+            END
+        END
         IF @user_primary_role IS NOT NULL
         BEGIN
             -- Hold the eligible definition while assigning it; no cross-tenant or silent name fallback.
@@ -288,8 +313,8 @@ BEGIN
             END
         END
 
-        INSERT [security].[user] ([user_id], [login_name], [password_hash], [password_salt], [email])
-        VALUES (@contact_id, @login_name, @password_hash, @password_salt, @email);
+        INSERT [security].[user] ([user_id], [tenant_id], [login_name], [password_hash], [password_salt], [email])
+        VALUES (@contact_id, @tenant_id, @login_name, @password_hash, @password_salt, @email);
 
         IF @role_id IS NOT NULL
         BEGIN

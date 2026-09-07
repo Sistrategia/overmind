@@ -14,7 +14,7 @@ SELECT e.[entity_id]
     , mde.[public_key] AS [modified_by_public_key]	 
     , COALESCE(mdalias.[name], mde.[display_name]) AS [modified_by_display_name] -- person_alias
 --  , mde.[display_name] AS [modified_by_display_name]
-    , COALESCE(em.[email_address], md.[login_name]) AS [modified_by_email]
+    , COALESCE(em.[email_address], md.[login_name] COLLATE DATABASE_DEFAULT) AS [modified_by_email]
 --  , md.[email_address] AS [modified_by_email] -- posiblemente debería ser este
     , mde.[thumbnail_url] AS [modified_by_thumbnail_url]
     , e.[locked], e.[validated]

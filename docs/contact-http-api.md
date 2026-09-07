@@ -148,4 +148,8 @@ The old schema tools require Development mode, `Development:EnableSchemaEndpoint
 signed `overmind_schema_admin=true` grant. Ordinary contact grants cannot invoke them.
 
 See the [testing record](testing-handoff.md#iteration-5b-contact-http-boundary--2026-09-07).
-Next is iteration 6: settle login uniqueness/tenant resolution, then administrative provisioning.
+Iteration 6 supplies administrative provisioning; its guide is linked below.
+
+Iteration 6 now adds [administrative provisioning](user-provisioning-api.md), including tenant-scoped
+case-insensitive login constraints and local initial passwords. Its separate signed provisioning/role
+grants do not follow automatically from contact access. Login/token issuance remains separate.

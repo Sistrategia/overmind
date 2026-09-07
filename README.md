@@ -7,5 +7,6 @@ coverage and verification evidence, and CI/Kudu examples.
 
 The [contact HTTP guide](docs/contact-http-api.md) documents the authenticated detail/edit/history API,
 required issuer configuration, signed tenant/actor grants and atomic Save payloads. Token issuance and
-administrative provisioning remain separate. Development schema endpoints are disabled by default and
+login remain separate. The [provisioning API](docs/user-provisioning-api.md) creates/promotes person accounts
+with tenant-scoped case-insensitive logins, local password hashes and authorized initial roles. Development schema endpoints are disabled by default and
 require their own maintenance grant when explicitly enabled.

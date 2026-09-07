@@ -69,9 +69,9 @@ DECLARE @before INT=(SELECT COUNT(*) FROM data.dbrow_version);
 EXEC dbo.expect_email_error N'EXEC security.user_insert @public_key=''E0000000-0000-0000-0000-000000000034'',@created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@expected_entity_version=1,@login_name=N''locked'',@full_name=N''Locked'';',51203;
 EXEC dbo.expect_email_error N'EXEC security.user_insert @public_key=''E0000000-0000-0000-0000-000000000035'',@created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@expected_entity_version=1,@login_name=N''foreign'',@full_name=N''Foreign'';',51202;
 EXEC dbo.expect_email_error N'EXEC security.user_insert @public_key=''E0000000-0000-0000-0000-000000000036'',@created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@expected_entity_version=1,@login_name=N''type'',@full_name=N''Type'';',51600;
-EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''E0000000-0000-0000-0000-000000000036'',@login_name=N''non-user actor'',@full_name=N''Invalid'';',51201;
-EXEC dbo.expect_email_error N'EXEC security.user_insert @public_key=''E0000000-0000-0000-0000-000000000037'',@created_by=''E0000000-0000-0000-0000-000000000037'',@login_name=N''implicit self'',@full_name=N''Invalid'';',51201;
-EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@tenant=''FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF'',@login_name=N''bad tenant'',@full_name=N''Invalid'';',51200;
+EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''E0000000-0000-0000-0000-000000000036'',@login_name=N''non-user-actor'',@full_name=N''Invalid'';',51201;
+EXEC dbo.expect_email_error N'EXEC security.user_insert @public_key=''E0000000-0000-0000-0000-000000000037'',@created_by=''E0000000-0000-0000-0000-000000000037'',@login_name=N''implicit-self'',@full_name=N''Invalid'';',51201;
+EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@tenant=''FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF'',@login_name=N''bad-tenant'',@full_name=N''Invalid'';',51200;
 IF (SELECT COUNT(*) FROM data.dbrow_version)<>@before THROW 52000,'Rejected construction left audit allocations.',1;
 PRINT 'PASS user: wrong tenant/type, locked root, invalid actor and implicit self-registration fail without System fallback';
 GO
@@ -91,7 +91,7 @@ ROLLBACK;
 IF EXISTS (SELECT 1 FROM entities.entity WHERE public_key=@key) OR EXISTS (SELECT 1 FROM security.user_history WHERE user_id=@id)
     THROW 52000,'Rollback left a user/type/history fragment.',1;
 EXEC dbo.expect_email_error N'BEGIN TRAN; EXEC data.audit_unit_begin;
- EXEC security.user_insert @public_key=''E0000000-0000-0000-0000-000000000038'',@created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''provisional actor'',@full_name=N''Provisional actor'';
+ EXEC security.user_insert @public_key=''E0000000-0000-0000-0000-000000000038'',@created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''provisional-actor'',@full_name=N''Provisional actor'';
  EXEC contacts.contact_email_insert @contact_public_key=''E0000000-0000-0000-0000-000000000038'',@created_by=''E0000000-0000-0000-0000-000000000038'',@expected_entity_version=0,@email_address=N''must-rollback@example.test'';',51005;
 IF EXISTS (SELECT 1 FROM entities.entity WHERE public_key=@key) THROW 52000,'Actor mismatch committed provisional user creation.',1;
 PRINT 'PASS user: composed create/promote/email bumps once, rollback removes all layers, same-unit actor rebinding rejected';
@@ -130,7 +130,7 @@ EXEC contacts.contact_insert @public_key='E0000000-0000-0000-0000-000000000042',
     @contact_type_id=2,@tenant='908E5A8C-0372-4EDC-ADDF-011E059091EE',@full_name=N'Constructor scoped company';
 DECLARE @v BIGINT,@id INT,@company INT;
 EXEC security.user_insert @public_key='E0000000-0000-0000-0000-000000000043',@created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',
-    @login_name=N'company user',@full_name=N'Company user',@person_company=N'Constructor scoped company',@dbrow_version=@v OUTPUT,@user_id=@id OUTPUT;
+    @login_name=N'company-user',@full_name=N'Company user',@person_company=N'Constructor scoped company',@dbrow_version=@v OUTPUT,@user_id=@id OUTPUT;
 SET @company=(SELECT to_contact_id FROM contacts.contact_relationship WHERE from_contact_id=@id);
 IF @company IS NULL OR NOT EXISTS (SELECT 1 FROM entities.entity e JOIN contacts.contact c ON c.contact_id=e.entity_id
     JOIN contacts.contact_history h ON h.contact_id=e.entity_id AND h.dbrow_version=e.dbrow_version
@@ -139,10 +139,10 @@ IF @company IS NULL OR NOT EXISTS (SELECT 1 FROM entities.entity e JOIN contacts
 IF (SELECT COUNT(*) FROM entities.entity_version_history WHERE dbrow_version=@v)<>2
     THROW 52000,'User/company creation did not share one audit unit.',1;
 UPDATE entities.entity SET locked=SYSUTCDATETIME() WHERE entity_id=@company;
-EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''locked company user'',@full_name=N''Invalid'',@person_company=N''Constructor scoped company'';',51203;
+EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''locked-company-user'',@full_name=N''Invalid'',@person_company=N''Constructor scoped company'';',51203;
 UPDATE entities.entity SET locked=NULL WHERE entity_id=@company;
 EXEC contacts.contact_insert @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',@contact_type_id=2,@full_name=N'Constructor scoped company';
-EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''ambiguous company user'',@full_name=N''Invalid'',@person_company=N''Constructor scoped company'';',51313;
+EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''ambiguous-company-user'',@full_name=N''Invalid'',@person_company=N''Constructor scoped company'';',51313;
 PRINT 'PASS user: tenant-scoped company reference, company creation history, inactive/ambiguous company rejection';
 GO
 
@@ -153,15 +153,15 @@ INSERT security.[role] (tenant_id,role_name,display_name,description) VALUES
  (1,N'Creation ambiguous',N'Local duplicate',N'Test');
 DECLARE @v BIGINT,@id INT,@role INT=(SELECT role_id FROM security.[role] WHERE role_name=N'Creation global');
 EXEC security.user_insert @public_key='E0000000-0000-0000-0000-000000000039',@created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',
-    @login_name=N'global role user',@full_name=N'Global role',@user_primary_role=N'Creation global',@dbrow_version=@v OUTPUT,@user_id=@id OUTPUT;
+    @login_name=N'global-role-user',@full_name=N'Global role',@user_primary_role=N'Creation global',@dbrow_version=@v OUTPUT,@user_id=@id OUTPUT;
 IF NOT EXISTS (SELECT 1 FROM security.user_role WHERE user_id=@id AND role_id=@role)
     OR NOT EXISTS (SELECT 1 FROM entities.event WHERE subject_id=@id AND dbrow_version=@v AND TRY_CONVERT(INT,JSON_VALUE(event_args,'$.initial_role_id'))=@role)
     THROW 52000,'Initial global role assignment lost its creation evidence.',1;
-EXEC security.user_insert @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',@login_name=N'local role user',@full_name=N'Local role',@user_primary_role=N'Creation local';
-EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''foreign role user'',@full_name=N''Invalid'',@user_primary_role=N''Creation foreign'';',51602;
-EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''ambiguous role user'',@full_name=N''Invalid'',@user_primary_role=N''Creation ambiguous'';',51602;
-EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''unknown role user'',@full_name=N''Invalid'',@user_primary_role=N''Missing creation role'';',51602;
-IF EXISTS (SELECT 1 FROM security.[user] WHERE login_name IN (N'foreign role user',N'ambiguous role user',N'unknown role user'))
+EXEC security.user_insert @created_by='71F092F4-3A35-463D-9589-E5EE1373F7D5',@login_name=N'local-role-user',@full_name=N'Local role',@user_primary_role=N'Creation local';
+EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''foreign-role-user'',@full_name=N''Invalid'',@user_primary_role=N''Creation foreign'';',51602;
+EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''ambiguous-role-user'',@full_name=N''Invalid'',@user_primary_role=N''Creation ambiguous'';',51602;
+EXEC dbo.expect_email_error N'EXEC security.user_insert @created_by=''71F092F4-3A35-463D-9589-E5EE1373F7D5'',@login_name=N''unknown-role-user'',@full_name=N''Invalid'',@user_primary_role=N''Missing creation role'';',51602;
+IF EXISTS (SELECT 1 FROM security.[user] WHERE login_name IN (N'foreign-role-user',N'ambiguous-role-user',N'unknown-role-user'))
     THROW 52000,'Invalid initial role left an account behind.',1;
 EXECUTE AS USER='email_app';
 BEGIN TRY EXEC entities.entity_history_snapshot 1,1,1; THROW 52000,'Runtime can rewrite root history.',1;

@@ -44,4 +44,6 @@ Iteration 4 adds [contact profiles and lifecycle](../contact-profile-and-lifecyc
 
 Iteration 5a adds the [integrated contact service](../contact-service.md): ordered atomic saves, coherent current/historical reads, trusted actor/tenant context, explicit contact grants and a separate directory projection. [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md) defines the boundary. Iteration 5b now supplies the HTTP boundary.
 
-Iteration 5b adds the [contact HTTP API](../contact-http-api.md) and [ADR 0015](../adr/0015-contact-http-authentication-and-wire-contract.md): validated bearer JWTs, signed actor/tenant/grants, strict ordered Save payloads and deliberate error responses. No token issuance or live issuer is configured. Iteration 6 begins with the deferred login/provisioning decisions.
+Iteration 5b adds the [contact HTTP API](../contact-http-api.md) and [ADR 0015](../adr/0015-contact-http-authentication-and-wire-contract.md): validated bearer JWTs, signed actor/tenant/grants, strict ordered Save payloads and deliberate error responses. No token issuance or live issuer is configured. Iteration 6 now supplies the administrative provisioning surface below.
+
+Iteration 6 adds the [user provisioning API](../user-provisioning-api.md) and [ADR 0016](../adr/0016-tenant-logins-and-administrative-provisioning.md): tenant-scoped case-insensitive logins, local password setup, explicit provisioning/role grants and one-unit create/promotion. Login/token issuance and recovery remain separate.

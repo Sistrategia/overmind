@@ -138,7 +138,7 @@ public sealed partial class SqlContactService : IContactService
     }
     private static ContactServiceException Invalid(string message) => new(ContactFailure.Validation, message);
 
-    private static async Task<T> ExecuteAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken) {
+    internal static async Task<T> ExecuteAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken) {
         try { return await action(); }
         catch (ArgumentException error) { throw new ContactServiceException(ContactFailure.Validation, error.Message, error); }
         // SqlClient can report command attention as SqlException rather than OperationCanceledException.
@@ -150,11 +150,11 @@ public sealed partial class SqlContactService : IContactService
             var failure = error.Number switch {
                 51200 or 51201 or 229 => ContactFailure.Forbidden,
                 51202 or 51401 or 51306 or 51706 or 51806 or 51906 => ContactFailure.NotFound,
-                51203 or 51204 or 51206 or 52006 or 1205 or 2601 or 2627 or
+                51601 or 51603 or 51203 or 51204 or 51206 or 52006 or 1205 or 2601 or 2627 or
                 51307 or 51707 or 51807 or 51907 => ContactFailure.Conflict,
                 52007 => ContactFailure.Dependency,
                 51402 or 52010 or 51309 or 51709 or 51809 or 51909 => ContactFailure.HistoryUnavailable,
-                52000 or 52001 or 52004 or 52005 => ContactFailure.Validation,
+                51602 or 51605 or 51606 or 51607 or 51608 or 52000 or 52001 or 52004 or 52005 => ContactFailure.Validation,
                 51300 or 51301 or 51305 or 51310 or 51700 or 51701 or 51705 or 51710 or 51717 or
                 51800 or 51801 or 51805 or 51810 or 51817 or 51819 or
                 51900 or 51901 or 51905 or 51910 or 51920 or 51921 or 51923 => ContactFailure.Validation,

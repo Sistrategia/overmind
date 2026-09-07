@@ -17,6 +17,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Sistrategia.Data.SqlClient.Contacts;
+using Sistrategia.Data.SqlClient.Security;
 using Sistrategia.Overmind.WebAPI.Contacts;
 
 namespace Overmind.AuditTests;
@@ -30,7 +31,8 @@ internal sealed class ContactHttpHost : IAsyncDisposable
     private WebApplication app = null!;
     internal HttpClient Client { get; private set; } = null!;
     internal static async Task<ContactHttpHost> Start(string connectionString = UnusedConnection,
-        IContactService? service = null, string environment = "Testing", bool schemaEnabled = false) {
+        IContactService? service = null, string environment = "Testing", bool schemaEnabled = false,
+        IUserProvisioningService? provisioningService = null) {
         var host = new ContactHttpHost();
         try {
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions {
@@ -53,6 +55,7 @@ internal sealed class ContactHttpHost : IAsyncDisposable
             builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
                 options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(configuration));
             if (service is not null) builder.Services.AddScoped<IContactService>(_ => service);
+            if (provisioningService is not null) builder.Services.AddScoped<IUserProvisioningService>(_ => provisioningService);
             host.app = builder.Build();
             ContactApiHosting.ConfigurePipeline(host.app);
             await host.app.StartAsync();
@@ -64,7 +67,8 @@ internal sealed class ContactHttpHost : IAsyncDisposable
     internal string Token(IEnumerable<string>? grants = null, Guid? actor = null, Guid? tenant = null,
         string? issuer = null, string? audience = null, bool invalidSignature = false, bool expired = false,
         bool omitTenant = false, bool duplicateActor = false, bool noExpiration = false, bool future = false,
-        bool schemaAdmin = false, bool unsigned = false, bool duplicateTenant = false) {
+        bool schemaAdmin = false, bool unsigned = false, bool duplicateTenant = false,
+        string? provision = null, int? assignRole = null) {
         var claims = new List<Claim> { new(ContactClaims.Actor, (actor ?? ContactProfileCases.Actor).ToString("D")) };
         if (!omitTenant) claims.Add(new(ContactClaims.Tenant, (tenant ?? ContactProfileCases.Tenant).ToString("D")));
         if (duplicateActor) claims.Add(new(ContactClaims.Actor, Guid.NewGuid().ToString("D")));
@@ -72,6 +76,8 @@ internal sealed class ContactHttpHost : IAsyncDisposable
         claims.AddRange((grants ?? Enum.GetValues<ContactPermission>().Select(p => ContactClaims.PermissionName(p) + ":*"))
             .Select(value => new Claim(ContactClaims.Grant, value)));
         if (schemaAdmin) claims.Add(new(ContactClaims.SchemaAdmin, "true"));
+        if (provision is not null) claims.Add(new(JwtProvisioningAuthorizer.ProvisionClaim, provision));
+        if (assignRole is not null) claims.Add(new(JwtProvisioningAuthorizer.AssignRoleClaim, assignRole.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)));
         using var other = invalidSignature ? RSA.Create(2048) : null;
         var key = new RsaSecurityKey(other ?? rsa) { KeyId = "contact-test" };
         var jwt = new JwtSecurityToken(issuer ?? Issuer, audience ?? Audience, claims,

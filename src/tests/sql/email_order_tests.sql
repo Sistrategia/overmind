@@ -9,7 +9,8 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id=OBJECT_ID('entities.ent
 IF NOT EXISTS (SELECT 1 FROM contacts.contact WHERE contact_id=1)
     INSERT contacts.contact (contact_id,contact_type_id,full_name) VALUES (1,1,N'System');
 IF NOT EXISTS (SELECT 1 FROM security.[user] WHERE user_id=1)
-    INSERT security.[user] (user_id,login_name) VALUES (1,N'system');
+    INSERT security.[user] (user_id,tenant_id,login_name)
+    SELECT entity_id,tenant_id,N'system' FROM entities.entity WHERE entity_id=1;
 IF NOT EXISTS (SELECT 1 FROM entities.entity e JOIN contacts.contact c ON c.contact_id=e.entity_id
     JOIN security.[user] u ON u.user_id=e.entity_id WHERE e.entity_id=1 AND e.entity_type_id=4)
     THROW 52000,'Complete view fixture actor is missing.',1;

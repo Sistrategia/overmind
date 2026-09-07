@@ -4,6 +4,24 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Iteration 6 complete, 2026-09-07:** authorized over `a8cf783`, local/uncommitted.
+The author selected tenant-scoped case-insensitive logins, generally emails, and local password setup.
+[ADR 0016](adr/0016-tenant-logins-and-administrative-provisioning.md) and the
+[provisioning guide](user-provisioning-api.md) define the fixed login comparison, owner-consistent tenant
+FK/unique constraint, two atomic service/HTTP operations, explicit signed provisioning/exact-role grants
+and Identity V3 local hashes (SHA512 PBKDF2, 220,000 iterations, Identity.Core 8.0.30). Passwords are input
+secrets, excluded from receipts/events/history. Contact edits and promotion share one unit/revision;
+root lifecycle commands are excluded from provisioning. System/constructor/schema-cycle changes are
+integrated; the old login-policy deferral is resolved. Login/token issuance, recovery, invitations and
+full account/role lifecycle remain separate. This does not configure the external issuer to use local hashes.
+Expanded focused tests passed 11/11; final focused 9/9 in 1 min 59 sec; build/discovery zero warnings/errors.
+The full gate passed 115/115 (52 per SQL profile plus eleven database-free), zero failures/skips, in
+14 min 52 sec. All 144 disposable databases across six runs have verified removal (288 journal copies,
+zero unresolved); see the [testing record](testing-handoff.md#iteration-6-administrative-provisioning--2026-09-07).
+All 119 copied SQL scripts match source. Evidence: artifacts/test-results/iteration-6/ (ignored).
+Historical review probes are unchanged; maintained fixtures adapt explicitly to the new login/tenant
+constraints. Subsequent work requires choosing the next bounded scope with the author.
+
 **Iteration 5b complete, 2026-09-07:** authorized over `04a4409`, local/uncommitted.
 [ADR 0015](adr/0015-contact-http-authentication-and-wire-contract.md) and the [HTTP guide](contact-http-api.md)
 record actual bearer validation, required signed actor/tenant and contact grants, five contact routes,

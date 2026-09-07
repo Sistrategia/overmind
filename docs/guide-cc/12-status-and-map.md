@@ -29,7 +29,7 @@ Implemented in the working tree, tested by the disposable-database suite in both
 | Relationship lifecycle/history | [Chapter 10](10-porting-a-family.md) recipe; spec §5 and §6 |
 | Root lock/validation transitions and erasure APIs | spec §7; ADR 0002 lifecycle table |
 | Public self-registration with reserved entity ids | ADR 0003 |
-| Login uniqueness, authentication, account and role lifecycle with history | ADR 0003, ADR 0007 deferred list |
+| Authentication, ongoing account and role lifecycle with history | ADR 0003, ADR 0007 deferred list; login uniqueness and initial provisioning are now ADR 0016 |
 | Migration of legacy history with coverage manifests | ADR 0004, legacy findings |
 | Disconnected synchronization (outbox, inbox, origin identity) | ADR 0004, primary design §7 |
 | Optional commit-ordered capture (Change Tracking) | primary design §8 |
@@ -70,7 +70,7 @@ lifecycle, integrated contact service (5a), HTTP boundary (5b), then administrat
 composition starts with phone; listing/search is separately tracked. Iteration 0 implements person-only
 eligibility and the bounded constructor corrections; shared immutable address ownership is decided and
 phone, web links and addresses are implemented with final verification recorded in the testing handoff.
-Iteration 4 implements the declared person/organization profile and protected contact lifecycle. Iteration 5a adds the integrated service; Iteration 5b now supplies the HTTP boundary. Login uniqueness is explicitly deferred until provisioning.
+Iteration 4 implements the declared person/organization profile and protected contact lifecycle. Iteration 5a adds the integrated service; iteration 5b supplies the HTTP boundary. Iteration 6 resolves login uniqueness and adds provisioning with local password setup, described below.
 The master plan and testing handoff record current completion and verification evidence.
 
 [Glossary](glossary.md) · [Index](README.md)
@@ -83,12 +83,22 @@ policy; saves authorize every required permission and use one unit. Current deta
 history has a separate permission, and directory detail filters private roots/children into a smaller DTO.
 Current revision selection occurs inside the existing read barrier. See the [service guide](../contact-service.md)
 and [ADR 0014](../adr/0014-integrated-contact-service-and-access-boundary.md). Iteration 5b now implements HTTP integration;
-discovery/search, provisioning/login policy and migration remain separate.
+discovery/search and migration remain separate. Iteration 6 now implements provisioning and login uniqueness.
 
 ## HTTP checkpoint (iteration 5b)
 
 `ContactApiHosting` wires real bearer authentication, the signed-claim service adapters and
 `ContactsController`. The [HTTP guide](../contact-http-api.md) covers routes, required issuer/audience
 configuration, exact command JSON, string audit stamps and errors. Schema tools now require opted-in
-Development mode plus their own signed grant. No SQL/audit mechanism changed. Provisioning and its
-login policy are next; live issuer setup, deployment and discovery/search remain separate.
+Development mode plus their own signed grant. No SQL/audit mechanism changed in 5b. Iteration 6 adds
+provisioning below; live issuer setup, deployment and discovery/search remain separate.
+
+## Provisioning checkpoint (iteration 6)
+
+The [provisioning guide](../user-provisioning-api.md) describes CreateAsync/PromoteAsync and `/api/users`.
+Login uniqueness is now enforced within the owning tenant using the fixed case-insensitive comparison.
+Accounts keep entered spelling; generally-email logins do not rewrite mailbox dots/tags or confirm email.
+The author requested local initial passwords: Identity V3 hashes are stored, secrets are excluded from
+history/responses, and no login/token issuance or recovery endpoint is claimed. Initial role assignment
+requires its own exact-ID grant. Contact changes and account creation share one unit/revision. See
+[ADR 0016](../adr/0016-tenant-logins-and-administrative-provisioning.md) and the testing handoff for evidence.

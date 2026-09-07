@@ -1,3 +1,11 @@
+-- Copyright (c) Jose Ernesto Ocampo Cicero / JEOCSI SA DE CV (Sistrategia). All rights reserved.
+-- Licensed under Apache-2.0. See LICENSE in the project root.
+-- Script: create_system_user_bootstrap.sql
+-- Part of the Sistrategia.Security Framework.
+-- Last Update: 2026-Sep-07
+-- Created: 2026-Sep-05
+-- Version: 8.0.0.0
+
 -- Trusted schema/bootstrap operation only; never grant to the email application principal.
 -- Reserves the existing compatibility identity 1 explicitly and creates all available base history.
 CREATE OR ALTER PROCEDURE [security].[system_user_bootstrap]
@@ -29,7 +37,7 @@ BEGIN
                 JOIN [contacts].[contact_history] ch ON ch.[contact_id]=e.[entity_id] AND ch.[dbrow_version]=h.[dbrow_version] AND ch.[tenant_id]=e.[tenant_id]
                 JOIN [security].[user_history] uh ON uh.[user_id]=e.[entity_id] AND uh.[dbrow_version]=h.[dbrow_version] AND uh.[tenant_id]=e.[tenant_id]
                 WHERE e.[entity_id]=1 AND e.[public_key]='71F092F4-3A35-463D-9589-E5EE1373F7D5'
-                  AND e.[entity_type_id]=4 AND eh.[entity_type_id]=4 AND e.[tenant_id]=@tenant_id AND u.[login_name]=N'system'
+                  AND e.[entity_type_id]=4 AND eh.[entity_type_id]=4 AND e.[tenant_id]=@tenant_id AND u.[tenant_id]=@tenant_id AND u.[login_name]=N'system'
                   AND e.[is_system]=1 AND e.[deleted] IS NULL AND e.[locked] IS NULL)
                 THROW 51502, 'Conflicting or incomplete System identity; bootstrap will not repair it implicitly.', 1;
             IF @owns=1 COMMIT;
@@ -51,7 +59,8 @@ BEGIN
         EXEC [entities].[entity_history_snapshot] 1,@tenant_id,@v,@operation=1;
         INSERT [contacts].[contact] ([contact_id],[contact_type_id],[full_name]) VALUES (1,1,N'System User');
         EXEC [contacts].[contact_history_snapshot] @contact_id=1,@tenant_id=@tenant_id,@dbrow_version=@v;
-        INSERT [security].[user] ([user_id],[login_name]) VALUES (1,N'system');
+        INSERT [security].[user] ([user_id], [tenant_id], [login_name])
+        VALUES (1, @tenant_id, N'system');
         EXEC [security].[user_history_create] 1,@tenant_id,@v;
         IF @owns=1 COMMIT;
     END TRY

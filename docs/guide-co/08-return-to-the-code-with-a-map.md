@@ -64,7 +64,7 @@ The preserved [user-construction review](../user-construction-independent-review
 
 Creation occurrence time now passes through `event_create.@when_ocurred` into the actual `event.created` column. Server recording time remains on the audit ledger's `recorded_at`; there is no separate event occurrence column. See the testing handoff for corrected evidence and current verification.
 
-Still pending: login uniqueness (explicitly deferred by the author until provisioning), account phone and general role history. Iteration 4 implements protected contact deletion/restoration and explicit root snapshot intent; account/relationship lifecycle remains separate. Initial-role evidence does not imply full role reconstruction.
+Still pending: account phone and general role history. Iteration 6 resolves the earlier login deferral with tenant-scoped case-insensitive uniqueness and local password setup. Iteration 4 implements protected contact deletion/restoration and explicit root snapshot intent; ongoing account/relationship lifecycle remains separate. Initial-role evidence does not imply full role reconstruction.
 
 Shared actor delegation, public self-registration, broader account/role/relationship lifecycle, unported metadata/classifier families, historical migration, synchronization and other provider implementations are later work. Existing legacy constructors outside the restricted email capability also retain separate hardening work. The reviewed email contract is not automatically inherited by every old procedure in the repository.
 
@@ -101,4 +101,13 @@ The [HTTP guide](../contact-http-api.md) connects the same Save and coherent rea
 validation supplies the actor/tenant; signed grants decide contact access. Bodies cannot choose either
 identity. Current detail, historical detail and directory projection retain their different permissions.
 The boundary reports conflicts and uncertain commit distinctly and never splits a Save or replays it.
-The next implementation checkpoint is user provisioning, after deciding login uniqueness.
+Iteration 6 now implements provisioning as described below.
+
+## Provisioning (iteration 6)
+
+Use the [provisioning guide](../user-provisioning-api.md) for creating a person/account or promoting an
+existing person. The database enforces case-insensitive login uniqueness within the entity's tenant;
+the service adds local password hashing and explicit provisioning/initial-role permissions. A mixed
+contact/account operation remains one unit. Passwords never become historical business payloads.
+[ADR 0016](../adr/0016-tenant-logins-and-administrative-provisioning.md) records the boundaries; login/token
+issuance, recovery, invitations and ongoing account/role lifecycle remain separate.
