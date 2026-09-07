@@ -66,3 +66,23 @@ GRANT EXECUTE ON [contacts].[web_link_restore] TO [contact_channels_runtime];
 GRANT EXECUTE ON [contacts].[web_link_move] TO [contact_channels_runtime];
 DENY EXECUTE ON [contacts].[contact_web_link_read_rows] TO [email_runtime];
 GRANT EXECUTE ON [contacts].[contact_web_link_read] TO [contact_channels_runtime];
+
+-- Address capability shares the trusted contact-channel boundary.
+GRANT EXECUTE ON [contacts].[contact_address_change] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[contact_address_insert] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[address_update] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[address_delete] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[address_restore] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[address_move] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[contact_address_read] TO [contact_channels_runtime];
+DENY EXECUTE ON [contacts].[contact_address_write] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_address_read_rows] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_address_history_sync] TO [email_runtime];
+DENY EXECUTE ON [contacts].[address_values_ensure] TO [email_runtime];
+DENY EXECUTE ON [contacts].[address_geography_resolve] TO [email_runtime];
+DENY EXECUTE ON [contacts].[ensure_address_location_upsert] TO [email_runtime];
+DENY EXECUTE ON [contacts].[country_value_ensure] TO [email_runtime];
+DENY EXECUTE ON [contacts].[state_value_ensure] TO [email_runtime];
+DENY EXECUTE ON [contacts].[county_value_ensure] TO [email_runtime];
+DENY EXECUTE ON [contacts].[city_value_ensure] TO [email_runtime];
+DENY EXECUTE ON [contacts].[colony_value_ensure] TO [email_runtime];

@@ -2,7 +2,7 @@
 
 Previous: [9. Reading history](09-reading-history.md) · [Index](README.md) · Next: [11. Errors and troubleshooting](11-errors-and-troubleshooting.md)
 
-Email is the original reference. Iteration 1 applies its lifecycle to phone while adding explicit parsing/value semantics and a composed reader; see the [phone guide](../phone-family.md). Iteration 2 now applies it to [web links](../web-link-family.md). Address and later families reuse that mechanism with their own field contracts. File paths are relative to `src/Framework/Sistrategia.Data.SqlClient/Scripts`.
+Email is the original reference. Iteration 1 applies its lifecycle to phone while adding explicit parsing/value semantics and a composed reader; see the [phone guide](../phone-family.md). Iteration 2 now applies it to [web links](../web-link-family.md). Iteration 3 delivers [addresses](../address-family.md) with immutable geographic catalogs and a complete value key. Later families reuse the mechanism with their own field contracts. File paths are relative to `src/Framework/Sistrategia.Data.SqlClient/Scripts`.
 
 ## 1. Tables
 

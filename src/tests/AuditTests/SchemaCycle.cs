@@ -102,12 +102,16 @@ internal static class SchemaCycle
             await unit.InsertWebLinkAsync(user, 1, new("https://example.test/secondary", "website"));
             var principalLink = await unit.InsertWebLinkAsync(user, 1, new("https://example.test/principal", "website", "Profile"));
             await unit.MakeWebLinkPrincipalAsync(user, 1, principalLink.Ordinal);
+            var principalAddress = await unit.InsertAddressAsync(user, 1,
+                new(Address1: "New office", Country: "México", State: "Morelos", City: "Cuernavaca"), "Office");
+            await unit.MakeAddressPrincipalAsync(user, 1, principalAddress.Ordinal);
             await unit.CommitAsync();
         }
         var channels = await new SqlContactChannelsReader(connectionString).ReadAsync(user, user, 2, compareEntityVersion: 1);
         if (channels.WebLinks.Count != 2 || channels.WebLinks[0].Url != "https://example.test/principal"
             || channels.WebLinkActions.Count != 3 || channels.EmailRevision.Emails[0].Email != "card-principal@example.test"
-            || channels.Phones.Count != 1)
+            || channels.Phones.Count != 1 || channels.Addresses.Count != 2
+            || channels.Addresses[0].Address.Address1 != "New office" || channels.AddressActions.Count != 2)
             throw new Exception("Actual schema cycle lost composed channels or saved principal order.");
         await using (var unit = await SqlAuditUnit.BeginAsync(connectionString, actor)) {
             await unit.InsertEmailAsync(actor, 1, "actor-secondary@example.test");
@@ -118,6 +122,8 @@ internal static class SchemaCycle
         using var check = new SqlCommand("""
             IF NOT EXISTS (SELECT 1 FROM contacts.contact_view WHERE public_key=@user AND email_address=N'card-principal@example.test')
                 THROW 52000,'Contact card ignored saved order.',1;
+            IF NOT EXISTS (SELECT 1 FROM contacts.contact_view WHERE public_key=@user AND address1=N'New office')
+                THROW 52000,'Contact card ignored saved address order.',1;
             IF NOT EXISTS (SELECT 1 FROM entities.entity_view WHERE public_key=@user AND modified_by_email=N'card-principal@example.test')
                 THROW 52000,'Actor display ignored saved order.',1;
             IF NOT EXISTS (SELECT 1 FROM entities.entity_view WHERE public_key='71F092F4-3A35-463D-9589-E5EE1373F7D5' AND modified_by_email=N'actor-principal@example.test')
@@ -163,6 +169,13 @@ internal static class SchemaCycle
                 THROW 52000, 'Seeded email did not share creation history, aggregate revision and audit unit.', 1;
             IF NOT EXISTS (SELECT 1 FROM contacts.contact_email_action WHERE contact_id=@contact AND operation='insert')
                 THROW 52000, 'Seeded email lost its action evidence.', 1;
+            IF NOT EXISTS (SELECT 1 FROM contacts.contact_address a
+                JOIN contacts.contact_address_history h ON h.contact_id=a.contact_id AND h.ordinal=a.ordinal AND h.dbrow_version=a.dbrow_version
+                JOIN entities.entity e ON e.entity_id=a.contact_id AND e.dbrow_version=a.dbrow_version
+                JOIN contacts.address v ON v.address_id=a.address_id
+                WHERE a.contact_id=@contact AND a.display_order=1 AND e.entity_version=1
+                    AND v.address1=N'Tabachin #12' AND v.zip_code=N'62130')
+                THROW 52000,'Seed address lost immutable value, saved order or revision-one history.',1;
             IF NOT EXISTS (SELECT 1 FROM contacts.contact_phone p
                 JOIN contacts.phone n ON n.phone_id=p.phone_id
                 JOIN contacts.phone_input i ON i.input_id=p.input_id

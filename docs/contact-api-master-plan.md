@@ -1,9 +1,9 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, iterations 0–2 complete. Iteration 3 onward has not started.
-Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0011 describe the implemented foundation.
+Updated: 2026-09-07, iterations 0–3 complete. Iteration 4 onward has not started.
+Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0012 describe the implemented foundation.
 
-The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–2 on 2026-09-07; later iterations remain planned.
+The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–3 on 2026-09-07; later iterations remain planned.
 
 ## Decisions already made
 
@@ -20,7 +20,7 @@ The goal is to grow the email reference into a coherent contact API for persons 
 | Phone identity and parsing | Complete international identity; preserve raw input and versioned interpretation separately. Explicit country for national/split input, optional LADA decomposition and qualified numbering geography. See [ADR 0009](adr/0009-phone-values-parsing-and-numbering-geography.md). |
 | Delivery scope | Build on fresh-schema SQL Server support first. Customer upgrades, synchronization and additional providers remain separate deliverables. Preserve the portable behavioral contracts. |
 
-The author explicitly retained stable ordinal identity plus separate display_order position as the convention for the new child lists: first saved item is default, insert/restore append, and delete closes gaps. Family-specific deviations, if needed, must be explicit. Labels and visibility are association metadata, not part of the shared address's identity; confirm their precise address representation in iteration 3.
+The author explicitly retained stable ordinal identity plus separate display_order position as the convention for the new child lists: first saved item is default, insert/restore append, and delete closes gaps. Family-specific deviations, if needed, must be explicit. Labels and visibility are association metadata, not part of the shared address's identity. Iteration 3 uses an optional immutable label reference and restrictive is_public default; see ADR 0012.
 
 ## Starting position
 
@@ -45,7 +45,7 @@ The order below is a proposal. Contact integration begins with the second family
 | 0 | Bounded correction pass and current baseline | Constructor findings in scope have atomic rejection/concurrency regressions; existing full gate passes. | Complete; [ADR 0008](adr/0008-constructor-corrections.md) |
 | 1 | Complete phone family and shared reader boundary | As-of/diff/actions and C# reads prove email/phone state at the same revision; mixed saves have one revision, global action order and whole rollback. | Complete; [ADRs 0009](adr/0009-phone-values-parsing-and-numbering-geography.md)/[0010](adr/0010-composed-contact-family-reader.md) |
 | 2 | Complete web-link family | SQL/C# lifecycle, ordering, visibility, history and mixed-family composition work. | Complete; [ADR 0011](adr/0011-web-link-values-and-contact-associations.md) |
-| 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Planned |
+| 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Complete; [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) |
 | 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Planned |
 | 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Planned |
 | 5b | Contact HTTP API | Endpoints apply authentication-derived context, authorization, visibility, validation and tested conflict/error responses to the completed service. | Planned |
@@ -62,7 +62,7 @@ Paginated listing/search is a separately tracked contact-discovery deliverable a
 | Before iteration 1 reader implementation | Shared consistent read boundary | Selected: one coordinator-owned SERIALIZABLE transaction and root barrier, private family components and existing as-of functions; [ADR 0010](adr/0010-composed-contact-family-reader.md). |
 | Before iteration 1 phone DDL | Complete phone value identity and derived matching | Selected with the author: E.164 identity, calling code/national strings, preserved input, backend parsing and optional metadata decomposition. Geographic catalog FKs belong to a separate versioned prefix-to-many-places map; no address inheritance. |
 | Before iteration 1 public contracts | Meaning of `is_public` | Directory-display eligibility, subject to root privacy and application authorization; restrictive default. Trusted internal readers retain flags and data. No anonymous endpoint in iteration 1; HTTP enforcement remains in 5b. |
-| Before iteration 3 | Address fields, catalog hierarchy and historical labels | Immutable complete values are settled; exact field identity, partial-address rules and catalog correction behavior still need definition. |
+| Before iteration 3 | Address fields, catalog hierarchy and historical labels | Selected in iteration 3: lines or structured street per value, exact full-field identity, explicit partial scopes and immutable catalog labels; [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md). |
 | Before iterations 4 and 6 | Profile/lifecycle/relationship scope; provisioning/activation scope | Keep the existing bounded decisions in those iterations. Dedicated group work and shared-user membership remain deferred. |
 
 ### 0. Corrections before expanding the public constructor boundary
@@ -101,6 +101,9 @@ Define URL, link type, label, display text, visibility and accepted length/norma
 Build the full family using the mechanism proved by email and phone. Align the existing C# domain objects with stable identity and saved order. Include creation, editing, delete/restore, move/default, historical state/diff/actions and combined saves with the preceding families.
 
 ### 3. Addresses and geographic catalogs
+
+Delivered in [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) and the
+[address guide](address-family.md). The requirements below are retained as the acceptance checklist.
 
 Ownership is settled: the address value is immutable and the contact association contains no address text. The value may contain geographic FKs and remaining textual fields directly. Additional catalogs for address lines are not a prerequisite.
 
@@ -242,6 +245,29 @@ customer upgrade, sibling-project change or independent review execution is clai
 ## Planning revision record
 
 2026-09-07, revision 2: incorporated independent feedback after source checks. Added early reader composition, explicit phone/address/name fidelity regressions, family evidence criteria, service tenant context and visibility checkpoints; split integration into 5a/5b and separated contact discovery. Brought login scope into the first discussion without treating it as decided or blocking child work. Kept company equality/locking as an explicit design choice and retained phone → web links → addresses. Recorded the author's SQL style preference. No production SQL/C# changes or database test execution belong to this revision.
+
+## Iteration 3 execution record — 2026-09-07
+
+Authorized over committed iteration 2 (`06d177d`); implementation remains local/uncommitted.
+[ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) records complete immutable
+addresses, all-field exact identity, scoped immutable geographic catalogs, partial addresses and
+replacement-based corrections. The [address guide](address-family.md) gives C#/SQL usage. The
+implementation supports address lines or structured street/number fields, one representation per
+value, using the stated assumption after an optional question received no reply.
+
+Delivered the complete SQL/C# lifecycle, saved order, retained identity, history/diffs/actions,
+constructor integration, checked FKs, restricted capability and domain state. Contact associations
+contain references and identity/order/audit/visibility metadata only. Catalog/value edits select
+replacements, preserving other contacts and historical labels. The shared reader now reconstructs
+email, phone, web links and addresses under one root barrier, with global action order and rollback
+across all four families. Earlier standalone reader contracts remain intact.
+
+Focused verification passed **17/17**; the full gate passed **77/77**, both RCSI profiles,
+**8 min 58 sec**, zero failures/skips or build warnings/errors. All **110** disposable databases
+across five runs have verified removal evidence; [testing record](testing-handoff.md#iteration-3-immutable-addresses--2026-09-07).
+Both guide families, handoffs and schema-cycle coverage are updated. Official geographic datasets,
+source mappings, customer migration and service/HTTP are not delivered. Next is iteration 4:
+person/organization profile and contact lifecycle. Login scope remains deferred until provisioning.
 
 ## Deferred work
 

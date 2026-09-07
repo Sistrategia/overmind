@@ -75,7 +75,8 @@ OUTER APPLY (SELECT TOP(1) * FROM [contacts].[contact_email] ce
     WHERE ce.contact_id=c.contact_id ORDER BY ce.display_order,ce.ordinal) AS ce
 LEFT JOIN [contacts].[email] AS em ON(ce.email_id = em.email_id) 
 
-LEFT JOIN [contacts].[contact_address] AS ca ON(c.contact_id = ca.contact_id AND ca.ordinal = 1) 
+OUTER APPLY (SELECT TOP(1) * FROM [contacts].[contact_address] ca
+    WHERE ca.contact_id=c.contact_id ORDER BY ca.display_order,ca.ordinal) AS ca
 LEFT JOIN [contacts].[address] AS ad ON(ca.address_id = ad.address_id) 
 LEFT JOIN [contacts].[city] AS adc ON(ad.city_id = adc.city_id) 
 LEFT JOIN [contacts].[state] AS ads ON(ad.state_id = ads.state_id) 

@@ -15,7 +15,7 @@ public sealed record ContactPhoneAction(long DbrowVersion, int ActionOrdinal, in
     PhoneInterpretation Phone, string? Location, string? Extension, bool IsPublic, bool ShowInTimeline,
     int PayloadVersion, DateTime RecordedAtUtc, int ActorEntityId, int? PreviousDisplayOrder, int? DisplayOrder);
 public sealed record ContactChannelAction(string Family, int ActionOrdinal, int Ordinal, string Operation,
-    ContactEmailAction? Email, ContactPhoneAction? Phone, ContactWebLinkAction? WebLink = null);
+    ContactEmailAction? Email, ContactPhoneAction? Phone, ContactWebLinkAction? WebLink = null, ContactAddressAction? Address = null);
 public sealed record ContactChannelsRevision(ContactEmailRevision EmailRevision,
     IReadOnlyList<ContactPhoneState> Phones, IReadOnlyList<ContactPhoneDifference> PhoneDifferences,
     IReadOnlyList<ContactPhoneAction> PhoneActions)
@@ -23,16 +23,20 @@ public sealed record ContactChannelsRevision(ContactEmailRevision EmailRevision,
     public IReadOnlyList<ContactWebLinkState> WebLinks { get; init; } = [];
     public IReadOnlyList<ContactWebLinkDifference> WebLinkDifferences { get; init; } = [];
     public IReadOnlyList<ContactWebLinkAction> WebLinkActions { get; init; } = [];
+    public IReadOnlyList<ContactAddressState> Addresses { get; init; } = [];
+    public IReadOnlyList<ContactAddressDifference> AddressDifferences { get; init; } = [];
+    public IReadOnlyList<ContactAddressAction> AddressActions { get; init; } = [];
     public int EntityVersion => EmailRevision.EntityVersion;
     public long DbrowVersion => EmailRevision.DbrowVersion;
     public IReadOnlyList<ContactChannelAction> Actions => EmailRevision.Actions
         .Select(a => new ContactChannelAction("email", a.ActionOrdinal, a.Ordinal, a.Operation, a, null))
         .Concat(PhoneActions.Select(a => new ContactChannelAction("phone", a.ActionOrdinal, a.Ordinal, a.Operation, null, a)))
         .Concat(WebLinkActions.Select(a => new ContactChannelAction("web_link", a.ActionOrdinal, a.Ordinal, a.Operation, null, null, a)))
+        .Concat(AddressActions.Select(a => new ContactChannelAction("address", a.ActionOrdinal, a.Ordinal, a.Operation, null, null, null, a)))
         .OrderBy(a => a.ActionOrdinal).ToArray();
 }
 
-/// <summary>One server-owned read boundary for historical email, phone and web-link state, differences and actions.</summary>
+/// <summary>One server-owned read boundary for historical email, phone, web-link and address state, differences and actions.</summary>
 public sealed class SqlContactChannelsReader(string connectionString)
 {
     public async Task<ContactChannelsRevision> ReadAsync(Guid contact, Guid authenticatedActor, int entityVersion,
@@ -67,9 +71,12 @@ public sealed class SqlContactChannelsReader(string connectionString)
                 reader.GetInt32(10), Position(reader, 11), Position(reader, 12)));
         await reader.NextResultAsync(cancellationToken);
         var links = await SqlContactWebLinkReader.ReadRowsAsync(reader, cancellationToken);
+        await reader.NextResultAsync(cancellationToken);
+        var addresses = await SqlContactAddressReader.ReadRowsAsync(reader, cancellationToken);
         await reader.NextResultAsync(cancellationToken); // Observe server completion/errors, not only delivered rows.
         return new(email, phones, differences, actions) {
-            WebLinks = links.States, WebLinkDifferences = links.Differences, WebLinkActions = links.Actions
+            WebLinks = links.States, WebLinkDifferences = links.Differences, WebLinkActions = links.Actions,
+            Addresses = addresses.States, AddressDifferences = addresses.Differences, AddressActions = addresses.Actions
         };
     }
 

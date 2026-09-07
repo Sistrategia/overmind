@@ -35,7 +35,7 @@ A diff compares the two reconstructed states. It finds that child 7 changed addr
 
 Comparing only live rows would answer a different question. Lina may now be at revision 12, with another address and a different name. The historical reader obtains the supported root/contact fields from historical payloads rather than substituting today's labels.
 
-The email reader covers root context and email, including historical entity type. Iteration 1 adds a [composed email/phone reader](../phone-family.md) with the same revision and transaction boundary. It is not yet a universal “reconstruct every contact child and account setting” API: address/profile and account lifecycle coverage remain later work.
+The email reader covers root context and email, including historical entity type. Iterations 1–3 add a [composed four-family reader](../address-family.md) with the same revision and transaction boundary. It is not yet a universal “reconstruct every contact child and account setting” API: complete profile and account lifecycle coverage remain later work.
 
 ## Third question: what actions happened?
 

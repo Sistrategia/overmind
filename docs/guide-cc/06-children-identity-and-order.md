@@ -42,7 +42,7 @@ OUTER APPLY (SELECT TOP(1) * FROM contacts.contact_email ce
              WHERE ce.contact_id = c.contact_id ORDER BY ce.display_order, ce.ordinal) AS ce
 ```
 
-This was a review finding: with permanent identities, deleting the first email left the card empty. Phone and address will need the same treatment when they are ported; their views still say `ordinal = 1` today.
+This was a review finding: with permanent identities, deleting the first email left the card empty. Iterations 1 and 3 now apply the same saved-order selection to phone and address summaries.
 
 ## Visibility
 

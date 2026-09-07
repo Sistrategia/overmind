@@ -50,13 +50,13 @@ CREATE OR ALTER PROCEDURE [contacts].[contact_insert] (
     ,@numbers_only                  NVARCHAR(15) = NULL
     ,@full_phone                    NVARCHAR(20) = NULL
 
-    ,@address_location_name         NVARCHAR(50) = NULL
-    ,@address1                      NVARCHAR(256) = NULL
-    ,@address2                      NVARCHAR(256) = NULL
-    ,@zip_code                      NVARCHAR(256) = NULL
-    ,@city                          NVARCHAR(256) = NULL
-    ,@state                         NVARCHAR(256) = NULL
-    ,@country                       NVARCHAR(256) = NULL
+    ,@address_location_name         NVARCHAR(MAX) = NULL
+    ,@address1                      NVARCHAR(MAX) = NULL
+    ,@address2                      NVARCHAR(MAX) = NULL
+    ,@zip_code                      NVARCHAR(MAX) = NULL
+    ,@city                          NVARCHAR(MAX) = NULL
+    ,@state                         NVARCHAR(MAX) = NULL
+    ,@country                       NVARCHAR(MAX) = NULL
 
     ,@do_not_contact                BIT = 0
     ,@line_of_business              NVARCHAR(256) = NULL 
@@ -71,6 +71,8 @@ CREATE OR ALTER PROCEDURE [contacts].[contact_insert] (
     ,@web_link_location_name NVARCHAR(MAX) = NULL
     ,@web_link_display_text NVARCHAR(MAX) = NULL
     ,@web_link_is_public BIT = NULL
+    ,@address_data NVARCHAR(MAX) = NULL
+    ,@address_is_public BIT = NULL
 )
 AS
 BEGIN
@@ -278,62 +280,40 @@ BEGIN
                 @dbrow_version=@dbrow_version OUTPUT, @show_in_timeline=0;
 		END
 
-        -- IF (@address1 IS NOT NULL OR @country IS NOT NULL)
-        -- IF (@address1 IS NOT NULL)
-        IF (@address1 IS NOT NULL OR @state IS NOT NULL OR @city IS NOT NULL)
+        IF @address_data IS NOT NULL AND (@address1 IS NOT NULL OR @address2 IS NOT NULL
+            OR @zip_code IS NOT NULL OR @city IS NOT NULL OR @state IS NOT NULL OR @country IS NOT NULL)
         BEGIN
-            -- ================================================================
-            -- Use centralized location upsert to ensure proper hierarchy
-            -- Country → State → City with correct parent-child relationships
-            -- ================================================================
-            DECLARE @city_id INT = NULL
-            DECLARE @state_id INT = NULL            
-            DECLARE @country_id INT = NULL
-            DECLARE @address_id INT = NULL
-
-            EXEC [contacts].[ensure_address_location_upsert]
-                @country_id = NULL,
-                @country_name = @country,
-                @state_id = NULL,
-                @state_name = @state,
-                @city_id = NULL,
-                @city_name = @city,
-                @out_country_id = @country_id OUTPUT,
-                @out_state_id = @state_id OUTPUT,
-                @out_city_id = @city_id OUTPUT;
-
-            SET @address_id = (SELECT TOP 1 [address_id] FROM [contacts].[address] 
-                    WHERE COALESCE([country_id], 0) = COALESCE(@country_id, 0)
-                    AND COALESCE([state_id], 0) = COALESCE(@state_id, 0)
-                    AND COALESCE([city_id], 0) = COALESCE(@city_id, 0)
-                    AND COALESCE([zip_code], '') = COALESCE(@zip_code, '')
-                    AND COALESCE([address2], '') = COALESCE(@address2, '')
-                    AND COALESCE([address1], '') = COALESCE(@address1, '')
-                    ORDER BY [address_id] ASC
-                )
-            IF (@address_id IS NULL AND (
-                @address1 IS NOT NULL OR @address2 IS NOT NULL OR @zip_code IS NOT NULL
-                OR @city_id IS NOT NULL OR @state_id IS NOT NULL OR @country_id IS NOT NULL
-                ) )
-            BEGIN
-                INSERT INTO [contacts].[address] ([address1],[address2],[zip_code],[city_id],[state_id],[country_id])
-                VALUES (@address1, @address2, @zip_code, @city_id, @state_id, @country_id)
-                SET @address_id = SCOPE_IDENTITY()
-            END
-
-            IF @address_location_name IS NULL
-                SET @address_location_name = 'Primary'
-
-            DECLARE @address_location_id INT
-            SET @address_location_id = (SELECT [location_id] FROM [contacts].[address_location] WHERE [location_name] = @address_location_name)
-            IF @address_location_id IS NULL
-            BEGIN
-                INSERT INTO [contacts].[address_location] ([location_name]) VALUES (@address_location_name)
-                SET @address_location_id = SCOPE_IDENTITY()
-            END
-
-            INSERT INTO [contacts].[contact_address] ([contact_id],[ordinal],[address_id],[location_id])
-            VALUES (@contact_id, 1, @address_id, @address_location_id)
+            THROW 51918, 'Supply address_data or legacy address fields, not both.', 1;
+        END
+        IF @address_data IS NULL AND (@address1 IS NOT NULL OR @address2 IS NOT NULL
+            OR @zip_code IS NOT NULL OR @city IS NOT NULL OR @state IS NOT NULL OR @country IS NOT NULL)
+        BEGIN
+            SET @address_data=(SELECT @address1 AS [address1],@address2 AS [address2],@zip_code AS [zip_code],
+                @city AS [city],@state AS [state],@country AS [country]
+                FOR JSON PATH, INCLUDE_NULL_VALUES, WITHOUT_ARRAY_WRAPPER);
+        END
+        IF @address_data IS NULL AND (@address_location_name IS NOT NULL OR @address_is_public IS NOT NULL)
+        BEGIN
+            THROW 51918, 'Initial address metadata requires an address value.', 1;
+        END
+        IF @address_data IS NOT NULL
+        BEGIN
+            DECLARE @address_actor INT=(SELECT [modified_by] FROM [data].[dbrow_version]
+                WHERE [tenant_id]=@tenant_id AND [dbrow_version]=@dbrow_version);
+            DECLARE @address_ordinal INT=NULL;
+            SET @address_is_public=COALESCE(@address_is_public,0);
+            EXEC [contacts].[contact_address_write]
+                @operation='insert',
+                @contact_id=@contact_id,
+                @tenant_id=@tenant_id,
+                @actor_entity_id=@address_actor,
+                @expected_entity_version=0,
+                @address_data=@address_data,
+                @location_name=@address_location_name,
+                @is_public=@address_is_public,
+                @ordinal=@address_ordinal OUTPUT,
+                @dbrow_version=@dbrow_version OUTPUT,
+                @show_in_timeline=0;
         END
 
         IF @web_link_url IS NULL AND (@web_link_type IS NOT NULL OR @web_link_location_name IS NOT NULL

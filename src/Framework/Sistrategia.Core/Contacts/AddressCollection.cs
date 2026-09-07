@@ -39,6 +39,18 @@ public class AddressCollection : IEnumerable<Address>
                 address.State = value.State;
                 address.Country = value.Country;
                 address.LocationName = value.LocationName;
+                address.IsPublic = value.IsPublic;
+                address.StreetName = value.StreetName;
+                address.ExtNumber = value.ExtNumber;
+                address.IntNumber = value.IntNumber;
+                address.Colony = value.Colony;
+                address.County = value.County;
+                address.References = value.References;
+                address.CountryId = value.CountryId;
+                address.StateId = value.StateId;
+                address.CityId = value.CityId;
+                address.CountyId = value.CountyId;
+                address.ColonyId = value.ColonyId;
             }
         }
     }
@@ -59,7 +71,8 @@ public class AddressCollection : IEnumerable<Address>
             throw new ArgumentNullException(nameof(address));
 
         entityList.Add(address);
-        address.Ordinal = entityList.IndexOf(address) + 1;
+        // Identity is allocated by the audited writer, never by collection position.
+        address.DisplayOrder ??= entityList.Count;
     }
 
     IEnumerator<Address> IEnumerable<Address>.GetEnumerator() {

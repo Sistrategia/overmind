@@ -1,5 +1,8 @@
 # ADR 0011: Exact web-link values and contact associations
 
+
+Later evolution: [ADR 0012](0012-immutable-address-values-and-geographic-catalogs.md) appends the address
+component, giving 13 composed result sets. The original checkpoint below is retained as history.
 Date: 2026-09-07. Status: implemented and verified for fresh schemas.
 Iteration 2 was authorized by the author over `00c72f2`. The author explicitly retained
 `ordinal` as stable child identity and `display_order` as saved position for every implemented family.

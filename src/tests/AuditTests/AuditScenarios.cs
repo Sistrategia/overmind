@@ -28,6 +28,42 @@ public abstract class AuditScenarios
     private Task Run(Func<AuditDatabase, Task> scenario) => AuditDatabase.RunAsync(Rcsi, TestContext, scenario);
 
     [TestMethod]
+    public Task AddressLifecycleAndCompleteValueHistory() => Run(async db => {
+        await db.SeedAsync();
+        await AddressCases.Lifecycle(db);
+    });
+
+    [TestMethod]
+    public Task AddressHierarchyAndImmutableCatalogCorrections() => Run(async db => {
+        await db.SeedAsync();
+        await AddressCases.Hierarchy(db);
+    });
+
+    [TestMethod]
+    public Task AddressValidationAndFourFamilyRollback() => Run(async db => {
+        await db.SeedAsync();
+        await AddressCases.RejectionRollback(db);
+    });
+
+    [TestMethod]
+    public Task AddressConstructionAndPermissions() => Run(async db => {
+        await db.SeedAsync();
+        await AddressCases.ConstructorPermissions(db);
+    });
+
+    [TestMethod]
+    public Task AddressComposedReaderHoldsFourFamilies() => Run(async db => {
+        await db.SeedAsync();
+        await AddressCases.ReaderConcurrency(db);
+    });
+
+    [TestMethod]
+    public Task AddressCatalogMissConcurrencyAndDistinctProgress() => Run(async db => {
+        await db.SeedAsync();
+        await AddressCases.CatalogConcurrency(db);
+    });
+
+    [TestMethod]
     public Task WebLinkLifecycleAndExactHistoricalValues() => Run(async db => {
         await db.SeedAsync();
         await WebLinkCases.Lifecycle(db);

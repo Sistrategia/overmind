@@ -7,6 +7,36 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Iteration 3 complete — 2026-09-07:** authorized over committed iteration 2 (`06d177d`),
+local/uncommitted. Read [docs/address-family.md](docs/address-family.md) and
+[ADR 0012](docs/adr/0012-immutable-address-values-and-geographic-catalogs.md).
+Complete immutable address values include all seven text fields and five geographic IDs; associations
+contain references, stable ordinal, saved display_order, label reference, visibility and audit/tenant
+metadata. Exact NULL/empty/case/space distinctions, full-key recheck after hash lookup and transaction
+miss locks prevent partial matching. Country/state/county/city/colony and address/label rows are
+immutable; corrections select/create replacements, preserving old labels and other contacts.
+Names require parent scope, valid child IDs infer ancestors, contradictions reject. City/county may
+have a country-only scope; they are parallel catalogs, not a county-to-city hierarchy. Lines or
+structured street/number fields are supported, one representation per value. This was the stated
+implementation assumption after an optional question received no reply, not an explicit author answer.
+AddressInput validates inside unit admission; native adapters use PrepareForDatabase or equivalent
+Unicode validation. SQL guards JSON structure, widths, representation and geographic consistency.
+Full lifecycle/history/order/diff/actions, constructor revision 1, promotion rejection, domain state
+and current saved-order view selection are implemented. The composed reader returns 13 sets under
+one root barrier across email/phone/web_link/address; previous standalone shapes remain unchanged.
+contact_channels_runtime adds addresses; email_runtime remains email-only. No official catalog
+dataset, source-mapping workflow or automatic organization-office propagation is introduced.
+Final verification and resource reconciliation are recorded in the
+[testing handoff](docs/testing-handoff.md#iteration-3-immutable-addresses--2026-09-07).
+Focused tests passed 17/17; full gate passed 77/77 (36 per RCSI profile plus five database-free),
+8 min 58 sec, zero failures/skips or build warnings/errors. All 110 disposable databases across five
+runs have matching intent/create/identity/removal evidence. All 107 copied production SQL files match
+source. Evidence: artifacts/test-results/iteration-3/ (ignored), including verification.json.
+Both guides, plan and handoffs are updated. Next is iteration 4 person/organization profile and
+contact lifecycle; not started. Login uniqueness remains deferred until provisioning. Fresh schemas
+only; no customer migration, service/HTTP or independent review execution is claimed. Historical
+probes are unchanged; the phone-construction fixture now supplies explicit parent country for its city.
+
 **Iteration 2 complete — 2026-09-07:** authorized over `00c72f2`, local/uncommitted.
 The author explicitly retained ordinal identity and display_order position. Read
 [docs/web-link-family.md](docs/web-link-family.md) and [ADR 0011](docs/adr/0011-web-link-values-and-contact-associations.md).
@@ -24,7 +54,7 @@ failures/skips or build warnings/errors, 6 min 38 sec. All 74 created databases 
 two initial sandbox encryption-failure intent names separately verified absent. Evidence:
 artifacts/test-results/iteration-2/ (ignored), including verification.json and absence-verification.json
 under schema/. All 81 copied production SQL scripts match source. Both guides, plan and handoffs updated.
-Next is iteration 3 immutable addresses; not started. Login uniqueness remains deferred to provisioning.
+Next at that checkpoint was iteration 3, now delivered above. Login uniqueness remains deferred to provisioning.
 Fresh schemas only; no customer migration, HTTP, independent review execution or sibling-project change.
 
 **Iteration 1 complete — 2026-09-07:** authorized after the author's phone discussion,

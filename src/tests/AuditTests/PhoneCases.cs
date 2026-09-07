@@ -160,7 +160,7 @@ internal static class PhoneCases
         var contact = Guid.NewGuid();
         await using var connection = new SqlConnection(db.ConnectionString);
         await connection.OpenAsync();
-        using (var command = new SqlCommand($"EXEC contacts.contact_insert @public_key='{contact}',@created_by='{Actor}',@full_name=N'Phone creation',@phone_data=@data,@phone_location_name=@location,@phone_extension=@extension,@email_address=N'initial@example.test',@address1=N'Address must not identify phone',@city=N'Other city';", connection)) {
+        using (var command = new SqlCommand($"EXEC contacts.contact_insert @public_key='{contact}',@created_by='{Actor}',@full_name=N'Phone creation',@phone_data=@data,@phone_location_name=@location,@phone_extension=@extension,@email_address=N'initial@example.test',@address1=N'Address must not identify phone',@city=N'Other city',@country=N'Other country';", connection)) {
             command.Parameters.Add("@data", SqlDbType.NVarChar, -1).Value = Data(Input);
             command.Parameters.Add("@location", SqlDbType.NVarChar, -1).Value = new string('L', 100);
             command.Parameters.Add("@extension", SqlDbType.NVarChar, -1).Value = new string('E', 25);

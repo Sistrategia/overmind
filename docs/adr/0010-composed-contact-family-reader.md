@@ -1,5 +1,8 @@
 # ADR 0010: Composed contact-family read boundary
 
+
+Later evolution: [ADR 0012](0012-immutable-address-values-and-geographic-catalogs.md) appends the address
+component, giving 13 composed result sets. The original checkpoint below is retained as history.
 Date: 2026-09-07. Status: implemented and verified for fresh schemas.
 
 The seven-set description below records iteration 1. [ADR 0011](0011-web-link-values-and-contact-associations.md)

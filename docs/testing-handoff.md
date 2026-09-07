@@ -18,7 +18,7 @@ dotnet build src/overmind.sln -c Release --no-restore
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --list-tests
 ```
 
-**Authoritative full command: both real database profiles and database-free tests**, currently 64 discovered tests (30 per profile, 2 batch-parser tests, 1 phone-parser scenario and 1 web-link validation/domain scenario):
+**Authoritative full command: both real database profiles and database-free tests**, currently 77 discovered tests (36 per profile, 2 batch-parser tests, 1 phone-parser scenario, 1 web-link validation/domain scenario and 1 address validation/domain scenario):
 
 ```powershell
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
@@ -32,11 +32,11 @@ For a backend-only build/test scope, target the project directly: `dotnet test s
 # Representative focused existing scenario, RCSI off (one test).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
 
-# Complete integration profile, independently selectable (30 tests each).
+# Complete integration profile, independently selectable (36 tests each).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
 
-# Database-free, LIMITED SCOPE: two batch-parser tests, phone parsing and web-link validation/domain state, no SQL behavior verification.
+# Database-free, LIMITED SCOPE: two batch-parser tests, phone parsing, web-link and address validation/domain state, no SQL behavior verification.
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=Infrastructure'
 ```
 
@@ -98,7 +98,14 @@ Methods in [AuditScenarios.cs](../src/tests/AuditTests/AuditScenarios.cs) are in
 | Iteration 2: pause before web-link results after email/phone, observe writer blocking and coherent before/after three-family state | `WebLinkComposedReaderHoldsAllFamilies` |
 | Iteration 2: blocked same-URL miss, differing association metadata, distinct URL progress before holder commit | `WebLinkExactMissConcurrencyAndDistinctProgress` |
 
-Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. These do not substitute for SQL audit tests.
+| Iteration 3: complete value identity, legacy omitted-field counterexample, order/history, shared isolation and four-family action order | `AddressLifecycleAndCompleteValueHistory` |
+| Iteration 3: scoped geography, invalid/contradictory IDs and names, immutable catalog/address correction with old-label history | `AddressHierarchyAndImmutableCatalogCorrections` |
+| Iteration 3: input/native rejection, four-family rollback in either direction and no leaked catalog rows | `AddressValidationAndFourFamilyRollback` |
+| Iteration 3: contact/user initial address, full widths, promotion/orphan rejection, tenant/stale checks and permissions | `AddressConstructionAndPermissions` |
+| Iteration 3: pause before address component after preceding three families, observe root-barrier writer blocking and coherent state | `AddressComposedReaderHoldsFourFamilies` |
+| Iteration 3: same-value miss blocking/reuse and distinct catalog/address progress before holder commit | `AddressCatalogMissConcurrencyAndDistinctProgress` |
+
+Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. `AddressValidationTests.AddressRepresentationsAndExactDomainState` covers alternate street representations, widths, Unicode rejection and exact domain state. These do not substitute for SQL audit tests.
 
 The four original SQL fixtures retain their scenario sequences. The original review-probe integration replaced supplied promotion contact names with explicit NULL and added fixture-shape assertions without production changes; iteration 0 subsequently adds the production corrections documented here. [SchemaFiles.cs](../src/tests/AuditTests/SchemaFiles.cs) retains the runner's production script list and dependency order, with files copied from production source at build time. `SeedAsync(1..4)` loads allocation → email → saved order → user construction **on the current test's database**, with a fresh SQL connection per fixture as before. Tests requiring only email stop at stage 2. Saved-order and user-reader cases intentionally run after their own SQL fixture stage. The native concurrency schedule remains grouped because its roots progress through revisions 1–4; the C# shared-unit and lifetime sequences retain their intentional within-scenario state. No test depends on another discovered test.
 
@@ -418,3 +425,44 @@ Ignored evidence: `artifacts/test-results/iteration-2/{schema,schema-local,focus
 production SQL files present in final test output match source hashes. `git diff --check` passed.
 Fresh-schema/local SQL Server verification only; no customer upgrade, remote CI/deployment,
 independent review execution, full contact HTTP API or provisioning claim.
+
+## Iteration 3 immutable addresses — 2026-09-07
+
+Authorized implementation over committed iteration 2 (`06d177d`); local/uncommitted.
+[ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) and the
+[address guide](address-family.md) define the complete immutable value, scoped immutable catalogs,
+partial-address and representation rules, constructor inputs and 13-set four-family reader.
+
+Six inherited address scenarios run under both RCSI profiles, plus one database-free validation/domain
+scenario. They cover every value field, the constructor's old partial-match counterexample, exact
+NULL/empty/case/space distinctions, child/ancestor consistency, immutable corrections with historical
+labels, shared-contact isolation, lifecycle/order/history, constructor widths, runtime permissions,
+mixed rollback and action order, same-value miss concurrency and distinct-value progress, and a
+writer blocked behind the reader after the preceding three family components have run.
+
+The existing phone-construction test now supplies a parent country for its previously unscoped city;
+it still proves phone parsing does not inherit address geography. Actual schema-cycle coverage adds
+initial address history and an ordinary seed user's mixed email/web-link/address save, principal
+selection and current contact-view output. Historical probes and original SQL fixture contents are
+unchanged; the allocation fixture's entity-only System shape was preserved.
+
+| Run | Result | Scope/correction |
+| --- | --- | --- |
+| Initial schema | 0/2 | Real application runner requires one batch per resource; split bundled procedures/triggers into individually registered scripts. |
+| Corrected schema | 2/2 | Actual application create/drop/create and seed execution. |
+| Initial focused | 11/17 | Corrected address wrappers to the modern `@actor` contract; changed immutability guards to INSTEAD OF so constraints cannot fail before explicit rejection; moved current-view assertion from the entity-only System fixture to the actual application fixture. |
+| Corrected focused | **17/17**, **1 min 56 sec** | Twelve address SQL cases, database-free validation, both phone-construction cases and both actual schema cycles; includes legacy omitted-field and overlength constructor counterexamples. |
+| Final full gate | **77/77**, **8 min 58 sec** | All 36 scenarios per RCSI profile and five database-free tests; zero failures/skips. |
+
+Solution build and discovery passed with zero warnings/errors; no dependency changed. Only trailing
+whitespace was removed from two SQL files during the full run, followed by a successful final rebuild.
+All **107** production SQL files present in final test output match current source hashes.
+
+All **110 distinct databases** across five executions reconcile through intent, creation, engine
+identity and verified removal: 55 per profile, 220 original-and-attachment journal copies, zero
+unresolved resources. The full gate owns 74 databases (37 per profile, including bootstrap's additional
+database). Cleanup includes post-DROP absence checks. No recovery deletion or prefix scan was needed.
+Ignored evidence: `artifacts/test-results/iteration-3/{schema,schema-2,focused,focused-2,full}/`,
+`discovery.txt`, `verify-evidence.ps1` and `verification.json`. `git diff --check` and changed-document
+relative links passed. Fresh-schema/local SQL Server verification only; customer upgrades, remote
+CI/deployment, official catalog datasets and independent review execution remain unexecuted.

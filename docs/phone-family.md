@@ -87,15 +87,15 @@ var orderedActions = revision.Actions; // Family tag + shared audit action ordin
 ```
 
 The coordinator owns one SERIALIZABLE transaction, resolves root and bounds once, holds the clustered
-root-key shared barrier, then reads each family. Iteration 2 extends its original seven sets to ten:
-root, email state/diff/actions, phone state/diff/actions, web-link state/diff/actions. See the
-[web-link guide](web-link-family.md). C# consumes server completion before returning success.
+root-key shared barrier, then reads each family. Iteration 3 extends its original seven sets to thirteen:
+root, then state/diff/actions for email, phone, web links and addresses. See the
+[address guide](address-family.md). C# consumes server completion before returning success.
 `SqlContactEmailReader` and the four-set `contact_email_read` retain their public behavior. Native
 `contact_phone_read` supplies the corresponding root/phone-only four sets. Private components reuse the
 as-of functions; they do not own transactions or receive runtime EXECUTE rights. Public readers reject
-ambient transactions. This reconstructs the implemented channel families, not complete contact profile/address history.
+ambient transactions. This reconstructs the implemented channel families, not complete contact profile or account lifecycle history.
 
-Assign the trusted application database principal to `contact_channels_runtime` to add phone, web links and combined
+Assign the trusted application database principal to `contact_channels_runtime` to add phone, web links, addresses and combined
 reads/writes. It includes the existing email capability; existing email_runtime users alone gain no phone
 access. Deployment roles/memberships survive schema drop/recreate. Neither role grants constructors,
 direct table access or private helpers. Authentication and contact-level authorization remain service duties.

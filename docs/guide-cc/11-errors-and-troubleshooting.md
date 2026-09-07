@@ -118,3 +118,17 @@ Next: [12. Status and map](12-status-and-map.md)
 
 Other 518xx lifecycle/order/catalog-lock errors mirror the email/phone guards. Any command error
 requires whole-unit rollback; an expired optimistic token is not fixed by retrying inside that unit.
+
+## Address additions (iteration 3)
+
+| Error | Meaning | Response |
+| --- | --- | --- |
+| 51900 / 51901 | Invalid/missing/overlong address payload or overlong label | Validate through AddressInput; preserve accepted values. |
+| 51918 | Initial address metadata without a value, or JSON mixed with legacy address inputs | Supply one complete representation and its metadata. |
+| 51920 | Blank or overlong geographic name | Supply an accepted name of at most 256 UTF-16 units. |
+| 51921 | Unknown/invalid ID, conflicting hierarchy or name, or missing parent context | Supply consistent IDs/names and required parent context. |
+| 51922 | Attempted mutation of an immutable address/catalog/label | Select/create a replacement and explicitly repoint the contact association. |
+| 51923 | Lines mixed with structured street, or a number without street | Choose one street representation. |
+
+Other 519xx lifecycle/order/lock errors mirror the preceding families. Any error requires whole-unit
+rollback. See [ADR 0012](../adr/0012-immutable-address-values-and-geographic-catalogs.md).

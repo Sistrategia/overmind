@@ -45,13 +45,13 @@ CREATE OR ALTER PROCEDURE [security].[user_insert]
     @phone_extension NVARCHAR(MAX) = NULL,
     @numbers_only NVARCHAR(15) = NULL,
     @full_phone NVARCHAR(20) = NULL,
-    @address_location_name NVARCHAR(50) = NULL,
-    @address1 NVARCHAR(256) = NULL,
-    @address2 NVARCHAR(256) = NULL,
-    @zip_code NVARCHAR(256) = NULL,
-    @city NVARCHAR(256) = NULL,
-    @state NVARCHAR(256) = NULL,
-    @country NVARCHAR(256) = NULL,
+    @address_location_name NVARCHAR(MAX) = NULL,
+    @address1 NVARCHAR(MAX) = NULL,
+    @address2 NVARCHAR(MAX) = NULL,
+    @zip_code NVARCHAR(MAX) = NULL,
+    @city NVARCHAR(MAX) = NULL,
+    @state NVARCHAR(MAX) = NULL,
+    @country NVARCHAR(MAX) = NULL,
     @user_primary_role NVARCHAR(100) = NULL,
     @dbrow_version BIGINT = NULL OUTPUT,
     @auto_create_person_company BIT = 1,
@@ -63,7 +63,9 @@ CREATE OR ALTER PROCEDURE [security].[user_insert]
     @web_link_type NVARCHAR(MAX) = NULL,
     @web_link_location_name NVARCHAR(MAX) = NULL,
     @web_link_display_text NVARCHAR(MAX) = NULL,
-    @web_link_is_public BIT = NULL
+    @web_link_is_public BIT = NULL,
+    @address_data NVARCHAR(MAX) = NULL,
+    @address_is_public BIT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -170,7 +172,7 @@ BEGIN
                 OR @phone_data IS NOT NULL OR @phone_location_name IS NOT NULL OR @phone_number IS NOT NULL
                 OR @phone_area_code IS NOT NULL OR @phone_extension IS NOT NULL
                 OR @numbers_only IS NOT NULL OR @full_phone IS NOT NULL
-                OR @address_location_name IS NOT NULL OR @address1 IS NOT NULL OR @address2 IS NOT NULL
+                OR @address_data IS NOT NULL OR @address_is_public IS NOT NULL OR @address_location_name IS NOT NULL OR @address1 IS NOT NULL OR @address2 IS NOT NULL
                 OR @zip_code IS NOT NULL OR @city IS NOT NULL OR @state IS NOT NULL OR @country IS NOT NULL
                 OR @auto_create_person_company IS NULL OR @auto_create_person_company <> 1
             BEGIN
@@ -250,6 +252,8 @@ BEGIN
                 @numbers_only = @numbers_only,
                 @full_phone = @full_phone,
                 @address_location_name = @address_location_name,
+                @address_data = @address_data,
+                @address_is_public = @address_is_public,
                 @address1 = @address1,
                 @address2 = @address2,
                 @zip_code = @zip_code,

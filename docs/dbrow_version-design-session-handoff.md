@@ -4,6 +4,23 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Iteration 3 complete, 2026-09-07:** authorized over `06d177d`; local/uncommitted. Read
+[ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) and the
+[address guide](address-family.md). Complete shared immutable addresses and scoped immutable
+geographic catalogs now have lifecycle, saved order, history/diffs/actions, constructor integration
+and coherent four-family reads/saves. Associations store references, with stable identity and audit
+metadata. Every value field participates in exact matching; changing a catalog label requires a
+replacement value, preserving old revisions. Partial addresses use explicit scopes; conflicting
+IDs/names reject. The implementation supports lines or structured street fields, one per value,
+using the stated assumption after the optional representation question received no reply.
+The composed reader appends addresses for 13 result sets; all standalone shapes remain intact.
+See the [testing record](testing-handoff.md#iteration-3-immutable-addresses--2026-09-07) for final
+verification and database reconciliation. Next is iteration 4 person/organization profile and
+contact lifecycle. Login uniqueness remains deferred until provisioning. Fresh schemas only;
+official catalog datasets, source mappings, service/HTTP and customer migrations remain separate.
+Focused tests passed 17/17; full gate passed 77/77 in 8 min 58 sec, both RCSI profiles, zero
+failures/skips or build warnings/errors. All 110 databases across five runs have verified removal.
+
 **Iteration 2 complete, 2026-09-07:** authorized over `00c72f2`. The author retained ordinal identity
 and display_order position. [ADR 0011](adr/0011-web-link-values-and-contact-associations.md) and the
 [web-link guide](web-link-family.md) describe exact immutable URLs, association metadata, full lifecycle,
@@ -11,7 +28,7 @@ constructor integration and ten-set composed reads across email/phone/web links.
 and full gate passed 64/64, both RCSI profiles, zero failures/skips or build warnings/errors, 6 min 38 sec.
 All 74 created databases have verified removal; two initial connection-failure intent names were
 separately verified absent. See the [testing record](testing-handoff.md#iteration-2-web-links--2026-09-07).
-Next is iteration 3, immutable addresses; not started. Login scope remains deferred until provisioning.
+Next at that checkpoint was iteration 3, now delivered above. Login scope remains deferred until provisioning.
 The earlier checkpoint below retains its original verification evidence.
 
 **Iteration 1 implementation, 2026-09-07:** the author approved canonical international phone identity,

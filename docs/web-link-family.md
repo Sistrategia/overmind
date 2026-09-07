@@ -50,15 +50,16 @@ var revision = await reader.ReadAsync(contact, authenticatedActor, entityVersion
     tenant: tenant, compareEntityVersion: 2);
 var links = revision.WebLinks;
 var differences = revision.WebLinkDifferences;
-var actions = revision.Actions; // Globally ordered email, phone and web_link effective actions.
+var actions = revision.Actions; // Globally ordered email, phone, web_link and address effective actions.
 
 var linksOnly = await new SqlContactWebLinkReader(connectionString)
     .ReadAsync(contact, authenticatedActor, 3, tenant, compareEntityVersion: 2);
 ```
 
 The composed reader resolves the root and both revision bounds once, holds its shared clustered root
-barrier through every family, and consumes server completion. Ten SQL result sets are now returned:
-root plus state/diff/actions for each of email, phone and web links. Earlier email-only and phone-only
+barrier through every family, and consumes server completion. Iteration 3 appends addresses, giving 13 SQL result sets:
+root plus state/diff/actions for each of email, phone, web links and addresses. See the
+[address guide](address-family.md). Earlier email-only and phone-only
 SQL APIs keep their four-set contract. The web-link-only API also returns root plus three family sets.
 Internal readers retain private values and flags; these are not public-directory endpoints.
 
@@ -91,5 +92,6 @@ The [testing handoff](testing-handoff.md#iteration-2-web-links--2026-09-07) reco
 tests in 6 min 38 sec, zero failures/skips or build warnings/errors, and verified removal of all 74
 created test databases. Two initial connection-failure intent names were independently verified absent. Coverage includes three-family saves and consistent reads, exact shared
 values, historical replacement, ordering, no-ops, rollback, permissions and constructor field fidelity.
-Next is iteration 3: immutable addresses and their geographic catalog contract. Contact service/HTTP,
+Iteration 3 now delivers [immutable addresses](address-family.md) and their geographic catalog contract.
+Next is iteration 4: person/organization profile and contact lifecycle. Contact service/HTTP,
 root lifecycle, user provisioning and customer migrations remain separately planned.

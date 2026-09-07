@@ -40,9 +40,74 @@ public class Address
         set { CurrentData.Ordinal = value; }
     }
 
+    public int? DisplayOrder {
+        get => CurrentData.DisplayOrder;
+        set => CurrentData.DisplayOrder = value;
+    }
+
+    public bool IsPublic {
+        get => CurrentData.IsPublic;
+        set => CurrentData.IsPublic = value;
+    }
+
+    public string? StreetName {
+        get => CurrentData.StreetName;
+        set => CurrentData.StreetName = value;
+    }
+
+    public string? ExtNumber {
+        get => CurrentData.ExtNumber;
+        set => CurrentData.ExtNumber = value;
+    }
+
+    public string? IntNumber {
+        get => CurrentData.IntNumber;
+        set => CurrentData.IntNumber = value;
+    }
+
+    public string? Colony {
+        get => CurrentData.Colony;
+        set => CurrentData.Colony = value;
+    }
+
+    public string? County {
+        get => CurrentData.County;
+        set => CurrentData.County = value;
+    }
+
+    public string? References {
+        get => CurrentData.References;
+        set => CurrentData.References = value;
+    }
+
+    public int? CountryId {
+        get => CurrentData.CountryId;
+        set => CurrentData.CountryId = value;
+    }
+
+    public int? StateId {
+        get => CurrentData.StateId;
+        set => CurrentData.StateId = value;
+    }
+
+    public int? CityId {
+        get => CurrentData.CityId;
+        set => CurrentData.CityId = value;
+    }
+
+    public int? CountyId {
+        get => CurrentData.CountyId;
+        set => CurrentData.CountyId = value;
+    }
+
+    public int? ColonyId {
+        get => CurrentData.ColonyId;
+        set => CurrentData.ColonyId = value;
+    }
+
     public string? DisplayName {
         get {
-            return $"{Address1}, {Address2}, {ZipCode}, {City}, {State}, {Country}";
+            return string.Join(", ", new[] { StreetName is null ? Address1 : $"{StreetName} {ExtNumber} {IntNumber}".TrimEnd(), Address2, Colony, ZipCode, City, County, State, Country }.Where(x => !string.IsNullOrEmpty(x)));
         }
     }
 
@@ -63,7 +128,7 @@ public class Address
 
     public string? ZipCode {
         get { return CurrentData.ZipCode; }
-        set { CurrentData.ZipCode = ReplaceWhitespace(value, ""); }
+        set { CurrentData.ZipCode = value; }
     }
 
     public string? City {
@@ -122,11 +187,29 @@ public class Address
         return sb.ToString();
     }
 
-    private class AddressData // : ICloneable, IEquatable<PhoneData>
+    /// <summary>Accept the current exact value and association state for change tracking.</summary>
+    public void AcceptChanges() => OriginalData.CopyValuesFrom(CurrentData);
+    public void RejectChanges() => CurrentData.CopyValuesFrom(OriginalData);
+    public bool HasChanges() => !CurrentData.SameValues(OriginalData);
+
+    private class AddressData
     {
         public AddressData() {
         }
 
+        public int? DisplayOrder;
+        public bool IsPublic;
+        public string? StreetName;
+        public string? ExtNumber;
+        public string? IntNumber;
+        public string? Colony;
+        public string? County;
+        public string? References;
+        public int? CountryId;
+        public int? StateId;
+        public int? CityId;
+        public int? CountyId;
+        public int? ColonyId;
         public Guid? ContactPublicKey;
         public int? Ordinal;
         public string? Address1;
@@ -137,8 +220,69 @@ public class Address
         public string? State;
         public string? Country;
 
+        public void CopyValuesFrom(AddressData source) {
+            ContactPublicKey = source.ContactPublicKey;
+            Ordinal = source.Ordinal;
+            Address1 = source.Address1;
+            Address2 = source.Address2;
+            ZipCode = source.ZipCode;
+            LocationName = source.LocationName;
+            City = source.City;
+            State = source.State;
+            Country = source.Country;
+            DisplayOrder = source.DisplayOrder;
+            IsPublic = source.IsPublic;
+            StreetName = source.StreetName;
+            ExtNumber = source.ExtNumber;
+            IntNumber = source.IntNumber;
+            Colony = source.Colony;
+            County = source.County;
+            References = source.References;
+            CountryId = source.CountryId;
+            StateId = source.StateId;
+            CityId = source.CityId;
+            CountyId = source.CountyId;
+            ColonyId = source.ColonyId;
+        }
+        public bool SameValues(AddressData other) =>
+            ContactPublicKey == other.ContactPublicKey
+            && Ordinal == other.Ordinal
+            && Address1 == other.Address1
+            && Address2 == other.Address2
+            && ZipCode == other.ZipCode
+            && LocationName == other.LocationName
+            && City == other.City
+            && State == other.State
+            && Country == other.Country
+            && DisplayOrder == other.DisplayOrder
+            && IsPublic == other.IsPublic
+            && StreetName == other.StreetName
+            && ExtNumber == other.ExtNumber
+            && IntNumber == other.IntNumber
+            && Colony == other.Colony
+            && County == other.County
+            && References == other.References
+            && CountryId == other.CountryId
+            && StateId == other.StateId
+            && CityId == other.CityId
+            && CountyId == other.CountyId
+            && ColonyId == other.ColonyId;
+
         public AddressData Clone() {
             return new AddressData {
+                DisplayOrder = DisplayOrder,
+                IsPublic = IsPublic,
+                StreetName = StreetName,
+                ExtNumber = ExtNumber,
+                IntNumber = IntNumber,
+                Colony = Colony,
+                County = County,
+                References = References,
+                CountryId = CountryId,
+                StateId = StateId,
+                CityId = CityId,
+                CountyId = CountyId,
+                ColonyId = ColonyId,
                 ContactPublicKey = ContactPublicKey,
                 Ordinal = Ordinal,
                 Address1 = Address1,

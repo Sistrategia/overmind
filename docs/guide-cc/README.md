@@ -37,3 +37,5 @@ For the current .NET test commands and migration verification evidence, start wi
 Start with [Chapter 1](01-from-old-to-new.md).
 
 Iteration 2 adds the [web-link family](../web-link-family.md) and [ADR 0011](../adr/0011-web-link-values-and-contact-associations.md): exact URLs, saved order/history and composed email/phone/web-link reads and saves.
+
+Iteration 3 adds the [address family](../address-family.md) and [ADR 0012](../adr/0012-immutable-address-values-and-geographic-catalogs.md): complete immutable addresses, scoped immutable geography and coherent four-family reads/saves. Person/organization profile and contact lifecycle are next.
