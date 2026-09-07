@@ -6,36 +6,38 @@ The framework/adapter packages explicitly support .NET 8; VSTest works with the 
 
 ## What to run
 
-Run from the **repository root**. [Overmind.Tests.sln](../Overmind.Tests.sln) is a focused test solution; the application solution remains `src/overmind.sln`. It contains [tests/AuditTests/AuditTests.csproj](../tests/AuditTests/AuditTests.csproj), whose project references build the actual backend libraries.
+Run from the **repository root**. [src/overmind.sln](../src/overmind.sln) is the single application and test solution. Its lowercase `tests` solution folder matches the physical `src/tests` directory, beside `Applications`, `Data`, `Domain` and `Framework`, and contains [src/tests/AuditTests/AuditTests.csproj](../src/tests/AuditTests/AuditTests.csproj). SQL fixtures, historical probes and runsettings also live under `src/tests`. Solution-wide builds include the WebAPI, backend libraries and tests.
 
 ```powershell
 # Local dedicated SQL Server: Windows integrated authentication; explicit LOCAL certificate bypass.
 $env:OVERMIND_TEST_CONNECTION_STRING = 'Server=localhost;Database=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True'
 $env:OVERMIND_TEST_RESULTS = Join-Path $PWD 'artifacts/test-results/resources'
 
-dotnet restore Overmind.Tests.sln
-dotnet build Overmind.Tests.sln -c Release --no-restore
-dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --list-tests
+dotnet restore src/overmind.sln
+dotnet build src/overmind.sln -c Release --no-restore
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --list-tests
 ```
 
 **Authoritative full command: both real database profiles and the batch-parser tests**, currently 32 discovered tests (15 per profile, 2 parser tests):
 
 ```powershell
-dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
 ```
 
 The same command works locally, in CI and in an appropriately configured Kudu environment. In scripts, stop on a nonzero restore/build status; preserve the test exit status with `exit $LASTEXITCODE`. Do not pipe away the native exit status. The supplied runsettings fail a zero-test selection and map inconclusive results to failure. No integration test is skipped for missing configuration or privilege. A filtered run is only the selected scope, even when green.
 
+For a backend-only build/test scope, target the project directly: `dotnet test src/tests/AuditTests/AuditTests.csproj -c Release --settings src/tests/audit.runsettings`. This restores/builds the test project and its backend dependencies without requiring a second solution. Both forms run the same tests and require the same SQL configuration. Bare `dotnet test` from the repository root is not the documented command because the single solution lives under `src`.
+
 ```powershell
 # Representative focused existing scenario, RCSI off (one test).
-dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
 
 # Complete integration profile, independently selectable (15 tests each).
-dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
-dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
 
 # Database-free, LIMITED SCOPE: two SQL batch-parser tests, no audit/SQL behavior verification.
-dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --filter 'TestCategory=Infrastructure'
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=Infrastructure'
 ```
 
 Use a fresh results directory per CI run. Reusing a `LogFileName` overwrites the prior TRX. TRX contains test failures, SQL error numbers/batch locations and captured scenario output; resource journals are also attached. Failed cleanup fails the test, reports `CLEANUP FAILED`, and preserves the original scenario error alongside cleanup exceptions. Inspect failures and skipped counts, not just process startup or a results file's existence.
@@ -61,7 +63,7 @@ For recovery, stop the failed run, open **that run's** JSONL attachment, and hav
 
 ## Coverage continuity
 
-Methods in [AuditScenarios.cs](../tests/AuditTests/AuditScenarios.cs) are inherited by `Overmind.AuditTests.ReadCommittedTests` (`RCSI_Off`) and `Overmind.AuditTests.ReadCommittedSnapshotTests` (`RCSI_On`). Both classes also have `FullAudit`. Test Explorer/TRX fully qualified class names distinguish profiles; the CLI's short discovery listing repeats method names. Filter any row below with `FullyQualifiedName~<method>` and optionally its profile category.
+Methods in [AuditScenarios.cs](../src/tests/AuditTests/AuditScenarios.cs) are inherited by `Overmind.AuditTests.ReadCommittedTests` (`RCSI_Off`) and `Overmind.AuditTests.ReadCommittedSnapshotTests` (`RCSI_On`). Both classes also have `FullAudit`. Test Explorer/TRX fully qualified class names distinguish profiles; the CLI's short discovery listing repeats method names. Filter any row below with `FullyQualifiedName~<method>` and optionally its profile category.
 
 | Former maintained source/group | Discoverable method (in both profiles) |
 | --- | --- |
@@ -83,13 +85,17 @@ Methods in [AuditScenarios.cs](../tests/AuditTests/AuditScenarios.cs) are inheri
 
 Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. These protect the replacement executor; they are not substitute audit tests.
 
-The four original SQL fixtures remain unchanged. [SchemaFiles.cs](../tests/AuditTests/SchemaFiles.cs) retains the runner's production script list and dependency order, with files copied from production source at build time. `SeedAsync(1..4)` loads allocation → email → saved order → user construction **on the current test's database**, with a fresh SQL connection per fixture as before. Tests requiring only email stop at stage 2. Saved-order and user-reader cases intentionally run after their own SQL fixture stage. The native concurrency schedule remains grouped because its roots progress through revisions 1–4; the C# shared-unit and lifetime sequences retain their intentional within-scenario state. No test depends on another discovered test.
+The four original SQL fixtures remain unchanged. [SchemaFiles.cs](../src/tests/AuditTests/SchemaFiles.cs) retains the runner's production script list and dependency order, with files copied from production source at build time. `SeedAsync(1..4)` loads allocation → email → saved order → user construction **on the current test's database**, with a fresh SQL connection per fixture as before. Tests requiring only email stop at stage 2. Saved-order and user-reader cases intentionally run after their own SQL fixture stage. The native concurrency schedule remains grouped because its roots progress through revisions 1–4; the C# shared-unit and lifetime sequences retain their intentional within-scenario state. No test depends on another discovered test.
 
-[SqlScenarios.cs](../tests/AuditTests/SqlScenarios.cs) ports the adopted Python regressions, with attribution to baseline `efacebb`. Distinct logical SQL invocations use distinct nonpooled connections. All batches of one invocation share a connection (including cross-database SQL); SET QUOTED_IDENTIFIER ON matches former sqlcmd `-I`. A lexical parser recognizes standalone GO, including a trailing line comment; repeat counts and sqlcmd directives are explicitly unsupported because the retained scripts do not use them. SQL exceptions keep their numbers. Concurrency uses separate opened connections, a client start barrier, the original SQL application-lock rendezvous, a 45-second cancellation budget and 15-second rendezvous deadlines; every participant's completion/failure is observed. This orchestration/session boundary and the regenerated fixture state are particular points for the returning review.
+[SqlScenarios.cs](../src/tests/AuditTests/SqlScenarios.cs) ports the adopted Python regressions, with attribution to baseline `efacebb`. Distinct logical SQL invocations use distinct nonpooled connections. All batches of one invocation share a connection (including cross-database SQL); SET QUOTED_IDENTIFIER ON matches former sqlcmd `-I`. A lexical parser recognizes standalone GO, including a trailing line comment; repeat counts and sqlcmd directives are explicitly unsupported because the retained scripts do not use them. SQL exceptions keep their numbers. Concurrency uses separate opened connections, a client start barrier, the original SQL application-lock rendezvous, a 45-second cancellation budget and 15-second rendezvous deadlines; every participant's completion/failure is observed. This orchestration/session boundary and the regenerated fixture state are particular points for the returning review.
 
-Independent reports and `tests/review/` probes are unchanged historical artifacts, excluded from the supported test path. To rerun a historical probe that imports the former Python runner, use its recorded checkpoint (or `efacebb` for the pre-migration environment) in a separate checkout with its historical prerequisites. Their pending user-construction findings were not silently converted into passing assertions or fixed in production. Company-name locking, promotion input rejection, login/account policy, explicit snapshot operations and other review recommendations remain separate work.
+Independent reports and `src/tests/review/` probes are historical artifacts, excluded from the supported test path. Probe contents are unchanged after relocation; their old path references and dependencies are preserved as part of the review record. To rerun a historical probe that imports the former Python runner, use its recorded checkpoint (or `efacebb` for the pre-migration environment) in a separate checkout with its historical prerequisites. Their pending user-construction findings were not silently converted into passing assertions or fixed in production. Company-name locking, promotion input rejection, login/account policy, explicit snapshot operations and other review recommendations remain separate work.
 
 ## What was actually verified
+
+### Original migration evidence (before solution consolidation)
+
+The results in this subsection used the former `Overmind.Tests.sln` (or direct test project). They remain historical evidence; current operational commands above use `src/overmind.sln`. The consolidation follow-up is recorded separately below.
 
 Local validation date: **2026-09-06**, baseline commit **`efacebb`** (initially clean), plus this migration's **uncommitted** solution/test/documentation/example changes. No production file, original SQL fixture, independent report or historical probe changed. OS: Windows x64, NT build **10.0.26200.0**; SDK selected by unchanged global.json: **8.0.424**; .NET runtime **8.0.30**. Packages: MSTest/framework/adapter **4.4.0**, Microsoft.NET.Test.Sdk/testhost **18.9.0**, Microsoft.Data.SqlClient **6.0.2**. The SDK's VSTest console reports **17.11.1 (x64)**; that is distinct from the testhost NuGet package version.
 
@@ -114,9 +120,23 @@ Supporting files are local, ignored by Git, under `artifacts/test-results/`. Pre
 
 The temporary probe first failed an MSTest assertion after seed setup, then separately threw SQL error **52089** after creating a table in a second owned database. TRX retained the original failures and all removal messages. The temporary test source was removed, the final solution rebuilt, and final discovery excludes those two tests. These are deliberate runner acceptance checks, not unresolved product failures. The new executor's permanent test also confirms SQL error **52087** survives and later GO batches do not execute after failure.
 
-The final combined run used the exact unfiltered full command documented above, after the old maintained runners and temporary probes were removed. Both profile classes passed every scenario. Journals contain matching successful CREATE/removal entries for all **32** databases (16 per profile); each fixture also queried absence after DROP. Earlier migration runs removed 32 databases, the controlled failures removed 3, and the focused run removed 1; all their journals have zero unmatched successful creations. The two original baseline runs removed their 6 databases. No cleanup failure occurred in these runs.
+The original migration combined run used the former unfiltered full command targeting `Overmind.Tests.sln`, after the old maintained runners and temporary probes were removed. Both profile classes passed every scenario. Journals contain matching successful CREATE/removal entries for all **32** databases (16 per profile); each fixture also queried absence after DROP. Earlier migration runs removed 32 databases, the controlled failures removed 3, and the focused run removed 1; all their journals have zero unmatched successful creations. The two original baseline runs removed their 6 databases. No cleanup failure occurred in these runs.
 
 Current documentation links and `git diff --check` passed; the Kudu PowerShell file parsed without syntax errors. The solution explicitly includes the three backend dependencies so Release selects Release for every project (the initial test-only solution listing built referenced projects as Debug; this was corrected before final verification).
+
+### Single-solution follow-up — 2026-09-06
+
+At the user's request, `src/overmind.sln` now contains the test project in a lowercase `tests` solution folder, matching the physical directory. The separate root solution was removed. This follow-up starts from committed migration checkpoint `76e49c7`; its solution/documentation/example changes are uncommitted. Test code, SQL fixtures and production code are unchanged. Current commands and both inactive CI/Kudu examples use the single solution; the original migration evidence above retains the commands actually used then.
+
+Restore and Release build of `src/overmind.sln` passed with zero warnings/errors, including the WebAPI, all three backend libraries and `AuditTests`. Discovery found the same 32 tests. The full run passed **32 / failed 0 / skipped 0**, exit **0**, in **3 min 32 sec**, covering both RCSI profiles. All **32** disposable databases were removed: **16 per profile**, with zero unmatched successful creations in the journals. Evidence: `artifacts/test-results/consolidated-audit.trx`, `consolidated-audit.log` and `consolidated-resources/`; restore/build/discovery logs use the matching `consolidated-` prefix and each command exited 0. The full test command used `src/overmind.sln` and `--settings tests/audit.runsettings` before the physical relocation, with `LogFileName=consolidated-audit.trx` to retain earlier results and `OVERMIND_TEST_RESULTS` pointing to the separate `consolidated-resources` directory. The test environment is unchanged from the original local verification above. Remote examples remain unexecuted.
+
+### Physical test-tree relocation — 2026-09-06
+
+The user subsequently chose to move the entire test tree from root `tests` to `src/tests`, matching the lowercase solution folder beside the other solution directories. The solution project path is now `tests/AuditTests/AuditTests.csproj`; project references and the production SQL content path resolve to `../../Framework` and `../../Data`. Current commands use `--settings src/tests/audit.runsettings`. Test/fixture/probe contents are preserved; only the test project needs reference-path changes. Earlier verification commands above describe the layout used at that time.
+
+Fresh restore and Release build using the relocated project both exited **0**, with **zero warnings/errors**. Discovery exited **0** and found **32** tests. The full unfiltered command using `--settings src/tests/audit.runsettings` passed **32 / failed 0 / skipped 0**, exit **0**, in **2 min 49 sec**. Both profiles ran and all **32** disposable databases were removed (**16 per profile**, no unmatched successful creations). Evidence is recorded separately under `artifacts/test-results/relocated-*`, including `relocated-restore.log`, `relocated-build.log`, `relocated-discovery.log`, `relocated-audit.log`, `relocated-audit.trx` and `relocated-resources/`. The TRX filename and resource directory were selected explicitly to retain prior runs; all other full-command settings and the local SQL environment are unchanged.
+
+All **19** relocated source/fixture/probe/runsettings files other than the `.csproj` were checked against their committed Git contents and matched; the `.csproj` changes only reference paths. The root `tests` directory is gone. Current documentation links, Kudu example syntax and diff whitespace checks passed. The current uncommitted changes include this relocation and the preceding solution consolidation over `76e49c7`; the independent return-session checklist remains pending.
 
 ### What remains unverified or outside this migration
 
@@ -152,7 +172,7 @@ If the site cannot supply SDK/network/full-instance permissions (including cross
 
 ## How to extend the suite
 
-Add a named method to `AuditScenarios` to run it in both profiles automatically. Use `Run(async db => { await db.SeedAsync(requiredStage); ... })`, obtain sessions only from `db.ConnectionString` or `db.OwnedConnectionString(await db.CreateAsync())`, and `await using` every connection/unit. Use the actual application schema manager only on the newly created blank database, as `ApplicationSchemaCycleSeedsAndDeploymentRole` does. Add production script paths to `SchemaFiles.Paths` in build dependency order; keep SQL assertions in `tests/sql` and call them explicitly from the scenario. Rebuild when production SQL resources change.
+Add a named method to `AuditScenarios` to run it in both profiles automatically. Use `Run(async db => { await db.SeedAsync(requiredStage); ... })`, obtain sessions only from `db.ConnectionString` or `db.OwnedConnectionString(await db.CreateAsync())`, and `await using` every connection/unit. Use the actual application schema manager only on the newly created blank database, as `ApplicationSchemaCycleSeedsAndDeploymentRole` does. Add production script paths to `SchemaFiles.Paths` in build dependency order; keep SQL assertions in `src/tests/sql` and call them explicitly from the scenario. Rebuild when production SQL resources change.
 
 For races reuse `db.ConcurrentAsync`, `Signal` and `WaitSignal` in `AuditDatabase`, and the actual blocked-request observation in `LifetimeCases` where appropriate. Include SQL postconditions and bounded waiting, observe every participant, and never replace overlap with a sequential call. Assembly-level `DoNotParallelize` prevents uncontrolled scenario parallelism even if a runner requests it; concurrency inside a scenario remains deliberate. Different test processes still own distinct names. Do not share a database between test methods or depend on discovery ordering to prepare a root revision.
 

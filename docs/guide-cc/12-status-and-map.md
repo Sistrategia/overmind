@@ -49,12 +49,12 @@ Implemented in the working tree, tested by the disposable-database suite in both
 
 ```powershell
 $env:OVERMIND_TEST_CONNECTION_STRING = 'Server=localhost;Database=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True'
-dotnet restore Overmind.Tests.sln
-dotnet build Overmind.Tests.sln -c Release --no-restore
-dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
+dotnet restore src/overmind.sln
+dotnet build src/overmind.sln -c Release --no-restore
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
 ```
 
-The full command runs both real RCSI profiles through MSTest/VSTest, with independently owned disposable databases, real scripts, SQL fixtures, concurrent schedules, C# cases, System bootstrap and application schema cycles. The [testing handoff](../testing-handoff.md) is the maintained operational entry point, including remote-server prerequisites and recovery. Historical review probes remain under `tests/review/` and are outside the supported test command.
+The full command runs both real RCSI profiles through MSTest/VSTest, with independently owned disposable databases, real scripts, SQL fixtures, concurrent schedules, C# cases, System bootstrap and application schema cycles. The [testing handoff](../testing-handoff.md) is the maintained operational entry point, including remote-server prerequisites and recovery. Historical review probes remain under `src/tests/review/` and are outside the supported test command.
 
 ## The next step
 

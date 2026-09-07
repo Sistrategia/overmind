@@ -11,9 +11,9 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
     <PackageReference Include="MSTest.TestFramework" Version="4.4.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="4.4.0" />
-    <ProjectReference Include="../../src/Framework/Sistrategia.Data.SqlClient/Sistrategia.Data.SqlClient.csproj" />
-    <ProjectReference Include="../../src/Data/Sistrategia.Overmind.Data.SqlClient/Sistrategia.Overmind.Data.SqlClient.csproj" />
-    <Content Include="../../src/Framework/Sistrategia.Data.SqlClient/Scripts/**/*.sql" Link="ProductionSql/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="../../Framework/Sistrategia.Data.SqlClient/Sistrategia.Data.SqlClient.csproj" />
+    <ProjectReference Include="../../Data/Sistrategia.Overmind.Data.SqlClient/Sistrategia.Overmind.Data.SqlClient.csproj" />
+    <Content Include="../../Framework/Sistrategia.Data.SqlClient/Scripts/**/*.sql" Link="ProductionSql/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../sql/*.sql" Link="Fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

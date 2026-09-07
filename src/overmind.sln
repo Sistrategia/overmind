@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -18,6 +18,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{7BFF6BDC-3921-42E8-819B-21E5B47E869A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sistrategia.Overmind.Data.SqlClient", "Data\Sistrategia.Overmind.Data.SqlClient\Sistrategia.Overmind.Data.SqlClient.csproj", "{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A986B058-2628-4145-8685-F4B127B74A7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuditTests", "tests\AuditTests\AuditTests.csproj", "{B31B5282-E954-48AD-A828-8302A6E65FB5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +45,10 @@ Global
 		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B31B5282-E954-48AD-A828-8302A6E65FB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B31B5282-E954-48AD-A828-8302A6E65FB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B31B5282-E954-48AD-A828-8302A6E65FB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B31B5282-E954-48AD-A828-8302A6E65FB5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -50,5 +58,6 @@ Global
 		{18B291E9-0DD9-4088-46A7-ABB1A6596B3B} = {45E0FA85-F265-4DBB-919F-F9133A371676}
 		{6BAE86D7-4143-9987-3775-B0F77BDEFE73} = {45E0FA85-F265-4DBB-919F-F9133A371676}
 		{C7AAA2BA-01D1-EE1A-A926-1E0868FD22FD} = {7BFF6BDC-3921-42E8-819B-21E5B47E869A}
+		{B31B5282-E954-48AD-A828-8302A6E65FB5} = {A986B058-2628-4145-8685-F4B127B74A7E}
 	EndGlobalSection
 EndGlobal

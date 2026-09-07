@@ -22,17 +22,17 @@ jobs:
       - name: Restore
         shell: pwsh
         run: |
-          dotnet restore Overmind.Tests.sln
+          dotnet restore src/overmind.sln
           exit $LASTEXITCODE
       - name: Build Release
         shell: pwsh
         run: |
-          dotnet build Overmind.Tests.sln -c Release --no-restore
+          dotnet build src/overmind.sln -c Release --no-restore
           exit $LASTEXITCODE
       - name: Full audit gate (both RCSI profiles)
         shell: pwsh
         run: |
-          dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger "trx;LogFileName=audit.trx" --results-directory artifacts/test-results
+          dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger "trx;LogFileName=audit.trx" --results-directory artifacts/test-results
           exit $LASTEXITCODE
       - name: Retain results even after failure
         if: always()

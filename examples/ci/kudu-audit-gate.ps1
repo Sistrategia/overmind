@@ -14,11 +14,11 @@ try {
     # global.json selects the SDK; a runtime-only App Service installation is insufficient.
     & dotnet --version
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & dotnet restore Overmind.Tests.sln
+    & dotnet restore src/overmind.sln
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & dotnet build Overmind.Tests.sln -c Release --no-restore
+    & dotnet build src/overmind.sln -c Release --no-restore
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory $results
+    & dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory $results
     exit $LASTEXITCODE
 } finally {
     Pop-Location

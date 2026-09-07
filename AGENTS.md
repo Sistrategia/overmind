@@ -9,10 +9,12 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 **Backend testing migration — 2026-09-06:** current commands, coverage map, execution evidence and the pending
 return-session verification checklist are in [docs/testing-handoff.md](docs/testing-handoff.md). Use
-`dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger "trx;LogFileName=audit.trx" --results-directory artifacts/test-results`
+`dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger "trx;LogFileName=audit.trx" --results-directory artifacts/test-results`
 after its documented configuration/restore/build. MSTest/VSTest tests replace maintained Python/sqlcmd orchestration
 and the console harness; old commands below are historical. Production mechanisms and independent review probes
 are unchanged. No pending constructor fix, phone port or deployment is authorized by this testing handoff.
+The test tree is now `src/tests`, matching the lowercase `tests` solution folder beside the other source directories.
+Older dated paths below describe their original checkpoints; historical probes moved without content changes.
 
 **Codex session close — 2026-09-05 (latest authoring context):** the user wants time to absorb the redesign;
 the latest completed task was an approachable guide, not another implementation pass. Start human discussion with
@@ -203,6 +205,7 @@ Spec reference: `D:\Code\GitHub\Sistrategia\SistrategiaDataAnalysis\schema-analy
   and subsequent tenant/email creation are covered by the expanded tests. General first-user creation remains legacy.
 
 ## Working style with this user
+- Match solution-folder casing to its physical directory (for example, lowercase `tests`), and preserve the lowercase `overmind.sln` name. Use the single `src/overmind.sln`; target a test `.csproj` directly when a narrower build scope is useful.
 - Discuss design as a partner; when multiple valid designs exist, map the trade-space honestly rather than citing "best practice".
 - Do NOT modify code during exploration/context-gathering phases unless asked.
 - Verify SQL proc changes against the actual table schemas before editing.

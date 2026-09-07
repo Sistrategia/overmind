@@ -96,9 +96,9 @@ Current commands, configuration, prerequisites, coverage mapping and execution e
 
 ```powershell
 $env:OVERMIND_TEST_CONNECTION_STRING = 'Server=localhost;Database=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True'
-dotnet restore Overmind.Tests.sln
-dotnet build Overmind.Tests.sln -c Release --no-restore
-dotnet test Overmind.Tests.sln -c Release --no-build --settings tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
+dotnet restore src/overmind.sln
+dotnet build src/overmind.sln -c Release --no-restore
+dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
 ```
 
 The full command discovers both RCSI profiles and executes real production DDL, SQL fixtures and C# behavior through direct SqlClient sessions. Each scenario creates and removes only its own generated databases, with resource journals and TRX results. See the handoff before configuring a remote server: the certificate bypass above is an explicit local test setting.
@@ -144,7 +144,7 @@ Not claimed: a capacity benchmark, every SQL Server/Azure version, PostgreSQL/My
 | C# ownership and reader | SqlAuditUnit.cs, AuditUnitCommitUncertainException.cs, SqlContactEmailReader.cs |
 | Grants | Scripts/Security/create_email_runtime_permissions.sql |
 | Fresh System/tenant construction | Scripts/Security/User/create_system_user_bootstrap.sql, Scripts/Data/create_tenant_insert.sql, SecurityDatabaseSchemaBuilder.cs |
-| Ordinary user construction/type history | Scripts/Security/User/create_security_user_insert.sql, create_user_history_schema.sql, create_user_history_create.sql; Scripts/Entities/create_entity_history_snapshot.sql; tests/sql/user_construction_tests.sql; tests/AuditTests/SqlScenarios.cs, UserConstructionCases.cs |
-| Discoverable tests and retained cases | tests/AuditTests/AuditScenarios.cs, SqlScenarios.cs, SharedUnitCases.cs, OrderingCases.cs, LifetimeCases.cs, SchemaCycle.cs; tests/sql/email_family_tests.sql, email_order_tests.sql; [testing handoff](testing-handoff.md) |
+| Ordinary user construction/type history | Scripts/Security/User/create_security_user_insert.sql, create_user_history_schema.sql, create_user_history_create.sql; Scripts/Entities/create_entity_history_snapshot.sql; src/tests/sql/user_construction_tests.sql; src/tests/AuditTests/SqlScenarios.cs, UserConstructionCases.cs |
+| Discoverable tests and retained cases | src/tests/AuditTests/AuditScenarios.cs, SqlScenarios.cs, SharedUnitCases.cs, OrderingCases.cs, LifetimeCases.cs, SchemaCycle.cs; src/tests/sql/email_family_tests.sql, email_order_tests.sql; [testing handoff](testing-handoff.md) |
 
 Source paths except tests are relative to src/Framework/Sistrategia.Data.SqlClient. No edits were made to CFUS-TOP-React, LaSalle-egresados or SistrategiaDataAnalysis.

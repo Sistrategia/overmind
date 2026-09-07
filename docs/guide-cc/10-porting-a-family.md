@@ -57,11 +57,11 @@ Add the public wrappers and the reader to `Security/create_email_runtime_permiss
 
 ## 5. Registration
 
-Add the scripts to `ContactsDatabaseSchemaBuilder` in dependency order (dictionary and tables first; writer before the public boundary; wrappers after), and the drop entries in reverse. Add the files to `tests/AuditTests/SchemaFiles.cs` and a named scenario in `AuditScenarios.cs`; the [testing handoff](../testing-handoff.md) explains fixture prerequisites, both profiles and concurrency helpers.
+Add the scripts to `ContactsDatabaseSchemaBuilder` in dependency order (dictionary and tables first; writer before the public boundary; wrappers after), and the drop entries in reverse. Add the files to `src/tests/AuditTests/SchemaFiles.cs` and a named scenario in `AuditScenarios.cs`; the [testing handoff](../testing-handoff.md) explains fixture prerequisites, both profiles and concurrency helpers.
 
 ## 6. Tests
 
-Copy `tests/sql/email_family_tests.sql` and `email_order_tests.sql` for the family and keep every case: constructor at version 1 with history and action; repeated updates and delete/restore in one unit; insert/delete cancellation and later restore; stale token, missing child, wrong actor, wrong tenant, raw unenrolled transaction, forged committed number; full rollback after a nested success; exact spelling; runtime-role permissions; move, principal and dense order. Reuse the two-connection cases in `tests/AuditTests/SqlScenarios.cs`: same-root stale writer, late-root rejection, catalog misses, reader barrier, same-gap distinct values. Extend the discoverable C# scenarios and the schema-cycle check in `tests/AuditTests`.
+Copy `src/tests/sql/email_family_tests.sql` and `email_order_tests.sql` for the family and keep every case: constructor at version 1 with history and action; repeated updates and delete/restore in one unit; insert/delete cancellation and later restore; stale token, missing child, wrong actor, wrong tenant, raw unenrolled transaction, forged committed number; full rollback after a nested success; exact spelling; runtime-role permissions; move, principal and dense order. Reuse the two-connection cases in `src/tests/AuditTests/SqlScenarios.cs`: same-root stale writer, late-root rejection, catalog misses, reader barrier, same-gap distinct values. Extend the discoverable C# scenarios and the schema-cycle check in `src/tests/AuditTests`.
 
 ## 7. Before you start phone
 
