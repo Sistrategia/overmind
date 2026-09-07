@@ -1,6 +1,6 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, iterations 0–4 complete. Iteration 5a is implemented and undergoing its final full gate.
+Updated: 2026-09-07, iterations 0–5a complete. Iteration 5b is next; it has not started.
 Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0014 describe the implemented foundation.
 
 The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–5a on 2026-09-07; later iterations remain planned.
@@ -47,7 +47,7 @@ The order below is a proposal. Contact integration begins with the second family
 | 2 | Complete web-link family | SQL/C# lifecycle, ordering, visibility, history and mixed-family composition work. | Complete; [ADR 0011](adr/0011-web-link-values-and-contact-associations.md) |
 | 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Complete; [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) |
 | 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Complete; [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) |
-| 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Implemented; final gate running; [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) |
+| 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Complete; [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) |
 | 5b | Contact HTTP API | Endpoints apply authentication-derived context, authorization, visibility, validation and tested conflict/error responses to the completed service. | Planned |
 | 6 | Administrative user provisioning | New-person/account and existing-person promotion use the contact API contracts, chosen login policy and explicit authorization. | Planned |
 
@@ -323,9 +323,10 @@ cancellation and uncertain commit retain distinct outcomes. SQL still enforces a
 
 Focused verification passed **13/13** including all service scenarios in both RCSI profiles, database-free
 guards and actual schema/DI integration using the normal seeded actor. Final build/discovery passed with
-zero warnings/errors. The **101-test full gate is running**; its completion and resource reconciliation
-will be recorded in the [testing record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
-Next after verification is **iteration 5b: contact HTTP boundary**. Login uniqueness remains deferred
+zero warnings/errors. The full gate passed **101/101** in **12 min 17 sec**, both RCSI profiles,
+zero failures/skips. All **118** disposable databases across three runs have matching intent, creation,
+engine identity and verified removal; see the [testing record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
+Next is **iteration 5b: contact HTTP boundary**, not started. Login uniqueness remains deferred
 until provisioning. Customer upgrades, discovery/search, deployment and independent review are separate.
 
 ## Deferred work

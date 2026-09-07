@@ -4,7 +4,7 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
-**Iteration 5a implemented; final gate running, 2026-09-07:** authorized over committed iteration 4
+**Iteration 5a complete, 2026-09-07:** authorized over committed iteration 4
 (`c421d3a`), local/uncommitted. [ADR 0014](adr/0014-integrated-contact-service-and-access-boundary.md) and
 the [service guide](contact-service.md) define IContactService/SqlContactService, scoped registration,
 required trusted context and per-contact capabilities. Ordered saves compose profile and all four
@@ -15,10 +15,10 @@ detail uses a separate filtered projection, hiding private/deleted roots and pri
 full reader selects the current version inside its root barrier and keeps its 16 result sets.
 SQL actor/tenant checks still apply; no permissive host policy or HTTP registration is installed.
 Known errors map to service outcomes; cancellation and uncertain commit remain distinct.
-Focused tests passed 13/13; final build/discovery passed with zero warnings/errors. Full gate is running
-with 101 tests (47 per profile plus seven database-free). Complete verification and resource reconciliation
-through the [testing record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
-Next after the gate is 5b HTTP integration; login uniqueness remains deferred until provisioning.
+Focused tests passed 13/13; final build/discovery passed with zero warnings/errors. Full gate passed
+101/101 (47 per profile plus seven database-free) in 12 min 17 sec, zero failures/skips. All 118 databases
+across three runs have verified removal; see the [testing record](testing-handoff.md#iteration-5a-integrated-contact-service--2026-09-07).
+Next is 5b HTTP integration, not started; login uniqueness remains deferred until provisioning.
 
 **Iteration 4 complete, 2026-09-07:** authorized over committed iteration 3 (`4f4fd78`),
 local/uncommitted. Read [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) and the

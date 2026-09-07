@@ -552,7 +552,7 @@ the service preserves that exception type and does not add a separate commit imp
 | --- | --- | --- |
 | Initial focused | 9/11, 1 min 26 sec | All non-cancellation cases passed. SqlClient reported blocked-command attention as SqlException; the service now normalizes it to cancellation when the request token is cancelled, preserving the separate uncertain-commit path. |
 | Corrected focused | **13/13**, **1 min 55 sec** | Ten service SQL cases, database-free guards and both actual schema cycles; zero failures/skips. |
-| Final full gate | Running | Expected 101 tests: 47 SQL scenarios per RCSI profile and seven database-free tests. |
+| Final full gate | **101/101**, **12 min 17 sec** | All 47 SQL scenarios per RCSI profile and seven database-free tests; zero failures/skips. |
 
 Final Release build/discovery passed with zero warnings/errors; no dependency changed. All **117**
 production SQL files copied into the final test output match source hashes. The final build additionally
@@ -560,6 +560,10 @@ classifies concurrent unique-key collisions as Conflict and documents SQL NULL c
 No production/test source changed after that build and the start of the full gate.
 
 Ignored evidence: `artifacts/test-results/iteration-5a/{focused,focused-2,full}/`, `discovery.txt`,
-`verify-evidence.ps1` and final `verification.json`. Full execution and cleanup reconciliation are pending
-completion of the running gate. Fresh-schema/local SQL Server verification only; HTTP/authentication
-integration, customer upgrades, remote deployment and independent review execution remain separate.
+`verify-evidence.ps1` and `verification.json`. All **118 distinct databases** across the three executions
+reconcile through intent, creation, engine identity and verified removal: 236 original-and-attachment
+journal copies, zero unresolved resources. The full gate owns 96 databases (48 per profile, including
+bootstrap's additional database). Removal includes post-DROP absence checks; no recovery deletion or
+prefix scan was needed. `git diff --check` and changed-document relative links passed. Fresh-schema/local
+SQL Server verification only; HTTP/authentication integration, customer upgrades, remote deployment and
+independent review execution remain separate.
