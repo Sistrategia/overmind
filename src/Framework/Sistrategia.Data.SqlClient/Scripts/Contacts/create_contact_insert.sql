@@ -24,13 +24,13 @@ CREATE OR ALTER PROCEDURE [contacts].[contact_insert] (
     
     ,@full_name                     NVARCHAR(256)
     
-    ,@person_title                  NVARCHAR(256) = NULL
-    ,@person_first_name             NVARCHAR(256) = NULL
+    ,@person_title                  NVARCHAR(MAX) = NULL
+    ,@person_first_name             NVARCHAR(MAX) = NULL
 --  ,@person_last_name              NVARCHAR(256) = NULL
-    ,@person_last_name1             NVARCHAR(256) = NULL
-    ,@person_last_name2             NVARCHAR(256) = NULL
-    ,@person_suffix                 NVARCHAR(256) = NULL
-    ,@person_alias                  NVARCHAR(256) = NULL
+    ,@person_last_name1             NVARCHAR(MAX) = NULL
+    ,@person_last_name2             NVARCHAR(MAX) = NULL
+    ,@person_suffix                 NVARCHAR(MAX) = NULL
+    ,@person_alias                  NVARCHAR(MAX) = NULL
     
     ,@person_job_title              NVARCHAR(256) = NULL
     ,@person_company                NVARCHAR(256) = NULL
@@ -163,94 +163,31 @@ BEGIN
             , [full_name]
             , [person_job_title], [person_company]
             , [person_gender_code], [person_birth_date]
-            , [person_marital_status]
+            , [person_marital_status], [do_not_contact]
             -- , [line_of_business_id]
             )
             VALUES (@contact_id, @contact_type_id
             , @full_name
             , @person_job_title, @person_company
             , @person_gender_code, @person_birth_date
-            , @person_marital_status
+            , @person_marital_status, @do_not_contact
             -- , (SELECT [line_of_business_id] FROM [contacts].[line_of_business] WHERE [display_name] = @line_of_business)
             -- , @line_of_business_id
             )
 
-        INSERT INTO [contacts].[contact_history] ([dbrow_version], [tenant_id]
-            , [contact_id] -- , [contact_type_id]            
-            , [full_name]
-            , [person_job_title], [person_company]
-            , [person_gender_code], [person_birth_date]
-            , [person_marital_status]
-            -- , [line_of_business_id]
-            , [do_not_contact]
-            )
-            VALUES ( @dbrow_version, @tenant_id
-            , @contact_id -- , @contact_type_id            
-            , @full_name
-            , @person_job_title, @person_company
-            , @person_gender_code, @person_birth_date
-            , @person_marital_status
-            -- , (SELECT [line_of_business_id] FROM [contacts].[line_of_business] WHERE [display_name] = @line_of_business)
-            -- , @line_of_business_id
-            , @do_not_contact -- default 0
-            )  
+        EXEC [contacts].[contact_names_replace]
+            @contact_id = @contact_id,
+            @person_title = @person_title,
+            @person_first_name = @person_first_name,
+            @person_last_name1 = @person_last_name1,
+            @person_last_name2 = @person_last_name2,
+            @person_suffix = @person_suffix,
+            @person_alias = @person_alias;
+        EXEC [contacts].[contact_history_snapshot]
+            @contact_id = @contact_id,
+            @tenant_id = @tenant_id,
+            @dbrow_version = @dbrow_version;
 
-        IF @person_title IS NOT NULL
-        BEGIN
-            IF NOT EXISTS (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_title)
-                INSERT INTO [contacts].[person_name] ([name]) VALUES (@person_title)
-            INSERT INTO [contacts].[contact_person_name] ([contact_id],[person_name_type_id],[person_name_id])
-                VALUES (@contact_id, 1, (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_title))
-        END
-
-        IF @person_first_name IS NOT NULL
-        BEGIN
-            IF NOT EXISTS (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_first_name)
-                INSERT INTO [contacts].[person_name] ([name]) VALUES (@person_first_name)
-            INSERT INTO [contacts].[contact_person_name] ([contact_id],[person_name_type_id],[person_name_id])
-                VALUES (@contact_id, 2, (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_first_name))
-        END
-
-        --IF @person_last_name IS NOT NULL
-        --BEGIN
-        --    IF NOT EXISTS (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_last_name)
-        --        INSERT INTO [contacts].[person_name] ([name]) VALUES (@person_last_name)
-        --    INSERT INTO [contacts].[contact_person_name] ([contact_id],[person_name_type_id],[person_name_id])
-        --        VALUES (@contact_id, 3, (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_last_name))
-        --END
-
-        IF @person_last_name1 IS NOT NULL
-        BEGIN
-            IF NOT EXISTS (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_last_name1)
-                INSERT INTO [contacts].[person_name] ([name]) VALUES (@person_last_name1)
-            INSERT INTO [contacts].[contact_person_name] ([contact_id],[person_name_type_id],[person_name_id])
-                VALUES (@contact_id, 4, (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_last_name1))
-        END
-
-        IF @person_last_name2 IS NOT NULL
-        BEGIN
-            IF NOT EXISTS (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_last_name2)
-                INSERT INTO [contacts].[person_name] ([name]) VALUES (@person_last_name2)
-            INSERT INTO [contacts].[contact_person_name] ([contact_id],[person_name_type_id],[person_name_id])
-                VALUES (@contact_id, 5, (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_last_name2))
-        END
-
-        IF @person_suffix IS NOT NULL
-        BEGIN
-            IF NOT EXISTS (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_suffix)
-                INSERT INTO [contacts].[person_name] ([name]) VALUES (@person_suffix)
-            INSERT INTO [contacts].[contact_person_name] ([contact_id],[person_name_type_id],[person_name_id])
-                VALUES (@contact_id, 6, (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_suffix))
-        END
-
-        IF @person_alias IS NOT NULL
-        BEGIN
-            IF NOT EXISTS (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_alias)
-                INSERT INTO [contacts].[person_name] ([name]) VALUES (@person_alias)
-            INSERT INTO [contacts].[contact_person_name] ([contact_id],[person_name_type_id],[person_name_id])
-                VALUES (@contact_id, 7, (SELECT [person_name_id] FROM [contacts].[person_name] WHERE [name] = @person_alias))
-        END
-            
         -- IF @email_address IS NOT NULL
         -- BEGIN
         --     DECLARE @email_id   INT
@@ -398,8 +335,10 @@ BEGIN
         
                 INSERT INTO [contacts].[contact] ([contact_id], [contact_type_id], [full_name])
                     VALUES (@company_contact_id, 2, @person_company) 
-                INSERT INTO [contacts].[contact_history] ([dbrow_version],[tenant_id],[contact_id],[full_name],[do_not_contact])
-                    VALUES (@dbrow_version,@tenant_id,@company_contact_id,@person_company,0);
+                EXEC [contacts].[contact_history_snapshot]
+                    @contact_id = @company_contact_id,
+                    @tenant_id = @tenant_id,
+                    @dbrow_version = @dbrow_version;
 
                 INSERT INTO [contacts].[contact_relationship] ([contact_relationship_type_id],[from_contact_id],[to_contact_id]) 
                 VALUES ((SELECT [contact_relationship_type_id] FROM [contacts].[contact_relationship_type] WHERE [code_name] = 'worksfor'), @contact_id, @company_contact_id)                

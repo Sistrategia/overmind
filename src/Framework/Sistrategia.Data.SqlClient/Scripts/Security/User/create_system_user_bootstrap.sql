@@ -48,10 +48,9 @@ BEGIN
             @created,1,@created,1,N'System User',0,1,1,@v);
         SET IDENTITY_INSERT [entities].[entity] OFF; SET @identity_on=0;
         INSERT [entities].[entity_version_history] ([tenant_id],[dbrow_version],[entity_id],[entity_version]) VALUES (@tenant_id,@v,1,1);
-        EXEC [entities].[entity_history_snapshot] 1,@tenant_id,@v;
+        EXEC [entities].[entity_history_snapshot] 1,@tenant_id,@v,@operation=1;
         INSERT [contacts].[contact] ([contact_id],[contact_type_id],[full_name]) VALUES (1,1,N'System User');
-        INSERT [contacts].[contact_history] ([dbrow_version],[tenant_id],[contact_id],[full_name],[do_not_contact],[open_to_work],[recruiting],[is_deceased])
-        VALUES (@v,@tenant_id,1,N'System User',0,0,0,0);
+        EXEC [contacts].[contact_history_snapshot] @contact_id=1,@tenant_id=@tenant_id,@dbrow_version=@v;
         INSERT [security].[user] ([user_id],[login_name]) VALUES (1,N'system');
         EXEC [security].[user_history_create] 1,@tenant_id,@v;
         IF @owns=1 COMMIT;

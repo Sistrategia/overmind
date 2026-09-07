@@ -4,7 +4,7 @@
 
 For most of your customers, Norte may be the only tenant in the database. Nothing about the contact-editing experience needs a tenant selector in that installation. Internally, however, Lina and the audit unit still have a real tenant.
 
-That gives the single-tenant and multi-tenant cases the same business ownership rules. An omitted tenant selects the established default. An explicit invalid tenant fails. The current resolver uses the framework's known default GUID; a general configurable tenant-selection service has not been built.
+That gives the single-tenant and multi-tenant cases the same business ownership rules. An omitted tenant selects the established default. An explicit invalid tenant fails. The resolver uses the framework's known default GUID for compatibility; iteration 4's new contact create/edit/lifecycle/full-read APIs instead require an explicitly resolved tenant. A general configurable tenant-selection service has not been built.
 
 ## Business ownership and shared definitions
 

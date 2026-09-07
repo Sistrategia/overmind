@@ -86,3 +86,16 @@ DENY EXECUTE ON [contacts].[state_value_ensure] TO [email_runtime];
 DENY EXECUTE ON [contacts].[county_value_ensure] TO [email_runtime];
 DENY EXECUTE ON [contacts].[city_value_ensure] TO [email_runtime];
 DENY EXECUTE ON [contacts].[colony_value_ensure] TO [email_runtime];
+
+-- Contact profile/lifecycle capability is opt-in; existing channel-only principals retain their surface.
+IF DATABASE_PRINCIPAL_ID(N'contact_runtime') IS NULL CREATE ROLE [contact_runtime] AUTHORIZATION [dbo];
+IF NOT EXISTS (SELECT 1 FROM sys.database_role_members WHERE role_principal_id=DATABASE_PRINCIPAL_ID(N'contact_channels_runtime')
+    AND member_principal_id=DATABASE_PRINCIPAL_ID(N'contact_runtime'))
+    ALTER ROLE [contact_channels_runtime] ADD MEMBER [contact_runtime];
+GRANT EXECUTE ON [contacts].[contact_change] TO [contact_runtime];
+GRANT EXECUTE ON [contacts].[contact_read] TO [contact_runtime];
+DENY EXECUTE ON [contacts].[person_name_value_ensure] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_names_replace] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_history_snapshot] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_profile_prepare] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_profile_read_rows] TO [email_runtime];

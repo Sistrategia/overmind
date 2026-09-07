@@ -1,9 +1,9 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, iterations 0–3 complete. Iteration 4 onward has not started.
-Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0012 describe the implemented foundation.
+Updated: 2026-09-07, iterations 0–4 complete. Iteration 5a is next; it has not started.
+Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0013 describe the implemented foundation.
 
-The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–3 on 2026-09-07; later iterations remain planned.
+The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0–4 on 2026-09-07; later iterations remain planned.
 
 ## Decisions already made
 
@@ -46,7 +46,7 @@ The order below is a proposal. Contact integration begins with the second family
 | 1 | Complete phone family and shared reader boundary | As-of/diff/actions and C# reads prove email/phone state at the same revision; mixed saves have one revision, global action order and whole rollback. | Complete; [ADRs 0009](adr/0009-phone-values-parsing-and-numbering-geography.md)/[0010](adr/0010-composed-contact-family-reader.md) |
 | 2 | Complete web-link family | SQL/C# lifecycle, ordering, visibility, history and mixed-family composition work. | Complete; [ADR 0011](adr/0011-web-link-values-and-contact-associations.md) |
 | 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Complete; [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) |
-| 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Planned |
+| 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Complete; [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) |
 | 5a | Integrated contact service | Current/historical detail and atomic saves cover the declared fields/families using one read/write boundary respectively, with explicit trusted actor/tenant context. | Planned |
 | 5b | Contact HTTP API | Endpoints apply authentication-derived context, authorization, visibility, validation and tested conflict/error responses to the completed service. | Planned |
 | 6 | Administrative user provisioning | New-person/account and existing-person promotion use the contact API contracts, chosen login policy and explicit authorization. | Planned |
@@ -63,7 +63,7 @@ Paginated listing/search is a separately tracked contact-discovery deliverable a
 | Before iteration 1 phone DDL | Complete phone value identity and derived matching | Selected with the author: E.164 identity, calling code/national strings, preserved input, backend parsing and optional metadata decomposition. Geographic catalog FKs belong to a separate versioned prefix-to-many-places map; no address inheritance. |
 | Before iteration 1 public contracts | Meaning of `is_public` | Directory-display eligibility, subject to root privacy and application authorization; restrictive default. Trusted internal readers retain flags and data. No anonymous endpoint in iteration 1; HTTP enforcement remains in 5b. |
 | Before iteration 3 | Address fields, catalog hierarchy and historical labels | Selected in iteration 3: lines or structured street per value, exact full-field identity, explicit partial scopes and immutable catalog labels; [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md). |
-| Before iterations 4 and 6 | Profile/lifecycle/relationship scope; provisioning/activation scope | Keep the existing bounded decisions in those iterations. Dedicated group work and shared-user membership remain deferred. |
+| Before iterations 4 and 6 | Profile/lifecycle/relationship scope; provisioning/activation scope | Iteration 4 selects explicit profile replacement, protected soft delete/restore, no category conversion or relationship editing. Provisioning scope remains for iteration 6; groups/shared-user membership remain deferred. |
 
 ### 0. Corrections before expanding the public constructor boundary
 
@@ -125,6 +125,9 @@ Turn these source-visible counterexamples into named regression cases for this i
 Implement the same complete lifecycle and constructor integration as the other families. Prove that two contacts can reference one address, editing one repoints only that association, and historical reads retain the old value and correct catalog interpretation. Test partial addresses, concurrent value creation and mixed-family rollback. A relationship to an organization's live office location is separate work; shared immutable values do not imply automatic propagation to employees.
 
 ### 4. Persons, organizations and contact-level operations
+
+Implemented contract: [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) and the
+[profile/lifecycle guide](contact-profile-and-lifecycle.md). The requirements below remain the acceptance checklist.
 
 Declare the supported Contact v1 profile fields and history coverage. Cover both entity presentation fields and contact payload; full name alone does not reconstruct editable structured person-name components. Define name/display-name derivation and explicit clearing behavior. Keep organization fields distinct from person fields. Contact-category conversion remains undecided; account promotion changes entity type and is not permission to convert an organization into a person.
 
@@ -238,8 +241,7 @@ Focused web-link tests passed 11/11; the initial real schema cycle passed 2/2. T
 passed **64/64**, both RCSI profiles, zero failures/skips or build warnings/errors, **6 min 38 sec**.
 All **74 created databases** have verified removal evidence; two initial sandbox connection-failure
 intent names were separately checked absent. See the [testing record](testing-handoff.md#iteration-2-web-links--2026-09-07).
-Next is iteration 3, immutable addresses; it has
-not started. Login uniqueness remains deferred until provisioning. Fresh schemas only; no HTTP,
+Next at that checkpoint was iteration 3, now delivered below. Login uniqueness remains deferred until provisioning. Fresh schemas only; no HTTP,
 customer upgrade, sibling-project change or independent review execution is claimed.
 
 ## Planning revision record
@@ -266,8 +268,35 @@ Focused verification passed **17/17**; the full gate passed **77/77**, both RCSI
 **8 min 58 sec**, zero failures/skips or build warnings/errors. All **110** disposable databases
 across five runs have verified removal evidence; [testing record](testing-handoff.md#iteration-3-immutable-addresses--2026-09-07).
 Both guide families, handoffs and schema-cycle coverage are updated. Official geographic datasets,
-source mappings, customer migration and service/HTTP are not delivered. Next is iteration 4:
-person/organization profile and contact lifecycle. Login scope remains deferred until provisioning.
+source mappings, customer migration and service/HTTP are not delivered. Next at that checkpoint was
+iteration 4, now delivered below. Login scope remains deferred until provisioning.
+
+## Iteration 4 execution record — 2026-09-07
+
+Authorized over committed iteration 3 (`4f4fd78`); implementation remains local/uncommitted.
+[ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) and the
+[profile/lifecycle guide](contact-profile-and-lifecycle.md) define explicit person/organization
+profile replacement, exact immutable name values and complete relational profile history.
+The new contact capability creates contacts, edits supported fields and performs protected soft
+delete/restore. Initial and later profile/channel commands share one audit unit and root revision.
+Root history now receives explicit operation intent; effective commands retain ordered action evidence.
+
+The full SQL/C# reader adds profile state, differences and actions to all four child families under
+the existing root barrier. Previous channel readers retain their result shapes. Existing constructor
+and System name/profile snapshots use the same history helper. The opt-in contact_runtime role adds
+the new public commands and reader while private helpers and legacy constructors remain restricted.
+
+Protected deletion and deferral of relationship editing/category conversion were stated implementation
+assumptions after optional questions received no reply. Deletion rejects accounts and linked contacts;
+restore preserves child identities and saved order. Employment/representation editing, lock/validation
+transitions and account lifecycle remain separate. Login uniqueness remains deferred until provisioning.
+
+Final focused tests passed **15/15**; the full gate passed **90/90**, both RCSI profiles,
+**11 min 13 sec**, zero failures/skips or build warnings/errors. All **128** disposable databases
+across seven runs have matching intent/create/identity/removal evidence, with verified post-DROP absence.
+See the [testing record](testing-handoff.md#iteration-4-contact-profiles-and-lifecycle--2026-09-07).
+Fresh-schema/local SQL Server verification only. Next is **iteration 5a: integrated contact service**;
+service/HTTP, discovery, customer upgrades and independent review execution are not delivered here.
 
 ## Deferred work
 

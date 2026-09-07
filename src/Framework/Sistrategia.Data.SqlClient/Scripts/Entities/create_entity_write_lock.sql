@@ -1,7 +1,8 @@
 -- Locks and validates before child mutation/allocation. Internal: no application EXECUTE grant.
 CREATE OR ALTER PROCEDURE [entities].[entity_write_lock]
     @entity_id INT, @tenant_id INT, @expected_entity_version INT,
-    @dbrow_version BIGINT = NULL OUTPUT, @entity_version INT = NULL OUTPUT
+    @dbrow_version BIGINT = NULL OUTPUT, @entity_version INT = NULL OUTPUT,
+    @allow_deleted BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -14,7 +15,7 @@ BEGIN
     FROM [entities].[entity] WITH (XLOCK,HOLDLOCK,INDEX([px_entities_entity]))
     WHERE [entity_id]=@entity_id AND [tenant_id]=@tenant_id;
     IF @entity_version IS NULL THROW 51202, 'Target entity does not exist in this tenant.', 1;
-    IF @deleted IS NOT NULL OR @locked IS NOT NULL THROW 51203, 'Target entity is deleted or locked.', 1;
+    IF (@deleted IS NOT NULL AND COALESCE(@allow_deleted,0)=0) OR @locked IS NOT NULL THROW 51203, 'Target entity is deleted or locked.', 1;
     IF @dbrow_version IS NOT NULL AND @stamp > @dbrow_version
         THROW 51204, 'A later unit has changed this root; roll back and retry the whole operation.', 1;
     DECLARE @entry INT = @entity_version;

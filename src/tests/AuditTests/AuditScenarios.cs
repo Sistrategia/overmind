@@ -28,6 +28,42 @@ public abstract class AuditScenarios
     private Task Run(Func<AuditDatabase, Task> scenario) => AuditDatabase.RunAsync(Rcsi, TestContext, scenario);
 
     [TestMethod]
+    public Task ContactProfileLifecycleNamesAndComposition() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactProfileCases.Lifecycle(db);
+    });
+
+    [TestMethod]
+    public Task ContactProfileValidationRollbackAndPermissions() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactProfileCases.ValidationAndPermissions(db);
+    });
+
+    [TestMethod]
+    public Task ContactProfileDependenciesAndLegacyNames() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactProfileCases.DependenciesAndLegacyNames(db);
+    });
+
+    [TestMethod]
+    public Task ContactProfileDeletionPromotionAndRelationshipRaces() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactProfileCases.DependencyRaces(db);
+    });
+
+    [TestMethod]
+    public Task ContactProfileReaderHoldsAllFamilies() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactProfileCases.ReaderConcurrency(db);
+    });
+
+    [TestMethod]
+    public Task ContactProfileNameMissConcurrencyAndDistinctProgress() => Run(async db => {
+        await ContactProfileCases.Prepare(db);
+        await ContactProfileCases.NameConcurrency(db);
+    });
+
+    [TestMethod]
     public Task AddressLifecycleAndCompleteValueHistory() => Run(async db => {
         await db.SeedAsync();
         await AddressCases.Lifecycle(db);

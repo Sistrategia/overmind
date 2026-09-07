@@ -116,3 +116,6 @@ Fresh schemas only. Geographic catalog population, unresolved legacy import, cus
 HTTP endpoints, account/recovery phone and general contact lifecycle remain later work. The old domain
 `Sistrategia.Contacts.Phone` formatting helpers are legacy UI conveniences and are not used by these new
 commands; new integrations should use PhoneInput/PhoneParser and the returned historical state records.
+
+Iteration 4 adds the [full contact reader](contact-profile-and-lifecycle.md) for the declared profile
+and all four child families. Existing channel/standalone reader shapes remain unchanged.

@@ -4,6 +4,24 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Iteration 4 complete, 2026-09-07:** authorized over committed iteration 3 (`4f4fd78`),
+local/uncommitted. Read [ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) and the
+[profile/lifecycle guide](contact-profile-and-lifecycle.md). Strict person/organization creation and
+profile replacement now capture exact immutable structured names and complete relational snapshots.
+Profile and all four child families share one unit/revision; root history receives explicit operation
+intent and effective commands retain globally ordered action evidence. Protected soft delete/restore
+retains child identities/order; deletion rejects accounts and relationship dependencies. Relationship
+editing, category conversion and lock/validation transitions remain deferred. The lifecycle protections
+and deferrals were stated assumptions after optional questions received no reply, not explicit author answers.
+The full contact_read/SqlContactReader adds profile state/diffs/actions for 16 result sets; the existing
+channel reader remains at 13. The new contact_runtime capability inherits channel access without exposing
+private helpers or legacy constructors. Existing constructors/bootstrap capture complete name/profile history.
+Final focused tests passed 15/15; full gate passed 90/90 in 11 min 13 sec, both RCSI profiles, zero
+failures/skips or build warnings/errors. All 128 databases across seven executions have verified removal;
+see the [testing record](testing-handoff.md#iteration-4-contact-profiles-and-lifecycle--2026-09-07).
+Next is iteration 5a integrated contact service, not started. Login uniqueness remains deferred until
+provisioning. Fresh schemas only; customer upgrades, service/HTTP and independent review remain separate.
+
 **Iteration 3 complete, 2026-09-07:** authorized over `06d177d`; local/uncommitted. Read
 [ADR 0012](adr/0012-immutable-address-values-and-geographic-catalogs.md) and the
 [address guide](address-family.md). Complete shared immutable addresses and scoped immutable
@@ -15,8 +33,8 @@ IDs/names reject. The implementation supports lines or structured street fields,
 using the stated assumption after the optional representation question received no reply.
 The composed reader appends addresses for 13 result sets; all standalone shapes remain intact.
 See the [testing record](testing-handoff.md#iteration-3-immutable-addresses--2026-09-07) for final
-verification and database reconciliation. Next is iteration 4 person/organization profile and
-contact lifecycle. Login uniqueness remains deferred until provisioning. Fresh schemas only;
+verification and database reconciliation. Next at that checkpoint was iteration 4, now delivered
+above. Login uniqueness remains deferred until provisioning. Fresh schemas only;
 official catalog datasets, source mappings, service/HTTP and customer migrations remain separate.
 Focused tests passed 17/17; full gate passed 77/77 in 8 min 58 sec, both RCSI profiles, zero
 failures/skips or build warnings/errors. All 110 databases across five runs have verified removal.

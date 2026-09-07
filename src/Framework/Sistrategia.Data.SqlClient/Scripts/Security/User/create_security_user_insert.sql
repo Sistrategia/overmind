@@ -24,12 +24,12 @@ CREATE OR ALTER PROCEDURE [security].[user_insert]
     @login_name NVARCHAR(256),
     @full_name NVARCHAR(256),
     @contact_type_id INT = 1,
-    @person_title NVARCHAR(256) = NULL,
-    @person_first_name NVARCHAR(256) = NULL,
-    @person_last_name1 NVARCHAR(256) = NULL,
-    @person_last_name2 NVARCHAR(256) = NULL,
-    @person_suffix NVARCHAR(256) = NULL,
-    @person_alias NVARCHAR(256) = NULL,
+    @person_title NVARCHAR(MAX) = NULL,
+    @person_first_name NVARCHAR(MAX) = NULL,
+    @person_last_name1 NVARCHAR(MAX) = NULL,
+    @person_last_name2 NVARCHAR(MAX) = NULL,
+    @person_suffix NVARCHAR(MAX) = NULL,
+    @person_alias NVARCHAR(MAX) = NULL,
     @person_job_title NVARCHAR(256) = NULL,
     @person_company NVARCHAR(256) = NULL,
     @person_gender_code CHAR(1) = NULL,
@@ -309,8 +309,9 @@ BEGIN
             @recorded_at = @recorded_at,
             @entity_version = @entity_version OUTPUT
         ;
+        DECLARE @root_operation INT=CASE WHEN @entity_version=1 THEN 1 ELSE 2 END;
         EXEC [entities].[entity_history_snapshot]
-            @entity_id = @contact_id, @tenant_id = @tenant_id, @dbrow_version = @dbrow_version;
+            @entity_id = @contact_id, @tenant_id = @tenant_id, @dbrow_version = @dbrow_version, @operation = @root_operation;
         EXEC [security].[user_history_create]
             @user_id = @contact_id, @tenant_id = @tenant_id, @dbrow_version = @dbrow_version;
 

@@ -41,3 +41,5 @@ The name and location dictionaries in `contact_insert` still use the older `IF N
 - Concurrent misses either errored on the unique key or serialized neighbours; now identical values wait for each other and nothing else waits.
 
 Next: [8. Actors, tenants and users](08-actors-tenants-and-users.md)
+
+Iteration 4 applies exact bytes-and-length identity and transaction miss protection to `person_name`. Name slots belong to the contact, while `contact_history` captures their immutable IDs. A new spelling selects another value; old revisions and other contacts keep theirs. See the [profile guide](../contact-profile-and-lifecycle.md).

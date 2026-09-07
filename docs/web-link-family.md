@@ -93,5 +93,8 @@ tests in 6 min 38 sec, zero failures/skips or build warnings/errors, and verifie
 created test databases. Two initial connection-failure intent names were independently verified absent. Coverage includes three-family saves and consistent reads, exact shared
 values, historical replacement, ordering, no-ops, rollback, permissions and constructor field fidelity.
 Iteration 3 now delivers [immutable addresses](address-family.md) and their geographic catalog contract.
-Next is iteration 4: person/organization profile and contact lifecycle. Contact service/HTTP,
+Iteration 4 now delivers the declared person/organization profile and contact lifecycle; service 5a is next. Contact service/HTTP,
 root lifecycle, user provisioning and customer migrations remain separately planned.
+
+Iteration 4 adds the [full contact reader](contact-profile-and-lifecycle.md) for the declared profile
+and all four child families. Existing channel/standalone reader shapes remain unchanged.

@@ -65,10 +65,12 @@ CREATE TABLE [contacts].[person_name_type_localized] (
 -- -----------------------------------------------------------------------------------------------------------
 CREATE TABLE [contacts].[person_name] (
      [person_name_id]           INT                 NOT NULL IDENTITY(1,1)
-    ,[name]                     NVARCHAR(256)           NULL 
+    ,[name]                     NVARCHAR(256)       NOT NULL
     ,[language_code]            NVARCHAR(6)             NULL -- opcional, for future multi-language support like: en-US, es-MX, etc. for Srta vs Miss, Sr. vs Mr., etc.
     ,CONSTRAINT [px_contacts_person_name] PRIMARY KEY CLUSTERED ( [person_name_id] ASC )
-    ,CONSTRAINT [uq_person_name_name] UNIQUE ([name])
+    , [value_key] AS CONVERT(VARBINARY(512),[name]) PERSISTED
+    , [value_length] AS DATALENGTH([name]) PERSISTED
+    ,CONSTRAINT [uq_person_name_name] UNIQUE ([value_key],[value_length])
 );
 -- SET IDENTITY_INSERT [contacts].[person_name] ON;
 -- INSERT INTO [contacts].[person_name] ([person_name_id],[name]) VALUES (0, N'(erased by official request)');

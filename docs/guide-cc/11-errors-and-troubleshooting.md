@@ -132,3 +132,21 @@ requires whole-unit rollback; an expired optimistic token is not fixed by retryi
 
 Other 519xx lifecycle/order/lock errors mirror the preceding families. Any error requires whole-unit
 rollback. See [ADR 0012](../adr/0012-immutable-address-values-and-geographic-catalogs.md).
+
+## Contact profile/lifecycle additions (iteration 4)
+
+| Error | Meaning | Response |
+| --- | --- | --- |
+| 52000 / 52001 | Invalid profile JSON, field type/width, required name or name value | Validate ContactProfileInput and supply the full desired replacement. |
+| 52002 | Immutable person-name mutation | Select/create another exact value through a contact operation. |
+| 52003 | Missing explicit tenant | Resolve tenant in the trusted application and pass it. |
+| 52004 | Unsupported/mismatched category or System target | Use person/organization fields; category conversion and System profile lifecycle are excluded. |
+| 52005 | Unsupported operation or profile data on a lifecycle command | Separate explicit profile replacement from delete/restore. |
+| 52006 | Creation public key already exists | Resolve the existing contact; this is not an upsert or a commit receipt. |
+| 52007 | Deletion would affect an account or relationship | Resolve that dependency through its explicit operation; no implicit cascade. |
+| 52008 | Snapshot intent contradicts stamped root/history | Private protocol error; roll back the whole unit. |
+| 52010 | Complete profile history unavailable | Report missing coverage; never substitute today's names. |
+| 52012 | Person-name miss lock failed | Discard the failed unit and use the established retry policy. |
+
+Deleted/locked edits still use 51203 and stale/missing entry versions use 51206. All command failures
+require whole-unit rollback; profile/lifecycle commands do not create a separate transaction inside a unit.

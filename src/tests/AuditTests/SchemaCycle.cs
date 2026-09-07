@@ -20,11 +20,13 @@ internal static class SchemaCycle
         await AssertSeedAsync(connectionString);
         await AssertBusinessRunnerAsync(database, connectionString);
         await AssertPrincipalAsync(connectionString);
+        await AssertProfileAsync(connectionString);
         await using (var connection = new SqlConnection(connectionString)) {
             await connection.OpenAsync();
             using var command = new SqlCommand("""
                 CREATE USER email_deployment_test WITHOUT LOGIN;
                 ALTER ROLE email_runtime ADD MEMBER email_deployment_test;
+                ALTER ROLE contact_runtime ADD MEMBER email_deployment_test;
                 -- Simulate the removed checkpoint table: drop must still clean up an older dev schema.
                 CREATE TABLE entities.entity_child_sequence (entity_id INT REFERENCES entities.entity(entity_id));
                 """, connection);
@@ -38,6 +40,8 @@ internal static class SchemaCycle
                     THROW 52000, 'Application DropSchema left an application schema behind.', 1;
                 IF COALESCE(IS_ROLEMEMBER('email_runtime','email_deployment_test'),0)<>1
                     THROW 52000, 'DropSchema removed deployment role membership.', 1;
+                IF COALESCE(IS_ROLEMEMBER('contact_runtime','email_deployment_test'),0)<>1
+                    THROW 52000, 'DropSchema removed contact capability membership.', 1;
                 """, connection);
             await command.ExecuteNonQueryAsync();
         }
@@ -48,6 +52,8 @@ internal static class SchemaCycle
             using var command = new SqlCommand("""
                 IF COALESCE(IS_ROLEMEMBER('email_runtime','email_deployment_test'),0)<>1
                     THROW 52000,'Recreation lost deployment role membership.',1;
+                IF COALESCE(IS_ROLEMEMBER('contact_runtime','email_deployment_test'),0)<>1
+                    THROW 52000,'Recreation lost contact capability membership.',1;
                 IF OBJECT_ID('entities.entity_child_sequence') IS NOT NULL
                     THROW 52000,'Recreation restored the removed counter table.',1;
                 """, connection);
@@ -79,6 +85,32 @@ internal static class SchemaCycle
                 THROW 52000,'Failed business batch left partial work.',1;
             """, connection);
         await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task AssertProfileAsync(string connectionString) {
+        var actor=Guid.Parse("97A45AEE-EF87-4EFF-98D5-E51195A6669A");
+        var tenant=Guid.Parse("908E5A8C-0372-4EDC-ADDF-011E059091ED");
+        var reader=new SqlContactReader(connectionString);
+        var seed=await reader.ReadAsync(actor,actor,1,tenant);
+        if (seed.Profile.PersonFirstName is null) throw new Exception("Actual seed lost structured name history.");
+        ContactWriteResult created;
+        await using (var unit=await SqlAuditUnit.BeginAsync(connectionString,actor,tenant)) {
+            created=await unit.CreateContactAsync(new(1,"Exact display",PersonFirstName:"Ernesto "));
+            await unit.InsertEmailAsync(created.PublicKey,0,"profile@example.test");
+            await unit.CommitAsync();
+        }
+        await using (var unit=await SqlAuditUnit.BeginAsync(connectionString,actor,tenant)) {
+            await unit.UpdateContactAsync(created.PublicKey,1,new(1,"EXACT display",PersonFirstName:"ERNESTO "));
+            await unit.CommitAsync();
+        }
+        var current=await reader.ReadAsync(created.PublicKey,actor,2,tenant,1);
+        if (current.Profile.PersonFirstName!="ERNESTO " || current.ProfileDifferences.Single().OldProfile.PersonFirstName!="Ernesto ")
+            throw new Exception("Actual application profile history lost exact spelling.");
+        await using var connection=new SqlConnection(connectionString);
+        await connection.OpenAsync();
+        using var command=new SqlCommand("SELECT person_first_name FROM contacts.contact_view WHERE public_key=@key;",connection);
+        command.Parameters.AddWithValue("@key",created.PublicKey);
+        if ((string?)await command.ExecuteScalarAsync()!="ERNESTO ") throw new Exception("Current contact view changed exact name spelling.");
     }
 
     private static async Task AssertPrincipalAsync(string connectionString) {

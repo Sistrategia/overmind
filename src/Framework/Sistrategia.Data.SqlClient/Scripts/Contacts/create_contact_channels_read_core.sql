@@ -11,7 +11,7 @@
 CREATE OR ALTER PROCEDURE [contacts].[contact_channels_read_core]
     @contact_public_key UNIQUEIDENTIFIER, @actor UNIQUEIDENTIFIER,
     @entity_version INT, @tenant UNIQUEIDENTIFIER=NULL, @compare_entity_version INT=NULL,
-    @include_email BIT=1, @include_phone BIT=1, @include_web_link BIT=0, @include_address BIT=0
+    @include_email BIT=1, @include_phone BIT=1, @include_web_link BIT=0, @include_address BIT=0, @include_profile BIT=0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -93,6 +93,11 @@ BEGIN
         BEGIN
             EXEC [contacts].[contact_address_read_rows]
                 @contact_id=@contact_id, @tenant_id=@tenant_id, @bound=@bound, @compare=@compare;
+        END
+        IF @include_profile=1
+        BEGIN
+            EXEC [contacts].[contact_profile_read_rows]
+                @contact_id=@contact_id,@tenant_id=@tenant_id,@bound=@bound,@compare=@compare;
         END
         COMMIT;
     END TRY

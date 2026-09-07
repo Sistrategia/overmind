@@ -49,8 +49,8 @@ Its feedback revision records shared immutable addresses, early reader compositi
 gates and a persons/organizations-first roadmap. Iteration 0's constructor corrections are described in
 [ADR 0008](../adr/0008-constructor-corrections.md). Iteration 1 now adds phone and composed email/phone
 reads; the [phone guide](../phone-family.md) and ADRs 0009–0010 describe the new contracts and verification.
-Iteration 2 adds [web links](../web-link-family.md); iteration 3 adds [immutable addresses](../address-family.md), scoped immutable catalogs and four-family reads/saves. Iteration 4 profile/lifecycle work is next.
-Addresses and the broader service/HTTP boundary remain planned.
+Iteration 2 adds [web links](../web-link-family.md); iteration 3 adds [immutable addresses](../address-family.md), scoped immutable catalogs and four-family reads/saves. Iteration 4 now adds [profiles and contact lifecycle](../contact-profile-and-lifecycle.md), exact structured names and the full reader.
+The integrated service and HTTP boundary remain planned.
 
 At this guide's checkpoint, the email lifecycle is the complete reference family for the declared fresh-schema boundary: insert, update, delete, restore, saved moves, history, actions, reader/diff, unit ownership and restricted database access. Ordinary administrative user creation and contact promotion now preserve type history and make constructed users eligible actors.
 
@@ -64,9 +64,9 @@ The preserved [user-construction review](../user-construction-independent-review
 
 Creation occurrence time now passes through `event_create.@when_ocurred` into the actual `event.created` column. Server recording time remains on the audit ledger's `recorded_at`; there is no separate event occurrence column. See the testing handoff for corrected evidence and current verification.
 
-Still pending: login uniqueness (explicitly deferred by the author until provisioning), account phone, general role history, and explicit root delete/restore semantics. The root snapshot helper still describes construction/promotion only. Initial-role evidence does not imply full role reconstruction.
+Still pending: login uniqueness (explicitly deferred by the author until provisioning), account phone and general role history. Iteration 4 implements protected contact deletion/restoration and explicit root snapshot intent; account/relationship lifecycle remains separate. Initial-role evidence does not imply full role reconstruction.
 
-Shared actor delegation, public self-registration, broader account/role/relationship lifecycle, the remaining contact families, historical migration, synchronization and other provider implementations are later work. Existing legacy constructors outside the restricted email capability also retain separate hardening work. The reviewed email contract is not automatically inherited by every old procedure in the repository.
+Shared actor delegation, public self-registration, broader account/role/relationship lifecycle, unported metadata/classifier families, historical migration, synchronization and other provider implementations are later work. Existing legacy constructors outside the restricted email capability also retain separate hardening work. The reviewed email contract is not automatically inherited by every old procedure in the repository.
 
 ## A small set of documents for the second reading
 

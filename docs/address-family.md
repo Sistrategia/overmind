@@ -100,6 +100,9 @@ preserve persisted ordinals and leave allocation of new ones to the database.
 ## Verification and next work
 
 The [testing handoff](testing-handoff.md#iteration-3-immutable-addresses--2026-09-07) records focused
-and full results, concurrency schedules and disposable-database reconciliation. The next planned
-iteration is person/organization profile and contact lifecycle. Official catalog loading/search,
+and full results, concurrency schedules and disposable-database reconciliation. Iteration 4 now delivers the declared
+person/organization profile and contact lifecycle; the integrated service (5a) is next. Official catalog loading/search,
 customer migration, service/HTTP, and user provisioning remain separate work.
+
+Iteration 4 adds the [full contact reader](contact-profile-and-lifecycle.md) for the declared profile
+and all four child families. Existing channel/standalone reader shapes remain unchanged.

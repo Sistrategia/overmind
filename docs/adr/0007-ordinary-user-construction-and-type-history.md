@@ -1,5 +1,10 @@
 # ADR 0007: Ordinary user construction and historical type
 
+Later evolution: [ADR 0013](0013-contact-profiles-names-and-root-lifecycle.md) adds explicit root snapshot
+operations and complete structured-name/profile history shared by ordinary construction. This earlier
+checkpoint remains historical where the newer contract differs.
+
+
 Date: 2026-09-05.
 Status: implemented for fresh schemas; review before broader account-lifecycle adoption.
 

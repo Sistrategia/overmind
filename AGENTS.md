@@ -7,6 +7,31 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Iteration 4 complete — 2026-09-07:** authorized over committed iteration 3 (`4f4fd78`),
+local/uncommitted. Read [docs/contact-profile-and-lifecycle.md](docs/contact-profile-and-lifecycle.md)
+and [ADR 0013](docs/adr/0013-contact-profiles-names-and-root-lifecycle.md). Strict contact_change and
+SqlAuditUnit profile commands create/edit persons and organizations with explicit tenant/actor context,
+exact immutable structured names, complete relational profile snapshots and ordered action evidence.
+Profile input replaces declared fields; FullName is explicit, NULL optional values clear, category is fixed.
+Profile and all four child families compose in one unit/revision, including initial revision 1.
+Protected soft deletion rejects accounts and relationship dependencies; restoration retains child
+identities/order. These lifecycle protections and deferral of relationship/category editing were stated
+assumptions after optional questions received no reply, not explicit author answers. Legacy company and
+birthplace references remain preserved/readable. Lock/validation transitions and account lifecycle are deferred.
+entity_history_snapshot now requires explicit operation intent (1/2/3/5); constructors/bootstrap/promotion
+are wired accordingly. New contact_read/SqlContactReader returns 16 sets including profile/diffs/actions;
+the four-family channel reader retains its 13 sets. contact_runtime is a new opt-in capability inheriting
+contact_channels_runtime; private helpers and privileged compatibility constructors remain denied.
+Final build/discovery passed with zero warnings/errors; focused 15/15 and full 90/90 passed (42 per
+RCSI profile plus six database-free), 11 min 13 sec, zero failures/skips. All 128 disposable databases
+across seven runs have matching intent/create/identity/removal evidence and post-DROP absence checks.
+All 117 copied production SQL files match source. Evidence and corrected early failures are recorded in
+[testing handoff](docs/testing-handoff.md#iteration-4-contact-profiles-and-lifecycle--2026-09-07),
+artifacts/test-results/iteration-4/ (ignored). Historical probes/fixtures are unchanged. Both guides,
+master plan and handoffs are updated. Next is iteration 5a integrated contact service; it has not started.
+Login uniqueness remains deferred until provisioning. Fresh schemas only; no customer migration,
+service/HTTP, deployment or independent review execution is claimed. Do not commit on the author's behalf.
+
 **Iteration 3 complete — 2026-09-07:** authorized over committed iteration 2 (`06d177d`),
 local/uncommitted. Read [docs/address-family.md](docs/address-family.md) and
 [ADR 0012](docs/adr/0012-immutable-address-values-and-geographic-catalogs.md).
@@ -32,8 +57,8 @@ Focused tests passed 17/17; full gate passed 77/77 (36 per RCSI profile plus fiv
 8 min 58 sec, zero failures/skips or build warnings/errors. All 110 disposable databases across five
 runs have matching intent/create/identity/removal evidence. All 107 copied production SQL files match
 source. Evidence: artifacts/test-results/iteration-3/ (ignored), including verification.json.
-Both guides, plan and handoffs are updated. Next is iteration 4 person/organization profile and
-contact lifecycle; not started. Login uniqueness remains deferred until provisioning. Fresh schemas
+Both guides, plan and handoffs are updated. Next at that checkpoint was iteration 4, now delivered
+above. Login uniqueness remains deferred until provisioning. Fresh schemas
 only; no customer migration, service/HTTP or independent review execution is claimed. Historical
 probes are unchanged; the phone-construction fixture now supplies explicit parent country for its city.
 

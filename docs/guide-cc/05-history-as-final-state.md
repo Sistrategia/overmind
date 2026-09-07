@@ -10,7 +10,7 @@ In the old code, a second change to the same child in the same transaction inser
 
 ## The net-transition table
 
-Because a unit records net effect, the operation code on the history row describes the transition from the committed state before the unit to the committed state after it:
+For child rows, the history operation describes the transition from the committed state before the unit to the committed state after it. Root soft-delete/restore intent is described separately below:
 
 | Before the unit | Inside the unit | History row at this unit |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ So: **history is state; actions are commands.** The fraud scenario that motivate
 
 ## Root payload history
 
-`entities.entity_history` holds the root's own columns, now including `entity_type_id`. All creation writers, including the System bootstrap, go through `entities.entity_history_snapshot`, which requires that the root already carries this unit's number and has its spine row, copies the live row's values, and upserts only this unit's history row. Revision 1 is labelled INSERT; later ones UPDATE. It is a construction and promotion helper today; a future delete or restore API must state its own operation rather than reuse this derivation (the second review shows what happens otherwise).
+`entities.entity_history` holds the root's own columns, now including `entity_type_id`. All creation writers, including the System bootstrap, go through `entities.entity_history_snapshot`, which requires that the root already carries this unit's number and has its spine row, copies the live row's values, and upserts only this unit's history row. Iteration 4 requires explicit insert/update/delete/undelete intent and validates it against root state. Creation stays INSERT through later active edits in revision 1; restoration stays UNDODL through later profile edits in that unit. Contact snapshots now retain category and all seven structured-name references. See [ADR 0013](../adr/0013-contact-profiles-names-and-root-lifecycle.md).
 
 A contact promoted to a user therefore has two root history rows: the creation with the contact type, and the promotion with the user type. Reading revision 1 shows a contact; reading revision 2 shows a user. Nothing rewrites the earlier row.
 

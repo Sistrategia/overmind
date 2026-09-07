@@ -37,4 +37,6 @@ Those documents serve different purposes; you do not need to read them chronolog
 
 Iteration 2 adds the [web-link family](../web-link-family.md) and [ADR 0011](../adr/0011-web-link-values-and-contact-associations.md): exact URLs, saved order/history and composed email/phone/web-link reads and saves.
 
-Iteration 3 adds the [address family](../address-family.md) and [ADR 0012](../adr/0012-immutable-address-values-and-geographic-catalogs.md): complete immutable addresses, scoped immutable geography and coherent four-family reads/saves. Person/organization profile and contact lifecycle are next.
+Iteration 3 adds the [address family](../address-family.md) and [ADR 0012](../adr/0012-immutable-address-values-and-geographic-catalogs.md): complete immutable addresses, scoped immutable geography and coherent four-family reads/saves. Iteration 4 now implements the declared person/organization profile and contact lifecycle.
+
+Iteration 4 adds [contact profiles and lifecycle](../contact-profile-and-lifecycle.md): exact structured-name history, explicit profile replacement, protected soft delete/restore, strict creation and a coherent full reader. [ADR 0013](../adr/0013-contact-profiles-names-and-root-lifecycle.md) records the scope. The integrated service (5a) is next.

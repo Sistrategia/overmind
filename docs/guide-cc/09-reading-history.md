@@ -4,6 +4,10 @@ Previous: [8. Actors, tenants and users](08-actors-tenants-and-users.md) · [Ind
 
 ## One call, one revision
 
+Iteration 4 adds `SqlContactReader` for the declared full profile plus all four families under the same
+barrier: 16 result sets, with captured structured names, profile diffs and merged root/child actions.
+See the [profile guide](../contact-profile-and-lifecycle.md). The existing APIs below retain their shapes.
+
 Iterations 1–3 add `SqlContactChannelsReader` for one coherent email/phone/web-link/address read and merged action order.
 The email-only API below retains its behavior. Both delegate transaction ownership to the shared
 coordinator, which holds the root barrier before invoking private family components. See the

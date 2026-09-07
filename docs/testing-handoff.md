@@ -18,7 +18,7 @@ dotnet build src/overmind.sln -c Release --no-restore
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --list-tests
 ```
 
-**Authoritative full command: both real database profiles and database-free tests**, currently 77 discovered tests (36 per profile, 2 batch-parser tests, 1 phone-parser scenario, 1 web-link validation/domain scenario and 1 address validation/domain scenario):
+**Authoritative full command: both real database profiles and database-free tests**, currently 90 discovered tests (42 per profile, 2 batch-parser tests and one database-free validation scenario each for phone, web link, address and contact profile):
 
 ```powershell
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
@@ -32,11 +32,11 @@ For a backend-only build/test scope, target the project directly: `dotnet test s
 # Representative focused existing scenario, RCSI off (one test).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
 
-# Complete integration profile, independently selectable (36 tests each).
+# Complete integration profile, independently selectable (42 tests each).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
 
-# Database-free, LIMITED SCOPE: two batch-parser tests, phone parsing, web-link and address validation/domain state, no SQL behavior verification.
+# Database-free, LIMITED SCOPE: two batch-parser tests, phone parsing, web-link, address and contact-profile validation/domain state, no SQL behavior verification.
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=Infrastructure'
 ```
 
@@ -105,20 +105,28 @@ Methods in [AuditScenarios.cs](../src/tests/AuditTests/AuditScenarios.cs) are in
 | Iteration 3: pause before address component after preceding three families, observe root-barrier writer blocking and coherent state | `AddressComposedReaderHoldsFourFamilies` |
 | Iteration 3: same-value miss blocking/reuse and distinct catalog/address progress before holder commit | `AddressCatalogMissConcurrencyAndDistinctProgress` |
 
-Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. `AddressValidationTests.AddressRepresentationsAndExactDomainState` covers alternate street representations, widths, Unicode rejection and exact domain state. These do not substitute for SQL audit tests.
+| Iteration 4: initial profile/all four families, exact names, clearing/no-op/revert, soft delete/restore and explicit history operations | `ContactProfileLifecycleNamesAndComposition` |
+| Iteration 4: input/native rejection, whole rollback, actor/tenant/stale checks, runtime grants and unavailable profile coverage | `ContactProfileValidationRollbackAndPermissions` |
+| Iteration 4: promotion/profile composition, protected accounts/relationships, exact legacy names and preserved company data | `ContactProfileDependenciesAndLegacyNames` |
+| Iteration 4: actual blocked deletion/promotion in both orders and failed company-reference construction after deletion | `ContactProfileDeletionPromotionAndRelationshipRaces` |
+| Iteration 4: pause before profile component after four child families, observe writer blocking, verify coherent before/after | `ContactProfileReaderHoldsAllFamilies` |
+| Iteration 4: same-name miss blocking/reuse and unrelated name progress before holder commit | `ContactProfileNameMissConcurrencyAndDistinctProgress` |
+
+Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. `AddressValidationTests.AddressRepresentationsAndExactDomainState` covers alternate street representations, widths, Unicode rejection and exact domain state. `ContactProfileValidationTests.ContactProfileExactFieldsAndCategoryValidation` adds exact profile widths, Unicode, required names and category-specific validation. These do not substitute for SQL audit tests.
 
 The four original SQL fixtures retain their scenario sequences. The original review-probe integration replaced supplied promotion contact names with explicit NULL and added fixture-shape assertions without production changes; iteration 0 subsequently adds the production corrections documented here. [SchemaFiles.cs](../src/tests/AuditTests/SchemaFiles.cs) retains the runner's production script list and dependency order, with files copied from production source at build time. `SeedAsync(1..4)` loads allocation → email → saved order → user construction **on the current test's database**, with a fresh SQL connection per fixture as before. Tests requiring only email stop at stage 2. Saved-order and user-reader cases intentionally run after their own SQL fixture stage. The native concurrency schedule remains grouped because its roots progress through revisions 1–4; the C# shared-unit and lifetime sequences retain their intentional within-scenario state. No test depends on another discovered test.
 
 [SqlScenarios.cs](../src/tests/AuditTests/SqlScenarios.cs) ports the adopted Python regressions, with attribution to baseline `efacebb`. Distinct logical SQL invocations use distinct nonpooled connections. All batches of one invocation share a connection (including cross-database SQL); SET QUOTED_IDENTIFIER ON matches former sqlcmd `-I`. A lexical parser recognizes standalone GO, including a trailing line comment; repeat counts and sqlcmd directives are explicitly unsupported because the retained scripts do not use them. SQL exceptions keep their numbers. Concurrency uses separate opened connections, a client start barrier, the original SQL application-lock rendezvous, a 45-second cancellation budget and 15-second rendezvous deadlines; every participant's completion/failure is observed. This orchestration/session boundary and the regenerated fixture state are particular points for the returning review.
 
-Independent reports and `src/tests/review/` probes are historical artifacts, excluded from the supported test path. Probe contents are unchanged after relocation; their old path references and dependencies are preserved as part of the review record. To rerun a historical probe that imports the former Python runner, use its recorded checkpoint (or `efacebb` for the pre-migration environment) in a separate checkout with its historical prerequisites. The historical integration did not silently convert pending findings into acceptance. Iteration 0 now explicitly corrects company-name locking, promotion inputs, person eligibility and event/seed evidence with new regressions; login scope, account phone and explicit root-lifecycle operations remain deferred.
+Independent reports and `src/tests/review/` probes are historical artifacts, excluded from the supported test path. Probe contents are unchanged after relocation; their old path references and dependencies are preserved as part of the review record. To rerun a historical probe that imports the former Python runner, use its recorded checkpoint (or `efacebb` for the pre-migration environment) in a separate checkout with its historical prerequisites. The historical integration did not silently convert pending findings into acceptance. Iteration 0 now explicitly corrects company-name locking, promotion inputs, person eligibility and event/seed evidence with new regressions; login scope and account phone remain deferred. Iteration 4 adds explicit protected contact-lifecycle operations.
 
 ## Historical review probe coverage
 
 Iteration 0 update, 2026-09-07: [ADR 0008](adr/0008-constructor-corrections.md) implements the P2/P3/P4/P6
 and actual seed-role corrections. The classifications below are updated; original review/probe files remain
-unchanged. The author's P1 login-scope decision is explicitly deferred until provisioning. P7/P8 remain future
-capabilities. The new maintained tests increase discovery from 38 to 42; final execution evidence appears
+unchanged. The author's P1 login-scope decision is explicitly deferred until provisioning. P7/P8 were future
+capabilities at this checkpoint. Iteration 4 now implements explicit root operation intent and protected
+contact delete/restore with new maintained regressions; P7 account phone remains deferred. The iteration 0 tests increased discovery from 38 to 42; their final execution evidence appears
 in the iteration 0 record below.
 
 Assessment dated **2026-09-06**, against `d660dd4` plus this test-only integration. Sources: the archived [email A–G](../src/tests/review/email-reference-family/run_review_probes.py) and [user P1–P9/P3b](../src/tests/review/user-construction/run_user_construction_probes.py) scripts in full, their [email](email-reference-family-independent-review.md) and [user](user-construction-independent-review.md) reports, and ADRs [0005](adr/0005-email-reference-family.md), [0006](adr/0006-email-review-corrections-and-saved-order.md), [0007](adr/0007-ordinary-user-construction-and-type-history.md). The scripts mostly print observations; header lists alone omit cases. Their original contents and reports remain unchanged. [Archive provenance](../src/tests/review/README.md) explains retention.
@@ -159,7 +167,7 @@ Use only a newly owned fixture database with the actual schema and `SeedAsync(4)
 - **P2:** create an ordinary contact named Alpha with initial email; promote at expected version 1 with `@full_name=N'Beta'`, `@person_first_name=N'Beta'`, `@person_job_title`, `@phone_number/@numbers_only` and `@person_company=N'Ghost Company'`. Inspect unchanged name/no corresponding details, phone, relationship or company. Future assertion: each supplied unsupported contact-detail input fails atomically; account `@email` with required `@full_name=NULL` still succeeds. Validation must distinguish caller inputs before the current name defaults are applied.
 - **P3:** RCSI ON, session A begins/enrolls and constructs a user naming a fresh company, retaining its transaction; after A's successful call, B constructs another user naming the same company and commits; A commits. Count company-category rows in tenant 1, then attempt a third user with that name (historical result: two companies, 51313). For a future locking fix, release A after observing B blocked rather than waiting for B to finish; then require both users linked to exactly one company under both profiles, unrelated names independent, and existing ambiguity still rejected. Preserve P3b's timeout/scan caveat above.
 - **P6 (implemented correction):** create a user with an old `@created`; assert `event.created` preserves that occurrence input and ledger `recorded_at` remains server recording time. `@when_ocurred` is the event procedure parameter, not a table column. Earlier wording that classified event.created as independent recording metadata was incorrect.
-- **P7/P8:** P7's contact phone inputs and returned account/history fields remain a routing observation until an account-phone contract exists. For P8, create a contact, begin/enroll, root-lock at version 1, allocate op 3, stamp entity.deleted/deleted_by with privileged DML, bump and call `entity_history_snapshot`, inspect op/deleted and roll back everything. Future delete/restore writers need explicit, validated operation semantics before asserting op 3; this recipe is not a supported lifecycle endpoint.
+- **P7/P8:** P7's contact phone inputs and returned account/history fields remain a routing observation until an account-phone contract exists. The historical P8 recipe stamped deletion through privileged DML and called a helper that inferred operation 1/2. Iteration 4 supersedes that experiment with required explicit intent, validation and tested public contact delete/restore operations; the archived probe is unchanged and is not the maintained lifecycle test.
 - **Seed role:** after the real schema seed, inspect its `security.user.new` event's `$.initial_role_id` alongside Developer membership. Future assertion should require the chosen role ID in that event after the seed uses the constructor option; general role history remains deferred.
 
 ### Integration execution and follow-up
@@ -466,3 +474,48 @@ Ignored evidence: `artifacts/test-results/iteration-3/{schema,schema-2,focused,f
 `discovery.txt`, `verify-evidence.ps1` and `verification.json`. `git diff --check` and changed-document
 relative links passed. Fresh-schema/local SQL Server verification only; customer upgrades, remote
 CI/deployment, official catalog datasets and independent review execution remain unexecuted.
+
+## Iteration 4 contact profiles and lifecycle — 2026-09-07
+
+Authorized implementation over committed iteration 3 (`4f4fd78`); local/uncommitted.
+[ADR 0013](adr/0013-contact-profiles-names-and-root-lifecycle.md) and the
+[profile/lifecycle guide](contact-profile-and-lifecycle.md) define person/organization replacement,
+exact immutable structured names, complete relational profile history, explicit root operation intent,
+protected soft delete/restore and the new 16-set full reader. The existing 13-set channel reader remains intact.
+
+Six new SQL scenarios run under both RCSI profiles, plus one database-free validation scenario.
+Coverage includes create/profile/four-family composition, exact name distinctions and sharing, old
+revisions, clearing/no-ops/reverts, explicit insert/delete/restore operations, retained children/order,
+whole rollback after C# or SQL failures, malformed native inputs, explicit tenant/actor validation,
+account/relationship deletion protection, observed promotion/deletion and company-reference races,
+same-name miss serialization with distinct-name progress, and coherent full reads that block mixed
+writers after all four channel components. Runtime grants, immutable dictionaries, private operation
+intent checks and incomplete historical-profile rejection are exercised. Historical probes and original
+SQL fixtures are unchanged; the new profile fixture seeds its own missing name types/operations.
+
+Actual application schema-cycle coverage now reads the normally constructed seed's profile, creates
+a person with an initial email, edits exact structured names and compares old/new profile state with
+current contact-view output. It also verifies contact_runtime membership survives drop/recreate.
+
+| Run | Result | Scope/correction |
+| --- | --- | --- |
+| Initial schema | 0/2 | SQL Server NVARCHAR has a 4000-unit bounded maximum; Summary now uses MAX after the explicit 4096-unit input guard. |
+| Second schema | 0/2 | Removed an accidental root-operation argument from the separate user-history bootstrap helper call. |
+| Corrected schema | 2/2 | Actual application create/drop/create and seed execution. |
+| Initial focused | 1/11 | New fixture duplicated operation 3 already seeded by the email fixture; changed its operation seeding to IF NOT EXISTS. Database-free validation passed. |
+| Corrected focused | 13/13, 1 min 45 sec | Five profile scenarios per profile, database-free validation and both expanded schema cycles. |
+| Final focused | **15/15**, **2 min 7 sec** | Added observed deletion/promotion/relationship races; includes explicit snapshot-intent and missing-coverage rejection. |
+| Final full gate | **90/90**, **11 min 13 sec** | All 42 SQL scenarios per RCSI profile and six database-free tests; zero failures/skips. |
+
+Final Release build and discovery passed, zero warnings/errors; no dependency changed. All **117**
+production SQL files copied into the final test output match source hashes. No production/test source
+changed after the final build and full-run start; subsequent changes only record documentation/evidence.
+
+All **128 distinct databases** across seven executions reconcile through intent, creation, engine
+identity and verified removal: 256 original-and-attachment journal copies, zero unresolved resources.
+The full gate owns 86 databases (43 per profile, including bootstrap's additional database). Cleanup
+includes post-DROP absence checks; no recovery deletion or prefix scan was needed.
+Ignored evidence: `artifacts/test-results/iteration-4/{schema,schema-2,schema-3,focused,focused-2,focused-3,full}/`,
+`discovery.txt`, `verify-evidence.ps1` and `verification.json`. `git diff --check` and changed-document
+relative links passed. Fresh-schema/local SQL Server verification only; customer upgrade/backfill,
+remote CI/deployment, service/HTTP and independent review execution remain unexecuted.

@@ -41,9 +41,14 @@ public sealed class SqlContactChannelsReader(string connectionString)
 {
     public async Task<ContactChannelsRevision> ReadAsync(Guid contact, Guid authenticatedActor, int entityVersion,
         Guid? tenant = null, int? compareEntityVersion = null, CancellationToken cancellationToken = default) {
+        return (await ReadCoreAsync(contact, authenticatedActor, entityVersion, tenant, compareEntityVersion, cancellationToken)).Channels;
+    }
+
+    internal async Task<ContactReadParts> ReadCoreAsync(Guid contact, Guid authenticatedActor, int entityVersion,
+        Guid? tenant, int? compareEntityVersion, CancellationToken cancellationToken, bool includeProfile = false) {
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
-        using var command = new SqlCommand("contacts.contact_channels_read", connection) { CommandType = CommandType.StoredProcedure };
+        using var command = new SqlCommand(includeProfile ? "contacts.contact_read" : "contacts.contact_channels_read", connection) { CommandType = CommandType.StoredProcedure };
         command.Parameters.Add("@contact_public_key", SqlDbType.UniqueIdentifier).Value = contact;
         command.Parameters.Add("@actor", SqlDbType.UniqueIdentifier).Value = authenticatedActor;
         command.Parameters.Add("@tenant", SqlDbType.UniqueIdentifier).Value = (object?)tenant ?? DBNull.Value;
@@ -74,10 +79,26 @@ public sealed class SqlContactChannelsReader(string connectionString)
         await reader.NextResultAsync(cancellationToken);
         var addresses = await SqlContactAddressReader.ReadRowsAsync(reader, cancellationToken);
         await reader.NextResultAsync(cancellationToken); // Observe server completion/errors, not only delivered rows.
-        return new(email, phones, differences, actions) {
+        ContactProfileState? profile = null;
+        var profileDifferences = new List<ContactProfileDifference>();
+        var profileActions = new List<ContactProfileAction>();
+        if (includeProfile) {
+            if (!await reader.ReadAsync(cancellationToken)) throw new InvalidOperationException("Missing profile payload.");
+            profile = SqlContactReader.Parse(reader.GetString(0));
+            await reader.NextResultAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                profileDifferences.Add(new(SqlContactReader.Parse(reader.GetString(0)), SqlContactReader.Parse(reader.GetString(1))));
+            await reader.NextResultAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                profileActions.Add(new(reader.GetInt32(0), reader.GetString(1), SqlContactReader.Parse(reader.GetString(2)),
+                    reader.GetInt32(3), DateTime.SpecifyKind(reader.GetDateTime(4), DateTimeKind.Utc), reader.GetInt32(5)));
+            await reader.NextResultAsync(cancellationToken); // Includes commit/error completion of the full reader.
+        }
+        var channels = new ContactChannelsRevision(email, phones, differences, actions) {
             WebLinks = links.States, WebLinkDifferences = links.Differences, WebLinkActions = links.Actions,
             Addresses = addresses.States, AddressDifferences = addresses.Differences, AddressActions = addresses.Actions
         };
+        return new(channels, profile, profileDifferences, profileActions);
     }
 
     private static string? Text(SqlDataReader r, int i) => r.IsDBNull(i) ? null : r.GetString(i);

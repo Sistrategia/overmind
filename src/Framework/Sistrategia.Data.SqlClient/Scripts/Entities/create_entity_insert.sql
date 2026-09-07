@@ -95,7 +95,7 @@ BEGIN
             ([tenant_id],[dbrow_version],[entity_id],[entity_version])
         VALUES (@tenant_id, @dbrow_version, @entity_id, 1);
 
-        EXEC [entities].[entity_history_snapshot] @entity_id,@tenant_id,@dbrow_version;
+        EXEC [entities].[entity_history_snapshot] @entity_id,@tenant_id,@dbrow_version,@operation=1;
     
         IF( @TranStarted = 1 )
         BEGIN

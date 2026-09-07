@@ -25,6 +25,7 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     public override void CreateSchemaTables() {
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.LineOfBusiness.create_line_of_business.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.create_contact_schema.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_contact_profile_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Phones.create_phone_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_schema.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Addresses.create_address_schema.sql");
@@ -51,6 +52,15 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void CreateSchemaFunctions() {
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_person_name_value_ensure.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_person_name_immutable.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_contact_names_replace.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_contact_history_snapshot.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_contact_profile_prepare.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_contact_profile_as_of.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_contact_profile_read_rows.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_contact_change.sql");
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Profiles.create_contact_read.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_email_values_ensure.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_email_history_sync.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.Emails.create_contact_email_write.sql");
@@ -159,6 +169,14 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
     }
 
     public override void DropSchemaFunctions() {
+        DropProcedureIfExists("contacts", "person_name_value_ensure");
+        DropProcedureIfExists("contacts", "contact_names_replace");
+        DropProcedureIfExists("contacts", "contact_history_snapshot");
+        DropProcedureIfExists("contacts", "contact_profile_prepare");
+        DropProcedureIfExists("contacts", "contact_profile_read_rows");
+        DropProcedureIfExists("contacts", "contact_change");
+        DropProcedureIfExists("contacts", "contact_read");
+        DropFunctionIfExists("contacts", "contact_profile_as_of");
         DropProcedureIfExists("contacts", "contact_address_read");
         DropProcedureIfExists("contacts", "contact_address_read_rows");
         DropFunctionIfExists("contacts", "contact_addresses_as_of");
@@ -314,6 +332,7 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         DropTableIfExists("contacts", "contact_email_identity");
         DropTableIfExists("contacts", "email_location");
         DropTableIfExists("contacts", "email");
+        DropTableIfExists("contacts", "contact_profile_action");
         DropTableIfExists("contacts", "contact_person_name");
         DropTableIfExists("contacts", "customer");
         DropTableIfExists("contacts", "contact_history");
