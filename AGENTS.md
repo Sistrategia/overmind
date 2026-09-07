@@ -7,6 +7,17 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Master-plan feedback incorporated — 2026-09-07:** revision 2 of
+[docs/contact-api-master-plan.md](docs/contact-api-master-plan.md) is ready for iterative work; all implementation
+iterations remain planned. It adds reader composition during phone, concrete phone/address/name fidelity tests,
+separate service (5a) and HTTP (5b) gates, explicit service tenant context, and a visibility-policy checkpoint.
+Login scope is an iteration 0 discussion, still undecided and not a phone blocker. Company-name lookup/lock
+equality must agree; no range-lock strategy is preselected. Listing/search is separately tracked. The author
+requests SQL style matching `Scripts/Data/create_audit_unit_begin.sql`: readable blocks and named arguments,
+consistent indentation/header/comments, with accurate metadata; preserve each procedure's behavioral/security
+contract. Apply to new/substantively touched SQL, not unrelated mass formatting. This revision is documentation
+only; implementation begins with the next authorized iteration, starting with iteration 0.
+
 **Contact/API master plan — 2026-09-07:** start with
 [docs/contact-api-master-plan.md](docs/contact-api-master-plan.md). The author requested an iterative plan:
 bounded constructor corrections, phone, web links, addresses, person/organization profile and lifecycle,

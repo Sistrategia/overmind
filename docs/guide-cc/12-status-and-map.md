@@ -60,7 +60,8 @@ The full command runs both real RCSI profiles through MSTest/VSTest, with indepe
 
 Use the [contact/API master plan](../contact-api-master-plan.md), added 2026-09-07, for the proposed
 iterations: bounded corrections, phone, web links, immutable addresses, person/organization profile and
-lifecycle, integrated contact API, then administrative provisioning. Person-only account eligibility and
+lifecycle, integrated contact service (5a), HTTP boundary (5b), then administrative provisioning. Reader
+composition starts with phone; listing/search is separately tracked. Person-only account eligibility and
 shared immutable address ownership are decided; enforcement and new family work remain pending.
 The plan records remaining decisions and completion gates without claiming implementation.
 

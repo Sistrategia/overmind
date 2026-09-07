@@ -4,6 +4,11 @@ Updated: 2026-09-05. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Plan revision 2, 2026-09-07:** [master plan](contact-api-master-plan.md) incorporates the independent feedback:
+early reader composition, concrete family fidelity regressions, service/HTTP split (5a/5b), explicit tenant
+context and decision checkpoints. Iteration 0 is next; implementation has not started. The plan also records
+the author's SQL formatting reference, `create_audit_unit_begin.sql`. No new database verification is claimed.
+
 **Current planning entry point, 2026-09-07:** [Contact and user provisioning master plan](contact-api-master-plan.md)
 records the author's shared immutable address decision, persons/organizations-first scope and proposed
 iterations through a complete contact API and administrative provisioning. The plan is not implementation
