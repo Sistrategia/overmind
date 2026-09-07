@@ -2,7 +2,7 @@
 
 Previous: [9. Reading history](09-reading-history.md) · [Index](README.md) · Next: [11. Errors and troubleshooting](11-errors-and-troubleshooting.md)
 
-Email is the reference. Phone, address, web link and every later child family are copies of its shape with different columns. This chapter is the recipe. File paths are relative to `src/Framework/Sistrategia.Data.SqlClient/Scripts`.
+Email is the original reference. Iteration 1 applies its lifecycle to phone while adding explicit parsing/value semantics and a composed reader; see the [phone guide](../phone-family.md). Address, web link and later families reuse that mechanism with their own field contracts. File paths are relative to `src/Framework/Sistrategia.Data.SqlClient/Scripts`.
 
 ## 1. Tables
 
@@ -16,7 +16,7 @@ For a family `X` of root `contact`, create the same four tables email has:
 | `contacts.contact_x_history` | identical columns plus `dboperation_type_id` and `display_order`; PK `(dbrow_version, contact_id, ordinal)`; **index `(contact_id, ordinal, dbrow_version DESC)`** | same file |
 | `contacts.contact_x_action` | one row per effective command with the exact values and positions; PK `(tenant_id, dbrow_version, action_ordinal)` | same file |
 
-Fix the widths at the same time (the phone history's `extension` is narrower than its live column today) and make every FK `WITH CHECK`.
+Check widths through every layer and make every FK `WITH CHECK`. Iteration 1 resolves the phone extension mismatch: live/history/action support 25 UTF-16 units and the constructors no longer truncate before validation.
 
 ## 2. Writers
 
@@ -63,8 +63,8 @@ Add the scripts to `ContactsDatabaseSchemaBuilder` in dependency order (dictiona
 
 Copy `src/tests/sql/email_family_tests.sql` and `email_order_tests.sql` for the family and keep every case: constructor at version 1 with history and action; repeated updates and delete/restore in one unit; insert/delete cancellation and later restore; stale token, missing child, wrong actor, wrong tenant, raw unenrolled transaction, forged committed number; full rollback after a nested success; exact spelling; runtime-role permissions; move, principal and dense order. Reuse the two-connection cases in `src/tests/AuditTests/SqlScenarios.cs`: same-root stale writer, late-root rejection, catalog misses, reader barrier, same-gap distinct values. Extend the discoverable C# scenarios and the schema-cycle check in `src/tests/AuditTests`.
 
-## 7. Before you start phone
+## 7. What phone established
 
-Iteration 0 handles the company-name race with collation-compatible miss protection, rejects unsupported promotion inputs and enforces person-only accounts; see [ADR 0008](../adr/0008-constructor-corrections.md). Login uniqueness is explicitly deferred until provisioning. Before phone, follow iteration 1's [master-plan checkpoints](../contact-api-master-plan.md#decision-checkpoints): value identity/derived matching, visibility semantics and coordinated readers. This chapter supplies the family mechanism; it does not replace those field-level decisions.
+Iteration 0 handles the constructor corrections ([ADR 0008](../adr/0008-constructor-corrections.md)); login uniqueness remains deferred. Phone's complete international identity, preserved interpretation and qualified geography are in [ADR 0009](../adr/0009-phone-values-parsing-and-numbering-geography.md). The shared read transaction/root barrier and private components are in [ADR 0010](../adr/0010-composed-contact-family-reader.md). Future families join that coordinator and the existing audit unit; they do not add independent transactions inside a Save/read.
 
 Next: [11. Errors and troubleshooting](11-errors-and-troubleshooting.md)

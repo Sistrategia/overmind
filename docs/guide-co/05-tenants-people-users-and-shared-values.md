@@ -46,7 +46,7 @@ After chapter 2, Lina's contact card shows child 7 because it is first in saved 
 
 This distinction preserves a simple contact experience while leaving room for explicit account verification and recovery policies. Those complete account workflows remain future work.
 
-There is a small current API detail worth knowing: phone inputs in `user_insert` populate contact phone data on the new-contact path. They do not populate account phone; its construction history currently records NULL there. Do not read the presence of a history column as proof that the corresponding lifecycle has been implemented.
+There is a small current API detail worth knowing: prepared `@phone_data` in `user_insert` populates the audited contact phone family on the new-contact path. Legacy split arguments now reject; [PhoneParser](../phone-family.md) prepares full or split input with explicit country context. These inputs do not populate account phone; its construction history still records NULL there. A history column does not prove that the corresponding lifecycle has been implemented.
 
 ## What the review changed, and what remains
 

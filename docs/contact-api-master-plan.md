@@ -1,9 +1,9 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, iteration 0 complete. Later iterations have not started.
-Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0008 describe the implemented foundation.
+Updated: 2026-09-07, iterations 0 and 1 complete. Iteration 2 onward has not started.
+Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0010 describe the implemented foundation.
 
-The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iteration 0 on 2026-09-07; later iterations remain planned.
+The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iterations 0 and 1 on 2026-09-07; later iterations remain planned.
 
 ## Decisions already made
 
@@ -17,6 +17,7 @@ The goal is to grow the email reference into a coherent contact API for persons 
 | Tenant experience | Optimize for existing single-tenant applications and multitenant applications without shared users. The application may resolve tenant context without asking the user to type it at login. Shared-user membership, default-tenant selection and tenant switching are future possibilities, not an implemented contract. |
 | Service tenant context | The service resolves and passes an explicit tenant to database operations, from trusted application/host or authenticated context. The SQL resolver's existing default GUID is a compatibility behavior, not the service's tenant-selection contract. |
 | Account contact channels | Contact email and phone are distinct from account email and recovery/verification phone. A contact edit must not silently modify security channels or confirmation state. |
+| Phone identity and parsing | Complete international identity; preserve raw input and versioned interpretation separately. Explicit country for national/split input, optional LADA decomposition and qualified numbering geography. See [ADR 0009](adr/0009-phone-values-parsing-and-numbering-geography.md). |
 | Delivery scope | Build on fresh-schema SQL Server support first. Customer upgrades, synchronization and additional providers remain separate deliverables. Preserve the portable behavioral contracts. |
 
 Email's existing stable ordinal plus separate saved order is the proposed convention for the new child lists: first saved item is default, insert/restore append, and delete closes gaps. Family-specific deviations, if needed, must be explicit. Labels and visibility are association metadata, not part of the shared address's identity; confirm their precise address representation in iteration 3.
@@ -42,7 +43,7 @@ The order below is a proposal. Contact integration begins with the second family
 | Iteration | Deliverable | Completion criterion | Status |
 | --- | --- | --- | --- |
 | 0 | Bounded correction pass and current baseline | Constructor findings in scope have atomic rejection/concurrency regressions; existing full gate passes. | Complete; [ADR 0008](adr/0008-constructor-corrections.md) |
-| 1 | Complete phone family and shared reader boundary | As-of/diff/actions and C# reads prove email/phone state at the same revision; mixed saves have one revision, global action order and whole rollback. | Planned |
+| 1 | Complete phone family and shared reader boundary | As-of/diff/actions and C# reads prove email/phone state at the same revision; mixed saves have one revision, global action order and whole rollback. | Complete; [ADRs 0009](adr/0009-phone-values-parsing-and-numbering-geography.md)/[0010](adr/0010-composed-contact-family-reader.md) |
 | 2 | Complete web-link family | SQL/C# lifecycle, ordering, visibility, history and mixed-family composition work. | Planned |
 | 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Planned |
 | 4 | Person/organization profile and contact lifecycle | Supported profile/name/root changes are audited; lifecycle and relationship boundaries are explicit. | Planned |
@@ -58,9 +59,9 @@ Paginated listing/search is a separately tracked contact-discovery deliverable a
 | --- | --- | --- |
 | Iteration 0 discussion | Login uniqueness scope and its tenant-resolution assumptions | **Author explicitly deferred until provisioning, 2026-09-07.** No login constraint or account tenant column is added in iteration 0. Decide and enforce the policy before provisioning exposure. |
 | Before the iteration 0 company fix | Company-name equality and serialization | **Selected in iteration 0:** retain database-collation equality and use tenant-scoped CHECKSUM synchronization buckets with full-predicate recheck. Collisions only add waiting. See ADR 0008 for seeks, collation-drift rejection, tests and tradeoffs. |
-| Before iteration 1 reader implementation | Shared consistent read boundary | Use a coordinator with internal composable reader components and standalone public wrappers, reusing existing as-of functions. Validate transaction, locking and permission contracts as described below. |
-| Before iteration 1 phone DDL | Complete phone value identity and derived matching | Explicitly define number/country/area-code fields and whether geographic FKs belong at all. Derive matching data from accepted inputs; do not inherit address geography. |
-| Before iteration 1 public contracts | Meaning of `is_public` | Define whether and where it permits directory/public display, interaction with root privacy, and authorized internal access. Preserve the restrictive default; a child flag alone is not authorization to disclose a private contact. HTTP enforcement is completed in 5b. |
+| Before iteration 1 reader implementation | Shared consistent read boundary | Selected: one coordinator-owned SERIALIZABLE transaction and root barrier, private family components and existing as-of functions; [ADR 0010](adr/0010-composed-contact-family-reader.md). |
+| Before iteration 1 phone DDL | Complete phone value identity and derived matching | Selected with the author: E.164 identity, calling code/national strings, preserved input, backend parsing and optional metadata decomposition. Geographic catalog FKs belong to a separate versioned prefix-to-many-places map; no address inheritance. |
+| Before iteration 1 public contracts | Meaning of `is_public` | Directory-display eligibility, subject to root privacy and application authorization; restrictive default. Trusted internal readers retain flags and data. No anonymous endpoint in iteration 1; HTTP enforcement remains in 5b. |
 | Before iteration 3 | Address fields, catalog hierarchy and historical labels | Immutable complete values are settled; exact field identity, partial-address rules and catalog correction behavior still need definition. |
 | Before iterations 4 and 6 | Profile/lifecycle/relationship scope; provisioning/activation scope | Keep the existing bounded decisions in those iterations. Dedicated group work and shared-user membership remain deferred. |
 
@@ -195,8 +196,30 @@ Baseline 38/38 and final 42/42 passed, including both RCSI profiles; final durat
 zero failures/skips or build warnings/errors. All 149 distinct disposable databases across the seven
 runs have verified removal evidence. See [ADR 0008](adr/0008-constructor-corrections.md) and the
 [testing execution record](testing-handoff.md#iteration-0-constructor-corrections--2026-09-07).
-Next is iteration 1: settle phone identity/visibility and reader composition, then implement the phone
-family with email integration. That iteration has not started.
+The next step at that checkpoint was iteration 1, now delivered in the record below.
+
+## Iteration 1 execution record — 2026-09-07
+
+Authorized after discussion of Mastio/CFUS split phone input and geographic segmentation; implemented
+locally over iteration 0 commit `78e2d9e`. [ADR 0009](adr/0009-phone-values-parsing-and-numbering-geography.md)
+records complete international identity, preserved input/metadata, explicit backend parsing and qualified
+numbering geography. [ADR 0010](adr/0010-composed-contact-family-reader.md) records the shared read transaction
+and private components. [Phone family](phone-family.md) gives SQL/C# entry points and a mixed Save example.
+
+Delivered phone lifecycle, retained identity, saved order, final history, diffs/actions, immutable values,
+constructor/seed integration and checked FKs. SqlAuditUnit composes email/phone changes and rolls back both
+after parser/SQL failure. SqlContactChannelsReader reconstructs both families under one root barrier;
+the email-only API remains compatible. A new opt-in role adds phone without widening existing email grants.
+Labels/extensions survive their full widths through both constructors. Legacy ambiguous phone parameters
+reject; adapters use PhoneParser.PrepareForDatabase. Current summaries follow saved principal order.
+
+Final build/discovery and full gate passed **53/53**, both RCSI profiles, zero failures/skips or build
+warnings/errors, **5 min 30 sec**. All **142** distinct disposable databases across seven runs have verified
+removal records; [testing evidence](testing-handoff.md#iteration-1-phone-and-composed-reader--2026-09-07).
+Geographic-ID mapping tables are deliberately empty pending a sourced dataset; parser metadata already
+provides qualified numbering-region/area grouping. Fresh schemas only; no customer migration, phone UI,
+HTTP API, account-phone workflow or independent review execution is claimed. Login uniqueness remains
+deferred until provisioning. Next is iteration 2, web links; it has not started.
 
 ## Planning revision record
 

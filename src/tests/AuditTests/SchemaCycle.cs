@@ -155,6 +155,16 @@ internal static class SchemaCycle
                 THROW 52000, 'Seeded email did not share creation history, aggregate revision and audit unit.', 1;
             IF NOT EXISTS (SELECT 1 FROM contacts.contact_email_action WHERE contact_id=@contact AND operation='insert')
                 THROW 52000, 'Seeded email lost its action evidence.', 1;
+            IF NOT EXISTS (SELECT 1 FROM contacts.contact_phone p
+                JOIN contacts.phone n ON n.phone_id=p.phone_id
+                JOIN contacts.phone_input i ON i.input_id=p.input_id
+                JOIN contacts.contact_phone_history h ON h.contact_id=p.contact_id AND h.ordinal=p.ordinal
+                    AND h.dbrow_version=p.dbrow_version AND h.input_id=p.input_id
+                JOIN entities.entity e ON e.entity_id=p.contact_id AND e.dbrow_version=p.dbrow_version
+                WHERE p.contact_id=@contact AND e.entity_version=1 AND p.display_order=1
+                    AND n.e164='+527773288894' AND i.area_code='777')
+                OR NOT EXISTS (SELECT 1 FROM contacts.contact_phone_action WHERE contact_id=@contact AND operation='insert')
+                THROW 52000,'Seed phone lost canonical value, input, revision-one history or action evidence.',1;
             IF NOT EXISTS (
                 SELECT 1 FROM entities.event ev
                 JOIN security.user_role ur ON ur.user_id=ev.subject_id

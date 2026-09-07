@@ -18,7 +18,7 @@ dotnet build src/overmind.sln -c Release --no-restore
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --list-tests
 ```
 
-**Authoritative full command: both real database profiles and the batch-parser tests**, currently 42 discovered tests (20 per profile, 2 parser tests):
+**Authoritative full command: both real database profiles and database-free tests**, currently 53 discovered tests (25 per profile, 2 batch-parser tests and 1 phone-parser scenario):
 
 ```powershell
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --logger 'trx;LogFileName=audit.trx' --results-directory artifacts/test-results
@@ -32,11 +32,11 @@ For a backend-only build/test scope, target the project directly: `dotnet test s
 # Representative focused existing scenario, RCSI off (one test).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off&FullyQualifiedName~SavedOrderSqlAndHistoricalReader' --logger 'trx;LogFileName=focused.trx' --results-directory artifacts/test-results
 
-# Complete integration profile, independently selectable (20 tests each).
+# Complete integration profile, independently selectable (25 tests each).
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_Off' --logger 'trx;LogFileName=rcsi-off.trx' --results-directory artifacts/test-results
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=RCSI_On' --logger 'trx;LogFileName=rcsi-on.trx' --results-directory artifacts/test-results
 
-# Database-free, LIMITED SCOPE: two SQL batch-parser tests, no audit/SQL behavior verification.
+# Database-free, LIMITED SCOPE: two batch-parser tests and phone parsing, no SQL behavior verification.
 dotnet test src/overmind.sln -c Release --no-build --settings src/tests/audit.runsettings --filter 'TestCategory=Infrastructure'
 ```
 
@@ -87,8 +87,13 @@ Methods in [AuditScenarios.cs](../src/tests/AuditTests/AuditScenarios.cs) are in
 | Historical user P5: existing-contact promotion then email, rollback/commit and historical type | `PromotionThenEmailSharesRevisionAndRollsBackTogether` |
 | Iteration 0: person-only new accounts/promotion, unsupported inputs with whole-unit rollback, account-only success and occurrence clocks | `PersonAccountEligibilityPromotionInputsAndOccurrence` |
 | Iteration 0: company-name collation variants, collision-safe miss protection, unrelated progress, third-call success and private helper denial | `CompanyNameConcurrencyRespectsCollationAndDistinctValues` |
+| Iteration 1: original/normalized values, extensions, no-op/revert, ordering, deletion/restoration, final history and mixed action order | `PhoneLifecycleAndComposedHistory` |
+| Iteration 1: parser/SQL failure in either mixed Save order and invalidated-unit rollback | `PhoneParsingAndSqlFailureRollBackMixedSave` |
+| Iteration 1: contact/user construction, full widths, malformed native payloads, stale/tenant errors, private helper denial and opt-in read capability | `PhoneConstructionAndReaderPermissions` |
+| Iteration 1: pause between family components, observe writer blocked behind root barrier, verify coherent before/after states | `PhoneComposedReaderHoldsRootAcrossFamilies` |
+| Iteration 1: actual blocked same-number miss and distinct-number progress before holder commit | `PhoneCanonicalMissConcurrencyAndDistinctProgress` |
 
-Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. These protect the replacement executor; they are not substitute audit tests.
+Two database-free `SqlScriptTests` cover standalone/case/comment GO delimiters, quoted strings/escaped identifiers/nested comments, empty batches and rejection of unsupported command directives. `PhoneParsingTests.InternationalNationalSplitAndInvalidPhoneInputs` adds international/national/split MX, GB/IT significant zeros, CA shared calling code, nongeographic service and invalid/incomplete input. These do not substitute for SQL audit tests.
 
 The four original SQL fixtures retain their scenario sequences. The original review-probe integration replaced supplied promotion contact names with explicit NULL and added fixture-shape assertions without production changes; iteration 0 subsequently adds the production corrections documented here. [SchemaFiles.cs](../src/tests/AuditTests/SchemaFiles.cs) retains the runner's production script list and dependency order, with files copied from production source at build time. `SeedAsync(1..4)` loads allocation → email → saved order → user construction **on the current test's database**, with a fresh SQL connection per fixture as before. Tests requiring only email stop at stage 2. Saved-order and user-reader cases intentionally run after their own SQL fixture stage. The native concurrency schedule remains grouped because its roots progress through revisions 1–4; the C# shared-unit and lifetime sequences retain their intentional within-scenario state. No test depends on another discovered test.
 
@@ -180,6 +185,45 @@ Fresh evidence is under ignored `artifacts/test-results/review-probes-return-202
 | Unfiltered solution gate | Exit 0; 38 passed, zero failed/skipped; 3 min 34 sec; 18 per profile plus 2 parser tests | `audit.log`, `audit.trx`, `full-resources/` |
 
 All **44 databases** reconcile by exact name and owner across create-intent, successful creation, engine identity and removal: 6 focused (3 per profile), then 38 full-suite (19 per profile). Removal records follow the fixture's server-side absence check. `verification.json` records TRX class counts, cleanup reconciliation and actual SQL 1205 evidence. Every deadlock execution had exactly one victim and one committed survivor; both possible victim positions occurred across the focused/full runs. The assertions verified whole rollback, invalidation, surviving historical state and explicit fresh-unit retry. This does not introduce automatic retry or prove partial-savepoint success. All 42 local Markdown file links checked in the handoff, integration prompt and archive README resolve; `git diff --check` passes. Remote CI/Kudu/SQL-auth and production-scale performance remain unverified. The unresolved production recipes above were reviewed against source, not rerun or fixed in this follow-up.
+
+## Iteration 1 phone and composed reader — 2026-09-07
+
+Authorized implementation over committed iteration 0, `78e2d9e`. Contracts and usage:
+[ADR 0009](adr/0009-phone-values-parsing-and-numbering-geography.md),
+[ADR 0010](adr/0010-composed-contact-family-reader.md), [phone guide](phone-family.md).
+Pinned libphonenumber-csharp 9.0.38 was restored; Release solution build and discovery passed with
+zero warnings/errors. Discovery is **53**: 25 scenarios per RCSI profile, two batch-parser tests and one
+database-free phone-parser scenario. Initial schema/email verification passed 2/2; the prior iteration's
+42-test result remains its dated baseline, not a newly executed baseline in this task.
+
+Final full gate passed **53/53**, zero failures/skips, **5 min 30 sec**. Authoritative result:
+`artifacts/test-results/iteration-1/final/audit.trx` (ignored). All 22 changed/new framework SQL scripts
+match the files loaded by the final test build. Actual schema-cycle assertions verify initial phone
+canonical value, interpretation, revision-one history/actions and the existing email/role evidence.
+
+The five new database scenarios cover phone lifecycle/no-op/revert/order/history, full-width input,
+canonical reuse with different spellings/extensions, mixed Save rollback after parser or SQL failure,
+native JSON validation, stale/tenant errors, constructor integration and capability isolation. The reader
+schedule inserts a test-only gate between family components and observes the writer blocked behind the
+actual shared root barrier; after release, both families reflect coherent before/after revisions. The
+catalog schedule observes actual equivalent-number blocking and distinct-number progress before commit.
+Existing lock-footprint assertions now instrument the shared coordinator and execute both public wrappers;
+the 200-unrelated-root threshold and whole-table-lock rejection are unchanged.
+
+Development records are retained: `schema` 2/2; `focused` 5/9 (missing address fixture helper and leftover
+legacy seed arguments); `focused-2` 7/11 (new-contact writer mistakenly received expected version 1 rather
+than unit-entry 0); `focused-3` 13/13. `full` passed 49/53: a malformed test payload did not actually change
+the escaped plus, and the footprint probe still targeted the old reader body. After correcting those and
+constructor widths, `corrections` passed 4/6; its remaining instrumentation parser matched "Created" in
+the audit-style header. It now starts at the actual procedure declaration. The final 53-test run passed
+the exact corrected sources. Historical independent reports and archived probes are unchanged.
+
+All **142 distinct owned databases** across seven runs have matching intent/create/identity/removed
+records and successful post-DROP absence checks. `verification.json` reconciles 284 journal/resource copies
+(originals and test attachments), zero invalid/incomplete records. The final run owns 52 databases,
+26 per profile, including the extra cross-database scenarios. No application/customer database changed.
+Geographic-ID catalog population, unresolved imports, other providers, remote CI/Kudu, SQL authentication,
+customer upgrades and HTTP/account-phone behavior remain outside the executed scope.
 
 ## Iteration 0 constructor corrections — 2026-09-07
 

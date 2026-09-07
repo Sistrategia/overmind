@@ -36,9 +36,9 @@ SELECT c.[contact_id],
      , gre.[public_key] AS [contact_group_public_key]
      --
      , c.[person_gender_code], c.[person_birth_date]     
-     , COALESCE('(' + p.[area_code] + ') ' + p.[phone_number], p.[phone_number]) AS [phone_number]
-     , p.[phone_number] AS [phone_local_number]
-     , p.[area_code] AS [phone_area_code], cp.[extension] AS [phone_extension] -- , p.[numbers_only] AS [phone_numbers_only]
+     , p.[e164] AS [phone_number]
+     , pi.[subscriber_number] AS [phone_local_number]
+     , pi.[area_code] AS [phone_area_code], cp.[extension] AS [phone_extension] -- , p.[numbers_only] AS [phone_numbers_only]
      , em.[email_address]
      , ad.[address1], ad.[address2], ad.[zip_code]
      , adc.[city], ads.[state], adco.[country] -- ad.[city_id], ad.[state_id], ad.[country_id]
@@ -52,23 +52,25 @@ INNER JOIN [entities].[entity_view] AS e ON (e.[entity_id] = c.[contact_id])
 --INNER JOIN [security].[user] AS md ON (e.[modified_by] = md.[user_id])
 --INNER JOIN [entities].[entity] AS mde ON (e.[modified_by] = mde.[entity_id])
 
-LEFT JOIN [contacts].[contact_person_name] AS cpn1 ON(c.[contact_id] = cpn1.[contact_id] AND cpn1.[person_name_type_id] = 1) 
-LEFT JOIN [contacts].[person_name] AS cpnn1 ON(cpn1.[person_name_id] = cpnn1.[person_name_id]) 
-LEFT JOIN [contacts].[contact_person_name] AS cpn2 ON(c.[contact_id] = cpn2.[contact_id] AND cpn2.[person_name_type_id] = 2) 
-LEFT JOIN [contacts].[person_name] AS cpnn2 ON(cpn2.[person_name_id] = cpnn2.[person_name_id]) 
-LEFT JOIN [contacts].[contact_person_name] AS cpn3 ON(c.[contact_id] = cpn3.[contact_id] AND cpn3.[person_name_type_id] = 3) 
-LEFT JOIN [contacts].[person_name] AS cpnn3 ON(cpn3.[person_name_id] = cpnn3.[person_name_id]) 
-LEFT JOIN [contacts].[contact_person_name] AS cpn4 ON(c.[contact_id] = cpn4.[contact_id] AND cpn4.[person_name_type_id] = 4) 
-LEFT JOIN [contacts].[person_name] AS cpnn4 ON(cpn4.[person_name_id] = cpnn4.[person_name_id]) 
-LEFT JOIN [contacts].[contact_person_name] AS cpn5 ON(c.[contact_id] = cpn5.[contact_id] AND cpn5.[person_name_type_id] = 5) 
-LEFT JOIN [contacts].[person_name] AS cpnn5 ON(cpn5.[person_name_id] = cpnn5.[person_name_id]) 
-LEFT JOIN [contacts].[contact_person_name] AS cpn6 ON(c.[contact_id] = cpn6.[contact_id] AND cpn6.[person_name_type_id] = 6) 
-LEFT JOIN [contacts].[person_name] AS cpnn6 ON(cpn6.[person_name_id] = cpnn6.[person_name_id]) 
-LEFT JOIN [contacts].[contact_person_name] AS cpn7 ON(c.[contact_id] = cpn7.[contact_id] AND cpn7.[person_name_type_id] = 7) 
-LEFT JOIN [contacts].[person_name] AS cpnn7 ON(cpn7.[person_name_id] = cpnn7.[person_name_id]) 
+LEFT JOIN [contacts].[contact_person_name] AS cpn1 ON(c.[contact_id] = cpn1.[contact_id] AND cpn1.[person_name_type_id] = 1)
+LEFT JOIN [contacts].[person_name] AS cpnn1 ON(cpn1.[person_name_id] = cpnn1.[person_name_id])
+LEFT JOIN [contacts].[contact_person_name] AS cpn2 ON(c.[contact_id] = cpn2.[contact_id] AND cpn2.[person_name_type_id] = 2)
+LEFT JOIN [contacts].[person_name] AS cpnn2 ON(cpn2.[person_name_id] = cpnn2.[person_name_id])
+LEFT JOIN [contacts].[contact_person_name] AS cpn3 ON(c.[contact_id] = cpn3.[contact_id] AND cpn3.[person_name_type_id] = 3)
+LEFT JOIN [contacts].[person_name] AS cpnn3 ON(cpn3.[person_name_id] = cpnn3.[person_name_id])
+LEFT JOIN [contacts].[contact_person_name] AS cpn4 ON(c.[contact_id] = cpn4.[contact_id] AND cpn4.[person_name_type_id] = 4)
+LEFT JOIN [contacts].[person_name] AS cpnn4 ON(cpn4.[person_name_id] = cpnn4.[person_name_id])
+LEFT JOIN [contacts].[contact_person_name] AS cpn5 ON(c.[contact_id] = cpn5.[contact_id] AND cpn5.[person_name_type_id] = 5)
+LEFT JOIN [contacts].[person_name] AS cpnn5 ON(cpn5.[person_name_id] = cpnn5.[person_name_id])
+LEFT JOIN [contacts].[contact_person_name] AS cpn6 ON(c.[contact_id] = cpn6.[contact_id] AND cpn6.[person_name_type_id] = 6)
+LEFT JOIN [contacts].[person_name] AS cpnn6 ON(cpn6.[person_name_id] = cpnn6.[person_name_id])
+LEFT JOIN [contacts].[contact_person_name] AS cpn7 ON(c.[contact_id] = cpn7.[contact_id] AND cpn7.[person_name_type_id] = 7)
+LEFT JOIN [contacts].[person_name] AS cpnn7 ON(cpn7.[person_name_id] = cpnn7.[person_name_id])
 
-LEFT JOIN [contacts].[contact_phone] AS cp ON(c.contact_id = cp.contact_id AND cp.ordinal = 1) 
-LEFT JOIN [contacts].[phone] AS p ON(cp.phone_id = p.phone_id) 
+OUTER APPLY (SELECT TOP(1) * FROM [contacts].[contact_phone] cp
+    WHERE cp.contact_id=c.contact_id ORDER BY cp.display_order,cp.ordinal) AS cp
+LEFT JOIN [contacts].[phone] AS p ON(cp.phone_id = p.phone_id)
+LEFT JOIN [contacts].[phone_input] AS pi ON(cp.input_id = pi.input_id)
 OUTER APPLY (SELECT TOP(1) * FROM [contacts].[contact_email] ce
     WHERE ce.contact_id=c.contact_id ORDER BY ce.display_order,ce.ordinal) AS ce
 LEFT JOIN [contacts].[email] AS em ON(ce.email_id = em.email_id) 

@@ -43,10 +43,10 @@ CREATE OR ALTER PROCEDURE [contacts].[contact_insert] (
     ,@email_location_name           NVARCHAR(MAX) = NULL
     ,@email_address                 NVARCHAR(MAX) = NULL
 
-    ,@phone_location_name           NVARCHAR(25) = NULL
+    ,@phone_location_name           NVARCHAR(MAX) = NULL
     ,@phone_number                  NVARCHAR(25) = NULL
     ,@phone_area_code               NVARCHAR(16) = NULL
-    ,@phone_extension               NVARCHAR(25) = NULL
+    ,@phone_extension               NVARCHAR(MAX) = NULL
     ,@numbers_only                  NVARCHAR(15) = NULL
     ,@full_phone                    NVARCHAR(20) = NULL
 
@@ -65,6 +65,7 @@ CREATE OR ALTER PROCEDURE [contacts].[contact_insert] (
 
     ,@auto_create_person_company    BIT = 1	 
     ,@supress_event_message         BIT = 0	 
+    ,@phone_data                    NVARCHAR(MAX) = NULL
 )
 AS
 BEGIN
@@ -330,41 +331,23 @@ BEGIN
             VALUES (@contact_id, 1, @address_id, @address_location_id)
         END
 
-        IF @phone_number IS NOT NULL
+        IF @phone_number IS NOT NULL OR @phone_area_code IS NOT NULL OR @numbers_only IS NOT NULL OR @full_phone IS NOT NULL
+            OR (@phone_data IS NULL AND (@phone_location_name IS NOT NULL OR @phone_extension IS NOT NULL))
         BEGIN
-            DECLARE @phone_id INT
-            --DECLARE @numbers_only NVARCHAR(15)
-            --DECLARE @full_phone NVARCHAR(20)
-            
-            --SET @full_phone = COALESCE(@phone_area_code + ' ' + @phone_number, @phone_number)            
-
-            --SET @numbers_only = (SELECT LEFT(SUBSTRING(@full_phone, PATINDEX('%[0-9.-]%', @full_phone), 8000),
-            --    PATINDEX('%[^0-9.-]%', SUBSTRING(@full_phone, PATINDEX('%[0-9.-]%', @full_phone), 8000) + 'X') -1))
-
-            SET @phone_id = (SELECT [phone_id] FROM [contacts].[phone] WHERE [phone_number] = @phone_number)
-            IF @phone_id IS NULL
-            BEGIN
-                INSERT INTO [contacts].[phone] ([phone_number], [area_code],[numbers_only],[city_id],[state_id],[country_id])
-                VALUES (@phone_number, @phone_area_code, @numbers_only, @city_id, @state_id, @country_id)
-                SET @phone_id = SCOPE_IDENTITY()
-                --EXEC [contacts].[phone_insert]
-                --        @email_id = @email_id OUTPUT
-                --    ,@email_address = @email_address
-            END
-
-            IF @phone_location_name IS NULL
-                SET @phone_location_name = 'Primary'
-
-            DECLARE @phone_location_id INT
-            SET @phone_location_id = (SELECT [location_id] FROM [contacts].[phone_location] WHERE [location_name] = @phone_location_name)
-            IF @phone_location_id IS NULL
-            BEGIN
-                INSERT INTO [contacts].[phone_location] ([location_name]) VALUES (@phone_location_name)
-                SET @phone_location_id = SCOPE_IDENTITY()
-            END
-
-            INSERT INTO [contacts].[contact_phone] ([contact_id],[ordinal],[phone_id],[location_id],[extension])
-            VALUES (@contact_id, 1, @phone_id, @phone_location_id, @phone_extension)
+            THROW 51718, 'Normalize phone input with the backend parser and supply phone_data; legacy split inputs are ambiguous.', 1;
+        END
+        IF @phone_data IS NOT NULL
+        BEGIN
+            DECLARE @phone_actor INT=(SELECT modified_by FROM data.dbrow_version
+                WHERE tenant_id=@tenant_id AND dbrow_version=@dbrow_version);
+            DECLARE @phone_ordinal INT=NULL, @phone_revision INT, @phone_id INT;
+            EXEC [contacts].[contact_phone_write]
+                @operation='insert', @contact_id=@contact_id, @tenant_id=@tenant_id,
+                @actor_entity_id=@phone_actor, @expected_entity_version=0,
+                @phone_data=@phone_data, @location_name=@phone_location_name,
+                @extension=@phone_extension, @ordinal=@phone_ordinal OUTPUT,
+                @dbrow_version=@dbrow_version OUTPUT, @entity_version=@phone_revision OUTPUT,
+                @phone_id=@phone_id OUTPUT, @show_in_timeline=0;
         END
 
         IF @auto_create_person_company = 1 AND @person_company IS NOT NULL

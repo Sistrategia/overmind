@@ -28,6 +28,36 @@ public abstract class AuditScenarios
     private Task Run(Func<AuditDatabase, Task> scenario) => AuditDatabase.RunAsync(Rcsi, TestContext, scenario);
 
     [TestMethod]
+    public Task PhoneLifecycleAndComposedHistory() => Run(async db => {
+        await db.SeedAsync();
+        await PhoneCases.Lifecycle(db);
+    });
+
+    [TestMethod]
+    public Task PhoneParsingAndSqlFailureRollBackMixedSave() => Run(async db => {
+        await db.SeedAsync();
+        await PhoneCases.RejectionRollback(db);
+    });
+
+    [TestMethod]
+    public Task PhoneConstructionAndReaderPermissions() => Run(async db => {
+        await db.SeedAsync();
+        await PhoneCases.ConstructorPermissions(db);
+    });
+
+    [TestMethod]
+    public Task PhoneComposedReaderHoldsRootAcrossFamilies() => Run(async db => {
+        await db.SeedAsync();
+        await PhoneCases.ReaderConcurrency(db);
+    });
+
+    [TestMethod]
+    public Task PhoneCanonicalMissConcurrencyAndDistinctProgress() => Run(async db => {
+        await db.SeedAsync();
+        await PhoneCases.CatalogConcurrency(db);
+    });
+
+    [TestMethod]
     public Task AllocationCompositionAndGuards() => Run(db => db.SeedAsync(1));
 
     [TestMethod]

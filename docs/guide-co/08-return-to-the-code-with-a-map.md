@@ -47,7 +47,9 @@ One naming trap from the sibling projects: CFUS uses `entity_history` for its th
 For the next work, use the [contact/API master plan](../contact-api-master-plan.md), added 2026-09-07.
 Its feedback revision records shared immutable addresses, early reader composition, separate service/HTTP
 gates and a persons/organizations-first roadmap. Iteration 0's constructor corrections are described in
-[ADR 0008](../adr/0008-constructor-corrections.md); the child-family/API iterations remain planned.
+[ADR 0008](../adr/0008-constructor-corrections.md). Iteration 1 now adds phone and composed email/phone
+reads; the [phone guide](../phone-family.md) and ADRs 0009–0010 describe the new contracts and verification.
+Web links, addresses and the broader service/HTTP boundary remain planned.
 
 At this guide's checkpoint, the email lifecycle is the complete reference family for the declared fresh-schema boundary: insert, update, delete, restore, saved moves, history, actions, reader/diff, unit ownership and restricted database access. Ordinary administrative user creation and contact promotion now preserve type history and make constructed users eligible actors.
 

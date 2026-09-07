@@ -157,17 +157,20 @@ internal static class SqlScenarios
                 SET @i+=1;
             END;
             EXEC contacts.email_update @contact_public_key=@target,@modified_by='{{actor}}',@expected_entity_version=1,@ordinal=1,@email_address=N'footprint-updated@example.test';
-            DECLARE @definition NVARCHAR(MAX)=OBJECT_DEFINITION(OBJECT_ID('contacts.contact_email_read'));
-            -- SQL Server can store CREATE followed by padding in place of OR ALTER.
-            -- Preserve the body/comments, changing only the declaration verb for instrumentation/restoration.
-            DECLARE @create INT=CHARINDEX(N'CREATE',@definition),@proc INT=CHARINDEX(N'PROCEDURE [contacts].[contact_email_read]',@definition);
+            -- Iteration 1 moved transaction ownership into the shared coordinator.
+            -- Observe its actual pre-COMMIT locks through both public wrappers.
+            DECLARE @definition NVARCHAR(MAX)=OBJECT_DEFINITION(OBJECT_ID('contacts.contact_channels_read_core'));
+            -- Start at the actual declaration: the audit-style header also contains "Created".
+            -- Retain parameters/body and use ALTER for instrumentation/restoration.
+            DECLARE @proc INT=CHARINDEX(N'PROCEDURE [contacts].[contact_channels_read_core]',@definition);
             IF @proc=0 THROW 52000,'Reader declaration not found.',1;
-            IF @create>0 AND @create<@proc SET @definition=STUFF(@definition,@create,@proc-@create,N'ALTER ');
+            SET @definition=N'ALTER '+SUBSTRING(@definition,@proc,LEN(@definition));
             DECLARE @instrumented NVARCHAR(MAX)=REPLACE(@definition,N'        COMMIT;',N'{{lock_check_literal}}');
             IF @instrumented=@definition THROW 52000,'Reader lock observation point not found.',1;
             EXEC (@instrumented);
             BEGIN TRY
                 EXEC contacts.contact_email_read @contact_public_key=@target,@actor='{{actor}}',@entity_version=2;
+                EXEC contacts.contact_channels_read @contact_public_key=@target,@actor='{{actor}}',@entity_version=2;
             END TRY
             BEGIN CATCH
                 EXEC (@definition);

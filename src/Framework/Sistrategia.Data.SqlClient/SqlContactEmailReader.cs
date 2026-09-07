@@ -30,6 +30,12 @@ public sealed class SqlContactEmailReader(string connectionString)
         command.Parameters.Add("@entity_version", SqlDbType.Int).Value = entityVersion;
         command.Parameters.Add("@compare_entity_version", SqlDbType.Int).Value = (object?)compareEntityVersion ?? DBNull.Value;
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var result = await ReadRowsAsync(reader, cancellationToken);
+        await reader.NextResultAsync(cancellationToken);
+        return result;
+    }
+
+    internal static async Task<ContactEmailRevision> ReadRowsAsync(SqlDataReader reader, CancellationToken cancellationToken) {
         if (!await reader.ReadAsync(cancellationToken)) throw new InvalidOperationException("Missing historical root payload.");
         var version = reader.GetInt32(0);
         var stamp = reader.GetInt64(1);
@@ -56,11 +62,8 @@ public sealed class SqlContactEmailReader(string connectionString)
         var actions = new List<ContactEmailAction>();
         while (await reader.ReadAsync(cancellationToken))
             actions.Add(new(reader.GetInt64(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetString(3), reader.GetString(4), Text(reader, 5), reader.GetBoolean(6), reader.GetBoolean(7), reader.GetInt32(8), DateTime.SpecifyKind(reader.GetDateTime(9), DateTimeKind.Utc), reader.GetInt32(10), Position(reader, 11), Position(reader, 12)));
-        // Consume completion too: a failure after result rows must not be mistaken for success.
-        await reader.NextResultAsync(cancellationToken);
         return new(version, stamp, displayName, fullName, summary, isPrivate, deleted, recordedAt, actorId, emails, differences, actions, entityTypeId);
     }
-
     private static string? Text(SqlDataReader reader, int ordinal) => reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
     private static bool? Flag(SqlDataReader reader, int ordinal) => reader.IsDBNull(ordinal) ? null : reader.GetBoolean(ordinal);
     private static int? Position(SqlDataReader reader, int ordinal) => reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);

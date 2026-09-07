@@ -4,6 +4,11 @@ Previous: [8. Actors, tenants and users](08-actors-tenants-and-users.md) · [Ind
 
 ## One call, one revision
 
+Iteration 1 adds `SqlContactChannelsReader` for one coherent email/phone read and merged action order.
+The email-only API below retains its behavior. Both delegate transaction ownership to the shared
+coordinator, which holds the root barrier before invoking private family components. See the
+[phone/composed-reader guide](../phone-family.md) for the seven-set contract and C# example.
+
 ```csharp
 var history  = new SqlContactEmailReader(connectionString);
 var revision = await history.ReadAsync(contactPublicKey, actorPublicKey,
@@ -21,7 +26,7 @@ A revision that does not exist throws 51401; a revision whose root payload is mi
 
 ## The algorithm underneath
 
-`contacts.contact_email_read` owns a short SERIALIZABLE transaction:
+`contacts.contact_email_read` delegates to the private coordinator, which owns a short SERIALIZABLE transaction:
 
 1. Resolve the actor and the contact in the tenant.
 2. Take the shared barrier on the root row (Chapter 4).
@@ -35,7 +40,7 @@ Reading the same thing from a legacy view was the L2 finding in the source intak
 
 ## What it does and does not reconstruct
 
-It reconstructs the email family and the root's own payload, with the historical type. It does not yet reconstruct phones, addresses, names or roles, because those families have no history writers yet. It reconstructs one aggregate at one revision, not the whole tenant at a point in time; Chapter 3 explains why the ledger cannot promise the latter.
+The email-only call reconstructs email and the root's payload, with historical type. The combined call adds phone state/diff/actions under the same bound and barrier. Addresses, names and roles still lack full reconstruction. Each call reconstructs one aggregate at one revision, not the whole tenant at a point in time; Chapter 3 explains why the ledger cannot promise the latter.
 
 For migrated data, absence of history may mean "unknown" rather than "empty". The migration design (ADR 0004) carries coverage information; the reader itself does not yet expose it.
 

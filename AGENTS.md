@@ -7,6 +7,27 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Iteration 1 complete — 2026-09-07:** authorized after the author's phone discussion,
+over committed iteration 0 (`78e2d9e`). Read [docs/phone-family.md](docs/phone-family.md),
+[ADR 0009](docs/adr/0009-phone-values-parsing-and-numbering-geography.md) and
+[ADR 0010](docs/adr/0010-composed-contact-family-reader.md). Phone identity is immutable E.164 with typed
+calling-code/national strings; exact immutable phone_input JSON preserves raw input, optional split,
+numbering geography and parser metadata. PhoneParser uses libphonenumber-csharp 9.0.38, explicit region
+for national/split inputs and no address inference. Qualified geography is not contact residence; optional
+versioned prefix/place catalog starts empty pending a sourced dataset. Full phone lifecycle/history/order,
+SqlAuditUnit phone commands, private family components and a coordinator-owned email/phone reader are in
+place. contact_channels_runtime opts into phone; existing email_runtime stays email-only. Constructors
+append prepared phone_data, reject ambiguous legacy phone arguments and route initial phone through the
+writer with expected version 0/revision 1. Phone label/extension inputs no longer truncate before validation.
+Actual seed uses prepared phone data. Both guides/master plan/testing handoff are updated; no sibling
+project or customer database changed. Final build/discovery: zero warnings/errors, 53 tests (25 per RCSI
+profile plus 3 database-free). Full gate passed 53/53, zero failures/skips, 5 min 30 sec. All 142 distinct
+owned databases across seven runs have verified removal evidence; final owns 52 (26 per profile).
+Evidence: artifacts/test-results/iteration-1/final/ and verification.json (ignored). All 22 changed/new
+framework SQL scripts match final test copies. The root-footprint test now instruments the shared
+coordinator through both wrappers and retains its prior lock-count/table-lock assertions.
+Historical independent reports/probes remain unchanged. Iteration 2 web links has not started.
+
 **Iteration 0 complete — 2026-09-07:** authorized implementation over `4a30dc0`, saved locally.
 Read [docs/adr/0008-constructor-corrections.md](docs/adr/0008-constructor-corrections.md) and the updated
 [master plan](docs/contact-api-master-plan.md). Ordinary accounts require person contacts on new construction

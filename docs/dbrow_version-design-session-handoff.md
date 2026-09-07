@@ -4,6 +4,18 @@ Updated: 2026-09-07. Purpose: resume with current recommendations and distinguis
 
 ## Resume here
 
+**Iteration 1 implementation, 2026-09-07:** the author approved canonical international phone identity,
+preserved input, optional LADA decomposition and qualified numbering geography, then authorized iteration 1.
+[ADR 0009](adr/0009-phone-values-parsing-and-numbering-geography.md),
+[ADR 0010](adr/0010-composed-contact-family-reader.md) and the [phone guide](phone-family.md) describe the
+implemented family, parsing boundary and composed reader. Iteration 1 is complete locally over `78e2d9e`:
+final build/discovery and full gate passed 53/53, zero failures/skips or build warnings/errors, 5 min 30 sec.
+All 142 distinct disposable databases across seven runs have verified removal records; see the
+[testing handoff](testing-handoff.md#iteration-1-phone-and-composed-reader--2026-09-07).
+No phone-derived geography is copied into contact addresses. Optional geographic-ID mapping tables are empty
+pending a sourced dataset. The new opt-in contact_channels_runtime role preserves email-only capability.
+Next after the iteration's completion is web links; no later iteration has started.
+
 **Iteration 0 complete, 2026-09-07:** the author authorized the bounded corrections in the
 [master plan](contact-api-master-plan.md); [ADR 0008](adr/0008-constructor-corrections.md) is the current
 constructor contract. Person-only construction/promotion, explicit rejection of ignored promotion inputs,

@@ -85,6 +85,10 @@ All custom errors are `THROW` with numbers in the 51000 range, grouped by layer.
 | 51604 | user creation history requires this unit's user root, subtype and spine | Internal precondition; report it. |
 | 51605 | ordinary user accounts require a human person contact | Organization/group accounts are rejected on creation and promotion. |
 | 51606 | promotion does not modify contact details | Pass account inputs and `@full_name=NULL`; compose supported contact changes explicitly. |
+| 51700 | normalized phone interpretation is missing, malformed or inconsistent | Use `PhoneParser.PrepareForDatabase` for native adapters; ordinary C# commands parse inside the unit. |
+| 51701 / 51717 | phone label exceeds 100 / extension exceeds 25 UTF-16 units | Correct the input; values are never silently truncated. |
+| 51702–51712 | phone operation, flags, child identity, position, prior history or catalog lock failure | Same lifecycle/rollback rules as the corresponding email errors; inspect the message. |
+| 51718 | legacy ambiguous phone arguments or label/extension without a phone | Supply prepared `@phone_data`; national/split input needs explicit country context. |
 
 ## Engine errors you will meet
 

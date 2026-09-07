@@ -62,11 +62,8 @@ Creo firmemente que la formación continua y la vinculación entre egresados, em
 	,@email 	        = 'ernesto@sistrategia.com'
 
     ,@phone_location_name = 'Celular'
-	,@phone_number      = '328-8894'
-    ,@phone_area_code   = '777'
+    ,@phone_data = N'{"e164":"+527773288894","country_calling_code":"52","national_number":"7773288894","raw_input":"328-8894","default_region":"MX","area_input":"777","numbering_region":"MX","area_code":"777","subscriber_number":"3288894","parser_version":"explicit-installation-seed-v1"}'
     ,@phone_extension   = NULL
-    ,@numbers_only      = '7773288894'
-    ,@full_phone        = '(777) 328-8894'
 
     ,@address_location_name = 'Oficina'
     ,@address1          = 'Tabachin #12' -- TABACHIN #12

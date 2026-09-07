@@ -34,3 +34,22 @@ DENY EXECUTE ON [security].[user_history_create] TO [email_runtime];
 DENY EXECUTE ON [entities].[entity_insert] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_insert] TO [email_runtime];
 DENY EXECUTE ON [security].[user_insert] TO [email_runtime];
+
+-- Phone capability is opt-in; existing email principals retain their original surface.
+IF DATABASE_PRINCIPAL_ID(N'contact_channels_runtime') IS NULL CREATE ROLE [contact_channels_runtime] AUTHORIZATION [dbo];
+IF NOT EXISTS (SELECT 1 FROM sys.database_role_members WHERE role_principal_id=DATABASE_PRINCIPAL_ID(N'email_runtime') AND member_principal_id=DATABASE_PRINCIPAL_ID(N'contact_channels_runtime'))
+    ALTER ROLE [email_runtime] ADD MEMBER [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[contact_phone_change] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[contact_phone_insert] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[phone_update] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[phone_delete] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[phone_restore] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[phone_move] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[contact_phone_read] TO [contact_channels_runtime];
+GRANT EXECUTE ON [contacts].[contact_channels_read] TO [contact_channels_runtime];
+DENY EXECUTE ON [contacts].[contact_channels_read_core] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_email_read_rows] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_phone_read_rows] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_phone_write] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_phone_history_sync] TO [email_runtime];
+DENY EXECUTE ON [contacts].[phone_values_ensure] TO [email_runtime];

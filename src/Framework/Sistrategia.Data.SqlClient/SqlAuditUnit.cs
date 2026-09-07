@@ -10,7 +10,7 @@ public sealed record EmailWriteResult(int Ordinal, int EmailId, int EntityVersio
 /// context from an untrusted request body. Dispose without CommitAsync rolls everything back.
 /// Results remain provisional until commit. A failed/uncertain commit is never retried here.
 /// </summary>
-public sealed class SqlAuditUnit : IAsyncDisposable
+public sealed partial class SqlAuditUnit : IAsyncDisposable
 {
     private readonly SqlConnection connection;
     private readonly SqlTransaction transaction;

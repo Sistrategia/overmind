@@ -39,10 +39,10 @@ CREATE OR ALTER PROCEDURE [security].[user_insert]
     @password_salt NVARCHAR(128) = NULL,
     @email_location_name NVARCHAR(MAX) = NULL,
     @email NVARCHAR(MAX) = NULL,
-    @phone_location_name NVARCHAR(25) = NULL,
+    @phone_location_name NVARCHAR(MAX) = NULL,
     @phone_number NVARCHAR(25) = NULL,
     @phone_area_code NVARCHAR(16) = NULL,
-    @phone_extension NVARCHAR(10) = NULL,
+    @phone_extension NVARCHAR(MAX) = NULL,
     @numbers_only NVARCHAR(15) = NULL,
     @full_phone NVARCHAR(20) = NULL,
     @address_location_name NVARCHAR(50) = NULL,
@@ -57,6 +57,7 @@ CREATE OR ALTER PROCEDURE [security].[user_insert]
     @auto_create_person_company BIT = 1,
     @expected_entity_version INT = NULL,
     @entity_version INT = NULL OUTPUT,
+    @phone_data NVARCHAR(MAX) = NULL,
     @user_id INT = NULL OUTPUT
 AS
 BEGIN
@@ -159,7 +160,7 @@ BEGIN
                 OR @person_job_title IS NOT NULL OR @person_company IS NOT NULL
                 OR @person_gender_code IS NOT NULL OR @person_birth_date IS NOT NULL
                 OR @person_marital_status IS NOT NULL OR @email_location_name IS NOT NULL
-                OR @phone_location_name IS NOT NULL OR @phone_number IS NOT NULL
+                OR @phone_data IS NOT NULL OR @phone_location_name IS NOT NULL OR @phone_number IS NOT NULL
                 OR @phone_area_code IS NOT NULL OR @phone_extension IS NOT NULL
                 OR @numbers_only IS NOT NULL OR @full_phone IS NOT NULL
                 OR @address_location_name IS NOT NULL OR @address1 IS NOT NULL OR @address2 IS NOT NULL
@@ -230,6 +231,7 @@ BEGIN
                 @email_location_name = @email_location_name,
                 @email_address = @email,
                 @phone_location_name = @phone_location_name,
+                @phone_data = @phone_data,
                 @phone_number = @phone_number,
                 @phone_area_code = @phone_area_code,
                 @phone_extension = @phone_extension,
