@@ -27,6 +27,7 @@ DENY EXECUTE ON [entities].[entity_history_snapshot] TO [email_runtime];
 DENY EXECUTE ON [contacts].[email_values_ensure] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_email_write] TO [email_runtime];
 DENY EXECUTE ON [contacts].[contact_email_history_sync] TO [email_runtime];
+DENY EXECUTE ON [contacts].[contact_company_lookup] TO [email_runtime];
 DENY EXECUTE ON [security].[system_user_bootstrap] TO [email_runtime];
 DENY EXECUTE ON [security].[user_history_create] TO [email_runtime];
 -- Legacy constructors retain separate compatibility/authorization work; this profile does not expose them.

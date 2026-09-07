@@ -155,6 +155,16 @@ internal static class SchemaCycle
                 THROW 52000, 'Seeded email did not share creation history, aggregate revision and audit unit.', 1;
             IF NOT EXISTS (SELECT 1 FROM contacts.contact_email_action WHERE contact_id=@contact AND operation='insert')
                 THROW 52000, 'Seeded email lost its action evidence.', 1;
+            IF NOT EXISTS (
+                SELECT 1 FROM entities.event ev
+                JOIN security.user_role ur ON ur.user_id=ev.subject_id
+                JOIN security.[role] r ON r.role_id=ur.role_id
+                WHERE ev.subject_id=@contact AND ev.dbrow_version=(SELECT dbrow_version FROM entities.entity WHERE entity_id=@contact)
+                    AND r.role_name=N'Developer' AND r.tenant_id IS NULL
+                    AND TRY_CONVERT(INT,JSON_VALUE(ev.event_args,'$.initial_role_id'))=r.role_id
+                    AND ev.created='2022-01-04T21:00:00'
+            )
+                THROW 52000,'Seeded Developer assignment or occurrence time lost construction evidence.',1;
             """, connection);
         await command.ExecuteNonQueryAsync();
     }

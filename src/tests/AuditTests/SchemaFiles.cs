@@ -37,6 +37,7 @@ internal static class SchemaFiles
         "Contacts/Emails/create_contact_email_read.sql",
         "Contacts/Emails/create_contact_email_history_view.sql",
         "Entities/create_entity_insert.sql",
+        "Contacts/create_contact_company_lookup.sql",
         "Contacts/create_contact_insert.sql",
         "Security/User/create_security_user_insert.sql",
         "Security/User/create_user_history_create.sql",

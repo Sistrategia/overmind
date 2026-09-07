@@ -373,11 +373,12 @@ BEGIN
             DECLARE @company_public_key UNIQUEIDENTIFIER
             DECLARE @company_contact_id INT = NULL
 
-            DECLARE @company_matches INT;
-            SELECT @company_matches=COUNT(*),@company_contact_id=MIN(c.[contact_id])
-            FROM [contacts].[contact] c JOIN [entities].[entity] e ON e.[entity_id]=c.[contact_id]
-            WHERE c.[full_name]=@person_company AND c.[contact_type_id]=2 AND e.[tenant_id]=@tenant_id;
-            IF @company_matches>1 THROW 51313,'Company name is ambiguous within this tenant; select a company explicitly.',1;
+            -- A missing name stays protected through company creation and the outer commit.
+            EXEC [contacts].[contact_company_lookup]
+                @tenant_id = @tenant_id,
+                @company_name = @person_company,
+                @company_contact_id = @company_contact_id OUTPUT
+            ;
 
             IF @company_contact_id IS NULL
             BEGIN

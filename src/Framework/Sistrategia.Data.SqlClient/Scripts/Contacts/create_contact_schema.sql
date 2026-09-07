@@ -157,6 +157,11 @@ REFERENCES [entities].[entity] ([entity_id])
 
 ALTER TABLE [contacts].[contact] CHECK CONSTRAINT [fk_contact_entity]
 
+-- Seek the legacy company-name lookup without scanning unrelated uncommitted contacts.
+CREATE INDEX [ix_contact_company_name]
+    ON [contacts].[contact] ([full_name], [contact_id])
+    WHERE [contact_type_id] = 2;
+
 -- ALTER TABLE [contacts].[contact] WITH CHECK ADD CONSTRAINT [fk_contact_line_of_business] FOREIGN KEY([line_of_business_id])
 -- REFERENCES [contacts].[line_of_business] ([line_of_business_id]);
 

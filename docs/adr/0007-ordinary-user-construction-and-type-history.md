@@ -3,6 +3,10 @@
 Date: 2026-09-05.
 Status: implemented for fresh schemas; review before broader account-lifecycle adoption.
 
+Follow-up, 2026-09-07: [ADR 0008](0008-constructor-corrections.md) supersedes the pending company-race,
+promotion-input, person-eligibility and event/seed-evidence behavior below. Login uniqueness remains deferred
+by the author until provisioning. This ADR preserves the original construction checkpoint.
+
 Companions: [email corrections](0006-email-review-corrections-and-saved-order.md), [tenant/actor policy](0003-tenant-actor-and-catalog-policy.md), [audit-unit contract](0002-portable-audit-unit-and-history.md), [usage and verification](../email-reference-family.md).
 
 ## Problem and scope

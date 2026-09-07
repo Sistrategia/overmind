@@ -1,8 +1,19 @@
 # Audit foundation — session handoff
 
-Updated: 2026-09-05. Purpose: resume with current recommendations and distinguish them from implemented code.
+Updated: 2026-09-07. Purpose: resume with current recommendations and distinguish them from implemented code.
 
 ## Resume here
+
+**Iteration 0 complete, 2026-09-07:** the author authorized the bounded corrections in the
+[master plan](contact-api-master-plan.md); [ADR 0008](adr/0008-constructor-corrections.md) is the current
+constructor contract. Person-only construction/promotion, explicit rejection of ignored promotion inputs,
+collation-compatible company miss protection, a targeted actor seek, occurrence metadata and actual seed
+initial-role evidence are implemented. Login uniqueness is explicitly deferred by the author until provisioning.
+Final Release build/discovery and full gate passed 42/42 in both RCSI profiles, zero failures/skips or build
+warnings/errors, 5 min 14 sec. All 149 distinct test databases across this task's seven runs have verified
+removal records. See the [testing handoff](testing-handoff.md#iteration-0-constructor-corrections--2026-09-07).
+Changes are local over `4a30dc0`. Next is iteration 1 (phone identity/visibility, composed reader and family);
+it has not started. Older planning and review-boundary notes below retain their historical scope.
 
 **Plan revision 2, 2026-09-07:** [master plan](contact-api-master-plan.md) incorporates the independent feedback:
 early reader composition, concrete family fidelity regressions, service/HTTP split (5a/5b), explicit tenant

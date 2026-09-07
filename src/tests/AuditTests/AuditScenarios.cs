@@ -64,6 +64,18 @@ public abstract class AuditScenarios
     });
 
     [TestMethod]
+    public Task PersonAccountEligibilityPromotionInputsAndOccurrence() => Run(async db => {
+        await db.SeedAsync();
+        await ConstructorCorrectionCases.EligibilityAndPromotion(db);
+    });
+
+    [TestMethod]
+    public Task CompanyNameConcurrencyRespectsCollationAndDistinctValues() => Run(async db => {
+        await db.SeedAsync();
+        await ConstructorCorrectionCases.CompanyConcurrency(db);
+    });
+
+    [TestMethod]
     public Task NativeRootCatalogAndReaderConcurrency() => Run(async db => {
         await db.SeedAsync();
         await SqlScenarios.NativeConcurrency(db);

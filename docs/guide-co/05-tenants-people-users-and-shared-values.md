@@ -48,13 +48,13 @@ This distinction preserves a simple contact experience while leaving room for ex
 
 There is a small current API detail worth knowing: phone inputs in `user_insert` populate contact phone data on the new-contact path. They do not populate account phone; its construction history currently records NULL there. Do not read the presence of a history column as proof that the corresponding lifecycle has been implemented.
 
-## What the latest review asks us to finish
+## What the review changed, and what remains
 
-The ordinary-user review confirmed correct type history, one revision per unit and actual seed-user usability. It also identified unfinished boundaries. Promotion currently accepts contact-detail inputs and leaves those fields unchanged without rejecting the inputs. Login uniqueness has no enforced scope. Company contacts can currently hold accounts, pending an explicit policy decision.
+The ordinary-user review confirmed correct type history, one revision per unit and actual seed-user usability. Iteration 0 now rejects unsupported contact-detail inputs during promotion and enforces the author's person-only rule for new accounts and promotion. Lina's account inputs can be supplied while her contact details remain unchanged; the legacy required full-name argument must be NULL on promotion.
 
-The tenant-scoped company-name convenience lookup has a further race: concurrent misses can create duplicate company names, after which ambiguity rejection blocks later name-based creation. Scoped lookup fixed the cross-tenant reference problem; concurrent find-or-create still needs a correction. Choosing a lock for that correction must respect the lookup's actual equality rules.
+The company-name convenience lookup now protects concurrent misses using tenant-scoped locks compatible with the existing database name comparison. It rechecks the complete name, so a lock-bucket collision adds waiting without merging different companies. Existing ambiguous names are still rejected; a name has not become a universal company identity.
 
-These findings remain open at this guide's checkpoint. They do not require relearning the aggregate model, but they do matter before broadening access to the constructor. Chapter 8 keeps them visible alongside the implemented capabilities.
+Login uniqueness remains unenforced and explicitly deferred by the author until provisioning. General account/role lifecycle and contact-family expansion remain later work. [ADR 0008](../adr/0008-constructor-corrections.md) records the corrections and their limits; chapter 8 provides the updated status map.
 
 For the full reasoning: [tenant/actor/catalog policy](../adr/0003-tenant-actor-and-catalog-policy.md), [ordinary construction](../adr/0007-ordinary-user-construction-and-type-history.md) and its [independent review](../user-construction-independent-review.md).
 

@@ -1,9 +1,9 @@
 # Contact and user provisioning master plan
 
-Updated: 2026-09-07, revision 2 after independent feedback. Status: ready for iterative work; implementation iterations have not started.
-Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0007 describe the implemented foundation.
+Updated: 2026-09-07, iteration 0 complete. Later iterations have not started.
+Production source checkpoint reviewed: `bb2b2c2`; original plan committed in `52a0e1c`. This document tracks the next work; ADRs 0005–0008 describe the implemented foundation.
 
-The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author's current request authorizes this plan and recording the decisions below; it does not start a production implementation pass.
+The goal is to grow the email reference into a coherent contact API for persons and organizations, then build administrative user provisioning on that API. Deliver one bounded iteration at a time, with usable SQL/C# behavior, historical evidence and verification before moving on. The author authorized iteration 0 on 2026-09-07; later iterations remain planned.
 
 ## Decisions already made
 
@@ -11,7 +11,7 @@ The goal is to grow the email reference into a coherent contact API for persons 
 | --- | --- |
 | Audit foundation | Keep one owned audit unit, one actor/tenant and one aggregate bump per unit, unit-entry optimistic tokens, final touched-row history and ordered effective actions. Email is the implemented reference. |
 | Initial contact scope | Focus on persons and organizations. A group remains a valid conceptual party that can collect organizations or people and have its own contact information. Dedicated group/membership work is deferred; do not redefine a group as merely a UI list or remove existing group support. |
-| Ordinary accounts | Only human person contacts receive ordinary accounts, on both new construction and promotion. Organizations and groups can be parties, but do not become ordinary login identities or write actors. Reserved System bootstrap is the existing technical exception. Enforcement/tests are pending. |
+| Ordinary accounts | Only human person contacts receive ordinary accounts, on both new construction and promotion. Organizations and groups can be parties, but do not become ordinary login identities or write actors. Reserved System bootstrap is the existing technical exception. Iteration 0 implements enforcement and regression tests for new construction/promotion. |
 | Address ownership | Complete address values are shared and immutable. `contact_address` holds references and ordering, with required identity/audit metadata; it does not contain address text. Editing one association selects or creates another address value and leaves other contacts and earlier history unchanged. |
 | Address catalogs | An address may reference `country_id`, `state_id`, city and other geographic catalogs. Address lines may be NVARCHAR columns on the immutable address value. Interning the lines into additional catalogs is optional and undecided. |
 | Tenant experience | Optimize for existing single-tenant applications and multitenant applications without shared users. The application may resolve tenant context without asking the user to type it at login. Shared-user membership, default-tenant selection and tenant switching are future possibilities, not an implemented contract. |
@@ -33,7 +33,7 @@ Email's existing stable ordinal plus separate saved order is the proposed conven
 | User | Administrative construction/promotion and non-secret construction history exist. Outstanding review findings and login policy remain; no complete provisioning service or HTTP endpoint. |
 | Application | `SqlAuditUnit` currently exposes email commands. WebAPI contains development schema operations, not contact/provisioning endpoints. |
 
-The migration gate at `d660dd4` passed 32 tests. The subsequent review-probe integration, committed in `b395bb3`, raised the documented full gate to 38 tests, zero failures/skips, in both READ COMMITTED profiles (RCSI off/on). Later commits refactor four audit procedures. Planning has not rerun tests at HEAD; establish current evidence when implementation starts. See the [testing handoff](testing-handoff.md) for commands, database ownership/cleanup and the distinction between maintained tests and archived probes.
+The migration gate at `d660dd4` passed 32 tests. The subsequent review-probe integration, committed in `b395bb3`, raised the documented full gate to 38 tests, zero failures/skips, in both READ COMMITTED profiles (RCSI off/on). Later commits refactor four audit procedures. Iteration 0 established a fresh 38-test baseline and completed the expanded 42-test gate; its execution record below supersedes this starting position. See the [testing handoff](testing-handoff.md) for commands, database ownership/cleanup and the distinction between maintained tests and archived probes.
 
 ## Iterations and completion criteria
 
@@ -41,7 +41,7 @@ The order below is a proposal. Contact integration begins with the second family
 
 | Iteration | Deliverable | Completion criterion | Status |
 | --- | --- | --- | --- |
-| 0 | Bounded correction pass and current baseline | Constructor findings in scope have atomic rejection/concurrency regressions; existing full gate passes. | Planned |
+| 0 | Bounded correction pass and current baseline | Constructor findings in scope have atomic rejection/concurrency regressions; existing full gate passes. | Complete; [ADR 0008](adr/0008-constructor-corrections.md) |
 | 1 | Complete phone family and shared reader boundary | As-of/diff/actions and C# reads prove email/phone state at the same revision; mixed saves have one revision, global action order and whole rollback. | Planned |
 | 2 | Complete web-link family | SQL/C# lifecycle, ordering, visibility, history and mixed-family composition work. | Planned |
 | 3 | Immutable address family and catalog contract | Shared-value reuse is safe, one contact's edit leaves others unchanged, and old revisions reconstruct old addresses. | Planned |
@@ -56,8 +56,8 @@ Paginated listing/search is a separately tracked contact-discovery deliverable a
 
 | When | Decision to resolve | Current position |
 | --- | --- | --- |
-| Iteration 0 discussion | Login uniqueness scope and its tenant-resolution assumptions | Per-tenant uniqueness is a recommendation, not a settled consequence of single-tenant UX. Record the author's choice or an explicit deferral; this discussion does not block phone. Implement matching schema/constraints together with provisioning, unless the chosen correction scope requires them earlier. |
-| Before the iteration 0 company fix | Company-name equality and serialization | Lookup, recheck and lock must agree for case, accents and trailing spaces. Compare a compatible application-lock scheme with indexed range locking; neither contention cost nor exact-name semantics is pre-approved. |
+| Iteration 0 discussion | Login uniqueness scope and its tenant-resolution assumptions | **Author explicitly deferred until provisioning, 2026-09-07.** No login constraint or account tenant column is added in iteration 0. Decide and enforce the policy before provisioning exposure. |
+| Before the iteration 0 company fix | Company-name equality and serialization | **Selected in iteration 0:** retain database-collation equality and use tenant-scoped CHECKSUM synchronization buckets with full-predicate recheck. Collisions only add waiting. See ADR 0008 for seeks, collation-drift rejection, tests and tradeoffs. |
 | Before iteration 1 reader implementation | Shared consistent read boundary | Use a coordinator with internal composable reader components and standalone public wrappers, reusing existing as-of functions. Validate transaction, locking and permission contracts as described below. |
 | Before iteration 1 phone DDL | Complete phone value identity and derived matching | Explicitly define number/country/area-code fields and whether geographic FKs belong at all. Derive matching data from accepted inputs; do not inherit address geography. |
 | Before iteration 1 public contracts | Meaning of `is_public` | Define whether and where it permits directory/public display, interaction with root privacy, and authorized internal access. Preserve the restrictive default; a child flag alone is not authorization to disclose a private contact. HTTP enforcement is completed in 5b. |
@@ -178,6 +178,25 @@ For each iteration append a short execution record: date, scope, decisions, sour
 Follow the author's [create_audit_unit_begin.sql](../src/Framework/Sistrategia.Data.SqlClient/Scripts/Data/create_audit_unit_begin.sql) style for new and substantively edited SQL scripts: the repository copyright/license and script header, concise contract comments, uppercase keywords, bracketed application schema/object names, four-space indentation, separated logical steps, explicit BEGIN/END blocks for conditional branches, readable declarations and multiline named EXEC arguments. Keep intentional statement terminators and readable THROW formatting. Use accurate dates/version/contributor metadata rather than copying the reference's historical values into new scripts.
 
 Style does not change transaction ownership, execution permissions or isolation contracts: `WITH EXECUTE AS OWNER`, for example, is selected for the procedure's security needs and is not a formatting default. Avoid unrelated mass reformatting; apply this convention within each iteration's touched SQL scope.
+
+## Iteration 0 execution record — 2026-09-07
+
+Implemented locally over `4a30dc0`, following the author's authorization. Ordinary accounts now require
+person contacts on construction/promotion; unsupported promotion details are rejected before defaults,
+with whole-unit rollback coverage. Company convenience lookup uses tenant/collation-compatible miss
+protection and a full-name recheck. A measured READ COMMITTED actor scan was corrected with a targeted
+seek so unrelated company creation can proceed. Creation occurrence reaches `entities.event.created`;
+server recording stays in the audit ledger. The actual seed uses constructor initial-role evidence.
+
+The author explicitly deferred login uniqueness until provisioning. No login constraint was added.
+SQL formatting follows the requested audit-unit style on substantively touched scripts.
+
+Baseline 38/38 and final 42/42 passed, including both RCSI profiles; final duration 5 min 14 sec,
+zero failures/skips or build warnings/errors. All 149 distinct disposable databases across the seven
+runs have verified removal evidence. See [ADR 0008](adr/0008-constructor-corrections.md) and the
+[testing execution record](testing-handoff.md#iteration-0-constructor-corrections--2026-09-07).
+Next is iteration 1: settle phone identity/visibility and reader composition, then implement the phone
+family with email integration. That iteration has not started.
 
 ## Planning revision record
 

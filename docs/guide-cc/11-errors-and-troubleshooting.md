@@ -54,6 +54,9 @@ All custom errors are `THROW` with numbers in the 51000 range, grouped by layer.
 | 51311 | order is not a dense unique list | Invariant check failed after a change. Should not happen through the writers; report it. |
 | 51312 | could not lock the email value | Dictionary applock timed out under your `LOCK_TIMEOUT`. Roll back and retry. |
 | 51313 | company name is ambiguous within this tenant | Two companies share the name. Select the company explicitly (an id-based API is planned). |
+| 51314 | company lookup requires a name and this tenant's allocated unit | Private-helper precondition; the constructor must supply its actual unit context. |
+| 51315 | could not lock the company name | Roll back the unit; a configured lock timeout or lock-acquisition failure prevented safe creation. |
+| 51316 | company full_name must use database collation | Unsupported collation drift would make lookup and locking disagree. Review schema/collation changes. |
 
 ## 514xx: reader (`contacts.contact_email_read`)
 
@@ -80,6 +83,8 @@ All custom errors are `THROW` with numbers in the 51000 range, grouped by layer.
 | 51602 | initial role name must identify exactly one eligible definition | Unknown, other-tenant or ambiguous global/local role name. |
 | 51603 | new user construction accepts only version 0 or omitted | You passed an expected version for a root that does not exist. |
 | 51604 | user creation history requires this unit's user root, subtype and spine | Internal precondition; report it. |
+| 51605 | ordinary user accounts require a human person contact | Organization/group accounts are rejected on creation and promotion. |
+| 51606 | promotion does not modify contact details | Pass account inputs and `@full_name=NULL`; compose supported contact changes explicitly. |
 
 ## Engine errors you will meet
 

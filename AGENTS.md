@@ -7,6 +7,25 @@ System User = id 1, public key `71F092F4-3A35-463D-9589-E5EE1373F7D5`. Default t
 
 ## Active design thread (RESUME HERE)
 
+**Iteration 0 complete — 2026-09-07:** authorized implementation over `4a30dc0`, saved locally.
+Read [docs/adr/0008-constructor-corrections.md](docs/adr/0008-constructor-corrections.md) and the updated
+[master plan](docs/contact-api-master-plan.md). Ordinary accounts require person contacts on new construction
+and promotion (51605); ignored promotion detail inputs now reject before defaults (51606), with whole-unit
+rollback coverage. Private company lookup protects misses with a tenant/database-collation-compatible CHECKSUM
+applock bucket and rechecks full-name equality; collisions serialize only, never define identity. A filtered
+company-name index and required actor public-key seek prevent unrelated lookup scans. Existing 51604 is
+reserved by user_history_create. Creation occurrence passes through event_create.@when_ocurred into the actual
+entities.event.created column; there is no event.when_ocurred column. Ledger recorded_at remains server time.
+The actual seed now uses user_insert's initial Developer role evidence. The author explicitly deferred login
+uniqueness until provisioning; no login constraint or account tenant column added. SQL follows the requested
+audit-unit style for new/substantively changed scripts. Final build/discovery/full gate: 42/42, both RCSI
+profiles, zero failures/skips or build warnings/errors, 5 min 14 sec. All 149 distinct disposable databases
+across seven runs have verified removal evidence in artifacts/test-results/iteration-0/ (ignored); final-2 is
+the authoritative final run. Tests cover 35 promotion inputs, organization/group rejection, company equality,
+collision/distinct-name concurrency and actual seed evidence. Historical reviews/probes are unchanged.
+Next is iteration 1 phone, beginning with identity/visibility and reader composition decisions; it has not
+started. Older statements below that constructor corrections are pending describe their dated checkpoints.
+
 **Master-plan feedback incorporated — 2026-09-07:** revision 2 of
 [docs/contact-api-master-plan.md](docs/contact-api-master-plan.md) is ready for iterative work; all implementation
 iterations remain planned. It adds reader composition during phone, concrete phone/address/name fidelity tests,

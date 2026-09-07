@@ -12,6 +12,7 @@ Implemented in the working tree, tested by the disposable-database suite in both
 | Roots | `entities.actor_resolve`, `entity_write_lock`, `entity_version_bump`, `entity_history_snapshot`, `entity_insert`, `event_create`; `entity_history.entity_type_id` |
 | Email family | dictionaries with exact keys; `contact_email`, `_identity`, `_history`, `_action`; `email_values_ensure`, `contact_email_history_sync`, `contact_email_write`, `contact_email_change`, `contact_email_insert`, `email_update`, `email_delete`, `email_restore`, `email_move`, `contact_emails_as_of`, `contact_email_read`, `contact_email_history_view`; views select the principal by saved order |
 | Users | `security.user_insert` (create and promote), `user_history` and `user_history_create`, `system_user_bootstrap` |
+| Constructor corrections | Person-only ordinary accounts; unsupported promotion-input rejection; private `contact_company_lookup` with collation-compatible miss protection; actor public-key seeks; occurrence time and actual seed initial-role evidence ([ADR 0008](../adr/0008-constructor-corrections.md)) |
 | Roles and grants | `email_runtime` role with EXECUTE on the public email API and enrollment, DENY on everything else |
 | C# | `SqlAuditUnit`, `AuditUnitCommitUncertainException`, `SqlContactEmailReader`, `SqlDatabase.RunLocalStoredAuditCommands` |
 | Application | real `CreateSchema → DropSchema → CreateSchema` with the installation seed created administratively by System |
@@ -61,8 +62,9 @@ The full command runs both real RCSI profiles through MSTest/VSTest, with indepe
 Use the [contact/API master plan](../contact-api-master-plan.md), added 2026-09-07, for the proposed
 iterations: bounded corrections, phone, web links, immutable addresses, person/organization profile and
 lifecycle, integrated contact service (5a), HTTP boundary (5b), then administrative provisioning. Reader
-composition starts with phone; listing/search is separately tracked. Person-only account eligibility and
-shared immutable address ownership are decided; enforcement and new family work remain pending.
-The plan records remaining decisions and completion gates without claiming implementation.
+composition starts with phone; listing/search is separately tracked. Iteration 0 implements person-only
+eligibility and the bounded constructor corrections; shared immutable address ownership is decided and
+new family work remains pending. Login uniqueness is explicitly deferred until provisioning.
+The master plan and testing handoff record current completion and verification evidence.
 
 [Glossary](glossary.md) · [Index](README.md)

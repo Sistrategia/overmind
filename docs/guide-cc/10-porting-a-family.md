@@ -65,6 +65,6 @@ Copy `src/tests/sql/email_family_tests.sql` and `email_order_tests.sql` for the 
 
 ## 7. Before you start phone
 
-Decisions the second review flagged are cheaper before the copy: whether the company-name miss path takes an exact-value lock; whether promotion rejects contact details; login uniqueness scope; and whether company contacts may hold accounts. None blocks phone, but each is copied by every constructor written after it.
+Iteration 0 handles the company-name race with collation-compatible miss protection, rejects unsupported promotion inputs and enforces person-only accounts; see [ADR 0008](../adr/0008-constructor-corrections.md). Login uniqueness is explicitly deferred until provisioning. Before phone, follow iteration 1's [master-plan checkpoints](../contact-api-master-plan.md#decision-checkpoints): value identity/derived matching, visibility semantics and coordinated readers. This chapter supplies the family mechanism; it does not replace those field-level decisions.
 
 Next: [11. Errors and troubleshooting](11-errors-and-troubleshooting.md)

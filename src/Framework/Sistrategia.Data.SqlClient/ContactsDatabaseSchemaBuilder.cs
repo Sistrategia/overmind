@@ -82,6 +82,7 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_update.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.WebLinks.create_web_link_delete.sql");
 
+        RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.create_contact_company_lookup.sql");
         RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.create_contact_insert.sql");
         // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.create_contact_update_summary.sql");
         // // RunLocalStoredCommands("Sistrategia.Data.SqlClient.Scripts.Contacts.create_contact_import.sql");
@@ -147,6 +148,7 @@ internal class ContactsDatabaseSchemaBuilder : SqlDatabaseSchemaBuilder
         DropProcedureIfExists("contacts", "ensure_address_location_upsert");
 
         DropProcedureIfExists("contacts", "contact_insert");
+        DropProcedureIfExists("contacts", "contact_company_lookup");
 
 
     }

@@ -78,6 +78,7 @@ Creo firmemente que la formación continua y la vinculación entre egresados, em
 
 	,@dbrow_version     = NULL 	
     ,@auto_create_person_company = 0
+    ,@user_primary_role = N'Developer';
             
 
 -- EXECUTE @RC = [entities].[identifier_insert] 
@@ -116,10 +117,7 @@ Creo firmemente que la formación continua y la vinculación entre egresados, em
 --     ,@value = '4521708'
 --     ,@from_date = '2024-01-14 22:40:10.5830000'
 
-INSERT INTO [security].[user_role] ([user_id],[role_id]) VALUES (
-            (SELECT [entity_id] FROM [entities].[entity] WHERE [public_key] = @public_key),
-            (SELECT [role_id] FROM [security].[role] WHERE [role_name] = 'Developer' AND [tenant_id] IS NULL))
-            -- (SELECT [role_id] FROM [security].[role] WHERE [role_name] = 'Customer' AND [tenant_id] IS NULL))
+-- The initial Developer assignment is validated and recorded by user_insert above.
 
 
 

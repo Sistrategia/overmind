@@ -46,9 +46,8 @@ One naming trap from the sibling projects: CFUS uses `entity_history` for its th
 
 For the next work, use the [contact/API master plan](../contact-api-master-plan.md), added 2026-09-07.
 Its feedback revision records shared immutable addresses, early reader composition, separate service/HTTP
-gates and a persons/organizations-first roadmap; those iterations are planned, not implemented.
-Person-only account eligibility is now decided, with enforcement pending;
-the older open-policy wording below describes this guide's original checkpoint.
+gates and a persons/organizations-first roadmap. Iteration 0's constructor corrections are described in
+[ADR 0008](../adr/0008-constructor-corrections.md); the child-family/API iterations remain planned.
 
 At this guide's checkpoint, the email lifecycle is the complete reference family for the declared fresh-schema boundary: insert, update, delete, restore, saved moves, history, actions, reader/diff, unit ownership and restricted database access. Ordinary administrative user creation and contact promotion now preserve type history and make constructed users eligible actors.
 
@@ -58,15 +57,11 @@ Testing infrastructure was subsequently migrated on 2026-09-06 to discoverable .
 
 This is fresh creation DDL. It is not an upgrade/backfill package for a customer's populated database. A running application must also load its rebuilt embedded SQL resources before using changed creation scripts.
 
-The latest [user-construction review](../user-construction-independent-review.md) is useful precisely because a passing reference suite does not exhaust every reachable behavior. Its current open items include:
+The preserved [user-construction review](../user-construction-independent-review.md) challenged behavior beyond the original passing suite. Iteration 0 now enforces person-only accounts, rejects unsupported promotion details, protects company-name misses and records the seed's initial-role choice. Company matching retains database-collation equality; synchronization buckets can collide without making different names equal. A targeted actor-key seek prevents unrelated provisional users from blocking actor resolution.
 
-- Concurrent company-name misses can create duplicates that later name-based creation rejects.
-- Promotion preserves existing contact details but currently accepts and silently drops supplied contact-detail changes.
-- Login uniqueness scope and whether organizational contacts may hold accounts need explicit decisions.
-- The root snapshot helper currently labels construction/promotion INSERT or UPDATE; it is not a general delete/restore writer.
-- Historical occurrence versus event recording time needs consistency work; account phone inputs and seed role-assignment evidence need the documented follow-ups.
+Creation occurrence time now passes through `event_create.@when_ocurred` into the actual `event.created` column. Server recording time remains on the audit ledger's `recorded_at`; there is no separate event occurrence column. See the testing handoff for corrected evidence and current verification.
 
-For the seed role issue specifically, the sample still assigns Developer by direct DML, bypassing the constructor's optional initial-role event evidence. General role history is also unimplemented. Do not infer complete role reconstruction from account construction history.
+Still pending: login uniqueness (explicitly deferred by the author until provisioning), account phone, general role history, and explicit root delete/restore semantics. The root snapshot helper still describes construction/promotion only. Initial-role evidence does not imply full role reconstruction.
 
 Shared actor delegation, public self-registration, broader account/role/relationship lifecycle, the remaining contact families, historical migration, synchronization and other provider implementations are later work. Existing legacy constructors outside the restricted email capability also retain separate hardening work. The reviewed email contract is not automatically inherited by every old procedure in the repository.
 
