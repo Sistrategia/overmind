@@ -1,0 +1,57 @@
+{
+  "at": "2026-09-08T02:39:31.768Z",
+  "results": [
+    {
+      "variant": "dispatch",
+      "status": "passed",
+      "checks": [
+        "organization navigation",
+        "invalid email validation",
+        "email edit / visibility",
+        "add email / phone / retained ordinals",
+        "phone primary",
+        "proposal restores pre-existing draft",
+        "freeform supported / unsupported assistant requests",
+        "keyboard save",
+        "technical disclosure / close",
+        "phone error / explicit area input",
+        "dark form / assistant / narrow overflow"
+      ]
+    },
+    {
+      "variant": "ledger",
+      "status": "passed",
+      "checks": [
+        "organization navigation",
+        "invalid email validation",
+        "email edit / visibility",
+        "add email / phone / retained ordinals",
+        "phone primary",
+        "proposal restores pre-existing draft",
+        "freeform supported / unsupported assistant requests",
+        "keyboard save",
+        "technical disclosure / close",
+        "phone error / explicit area input",
+        "dark form / assistant / narrow overflow"
+      ]
+    },
+    {
+      "variant": "relay",
+      "status": "passed",
+      "checks": [
+        "organization navigation",
+        "invalid email validation",
+        "email edit / visibility",
+        "add email / phone / retained ordinals",
+        "phone primary",
+        "proposal restores pre-existing draft",
+        "freeform supported / unsupported assistant requests",
+        "keyboard save",
+        "technical disclosure / close",
+        "phone error / explicit area input",
+        "dark form / assistant / narrow overflow"
+      ]
+    }
+  ],
+  "errors": []
+}

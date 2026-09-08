@@ -1,0 +1,72 @@
+{
+  "at": "2026-09-08T02:37:39.814Z",
+  "results": [
+    {
+      "variant": "dispatch",
+      "status": "passed",
+      "journeys": [
+        "edit / cancel / combined save",
+        "primary order",
+        "phone context",
+        "historical state / diff / ordered actions",
+        "filters / navigation",
+        "light / dark persistence",
+        "assistant references / filters / staging / adjust / discard",
+        "two-tab conflict / explicit reconciliation",
+        "persona restrictions",
+        "loading / empty / denied / unavailable / uncertain",
+        "single-reviewer conflict / reset",
+        "keyboard focus / narrow layout"
+      ]
+    },
+    {
+      "variant": "ledger",
+      "status": "passed",
+      "journeys": [
+        "edit / cancel / combined save",
+        "primary order",
+        "phone context",
+        "historical state / diff / ordered actions",
+        "filters / navigation",
+        "light / dark persistence",
+        "assistant references / filters / staging / adjust / discard",
+        "two-tab conflict / explicit reconciliation",
+        "persona restrictions",
+        "loading / empty / denied / unavailable / uncertain",
+        "single-reviewer conflict / reset",
+        "keyboard focus / narrow layout"
+      ]
+    },
+    {
+      "variant": "relay",
+      "status": "passed",
+      "journeys": [
+        "edit / cancel / combined save",
+        "primary order",
+        "phone context",
+        "historical state / diff / ordered actions",
+        "filters / navigation",
+        "light / dark persistence",
+        "assistant references / filters / staging / adjust / discard",
+        "two-tab conflict / explicit reconciliation",
+        "persona restrictions",
+        "loading / empty / denied / unavailable / uncertain",
+        "single-reviewer conflict / reset",
+        "keyboard focus / narrow layout"
+      ]
+    }
+  ],
+  "errors": [],
+  "expectedNetworkDiagnostics": [
+    "dispatch: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "dispatch: Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "dispatch: Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "dispatch: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "ledger: Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "ledger: Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "ledger: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "relay: Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "relay: Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "relay: Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ]
+}

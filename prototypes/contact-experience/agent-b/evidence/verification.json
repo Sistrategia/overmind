@@ -1,0 +1,724 @@
+{
+  "executedAt": "2026-09-08T04:40:18.597Z",
+  "checkout": "24e4bd14175c3514b2f87895454817aaba868549",
+  "modelTests": {
+    "command": "npm test",
+    "passed": 12,
+    "failed": 0
+  },
+  "browser": {
+    "surface": "Codex in-app Chromium via CUA accessibility and Playwright locators",
+    "passedDistinctAssertions": 146,
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 1000
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "notes": [
+      "Live two-tab optimistic conflicts executed separately in Relay, Atelier and Trace.",
+      "Some pointer automation calls timed out; fresh accessibility inspection and direct accessible activation verified the controls.",
+      "Early screenshot attempts were replaced with verified viewport captures in JPEG format.",
+      "No production backend, SQL tests, remote deployment, real authentication, screen-reader certification or external model was exercised."
+    ]
+  },
+  "assertions": [
+    {
+      "check": "Relay: grounded weekly summary resets to seven Saves",
+      "passed": true
+    },
+    {
+      "check": "Relay: audit unit links to an actual field comparison",
+      "passed": true
+    },
+    {
+      "check": "Relay: revision 4 to 5 has no final differences",
+      "passed": true
+    },
+    {
+      "check": "Relay: inline email validation blocks the Save",
+      "passed": true
+    },
+    {
+      "check": "Relay: cancel restores committed email",
+      "passed": true
+    },
+    {
+      "check": "Relay: primary move creates one revision",
+      "passed": true
+    },
+    {
+      "check": "Relay: combined name, phone and address edit creates exactly one revision",
+      "passed": true
+    },
+    {
+      "check": "Relay: assistant stages visible proposal",
+      "passed": true
+    },
+    {
+      "check": "Relay: intentional assistant Apply saves extension and email order together",
+      "passed": true
+    },
+    {
+      "check": "Relay: summary reflects current edited fixture",
+      "passed": true
+    },
+    {
+      "check": "Relay: assistant opens Bruno phone evidence filters",
+      "passed": true
+    },
+    {
+      "check": "Relay: text search empty state",
+      "passed": true
+    },
+    {
+      "check": "Relay: four activity filters compose",
+      "passed": true
+    },
+    {
+      "check": "Relay: audit unit opens revision comparison",
+      "passed": true
+    },
+    {
+      "check": "Relay: final diff correctly empty for round trip",
+      "passed": true
+    },
+    {
+      "check": "Relay: both intermediate actions retained",
+      "passed": true
+    },
+    {
+      "check": "Relay: snapshot uses historical archive label",
+      "passed": true
+    },
+    {
+      "check": "Relay: organization retains shared original address",
+      "passed": true
+    },
+    {
+      "check": "Atelier: email validation blocks Save",
+      "passed": true
+    },
+    {
+      "check": "Atelier: primary move saves one revision",
+      "passed": true
+    },
+    {
+      "check": "Atelier: combined profile, phone and address Save",
+      "passed": true
+    },
+    {
+      "check": "Atelier: assistant stages a visible editing sheet",
+      "passed": true
+    },
+    {
+      "check": "Atelier: intentional proposal application creates one revision",
+      "passed": true
+    },
+    {
+      "check": "Atelier: summary reflects all new Saves",
+      "passed": true
+    },
+    {
+      "check": "Atelier: assistant sets evidence filters",
+      "passed": true
+    },
+    {
+      "check": "Atelier: empty search state",
+      "passed": true
+    },
+    {
+      "check": "Atelier: activity filters compose",
+      "passed": true
+    },
+    {
+      "check": "Atelier: unit opens revision comparison",
+      "passed": true
+    },
+    {
+      "check": "Atelier: round trip final diff empty",
+      "passed": true
+    },
+    {
+      "check": "Atelier: two round-trip actions retained",
+      "passed": true
+    },
+    {
+      "check": "Atelier: historical archive label retained",
+      "passed": true
+    },
+    {
+      "check": "Atelier: organization still uses original address",
+      "passed": true
+    },
+    {
+      "check": "Trace: inline email validation blocks the Save",
+      "passed": true
+    },
+    {
+      "check": "Trace: cancel restores committed email",
+      "passed": true
+    },
+    {
+      "check": "Trace: primary move creates one revision",
+      "passed": true
+    },
+    {
+      "check": "Trace: combined name, phone and address edit creates exactly one revision",
+      "passed": true
+    },
+    {
+      "check": "Trace: assistant stages visible proposal",
+      "passed": true
+    },
+    {
+      "check": "Trace: intentional assistant Apply saves extension and email order together",
+      "passed": true
+    },
+    {
+      "check": "Trace: summary reflects current edited fixture",
+      "passed": true
+    },
+    {
+      "check": "Trace: assistant opens Bruno phone evidence filters",
+      "passed": true
+    },
+    {
+      "check": "Trace: text search empty state",
+      "passed": true
+    },
+    {
+      "check": "Trace: four activity filters compose",
+      "passed": true
+    },
+    {
+      "check": "Trace: audit unit opens revision comparison",
+      "passed": true
+    },
+    {
+      "check": "Trace: final diff correctly empty for round trip",
+      "passed": true
+    },
+    {
+      "check": "Trace: both intermediate actions retained",
+      "passed": true
+    },
+    {
+      "check": "Trace: snapshot uses historical archive label",
+      "passed": true
+    },
+    {
+      "check": "Trace: organization retains shared original address",
+      "passed": true
+    },
+    {
+      "check": "Relay: Mariana draft begins at revision 3",
+      "passed": true
+    },
+    {
+      "check": "Relay: Bruno saves revision 4 in a separate tab",
+      "passed": true
+    },
+    {
+      "check": "Relay: remote update preserves Mariana base and draft",
+      "passed": true
+    },
+    {
+      "check": "Relay: stale Save shows actual three-way conflict",
+      "passed": true
+    },
+    {
+      "check": "Relay: explicit reconciliation advances draft base",
+      "passed": true
+    },
+    {
+      "check": "Relay: reconciled Save preserves Bruno label and Mariana extension",
+      "passed": true
+    },
+    {
+      "check": "Atelier: Mariana draft begins at revision 3",
+      "passed": true
+    },
+    {
+      "check": "Atelier: Bruno saves revision 4 in a separate tab",
+      "passed": true
+    },
+    {
+      "check": "Atelier: remote update preserves Mariana base and draft",
+      "passed": true
+    },
+    {
+      "check": "Atelier: stale Save shows actual three-way conflict",
+      "passed": true
+    },
+    {
+      "check": "Atelier: explicit reconciliation advances draft base",
+      "passed": true
+    },
+    {
+      "check": "Atelier: reconciled Save preserves Bruno label and Mariana extension",
+      "passed": true
+    },
+    {
+      "check": "Trace: Mariana draft begins at revision 3",
+      "passed": true
+    },
+    {
+      "check": "Trace: Bruno saves revision 4 in a separate tab",
+      "passed": true
+    },
+    {
+      "check": "Trace: remote update preserves Mariana base and draft",
+      "passed": true
+    },
+    {
+      "check": "Trace: stale Save shows actual three-way conflict",
+      "passed": true
+    },
+    {
+      "check": "Trace: explicit reconciliation advances draft base",
+      "passed": true
+    },
+    {
+      "check": "Trace: reconciled Save preserves Bruno label and Mariana extension",
+      "passed": true
+    },
+    {
+      "check": "Relay: proposal discard saves nothing",
+      "passed": true
+    },
+    {
+      "check": "Relay: unsupported assistant question gets bounded response",
+      "passed": true
+    },
+    {
+      "check": "Relay: auditor has no edit control",
+      "passed": true
+    },
+    {
+      "check": "Relay: assistant respects auditor write restriction",
+      "passed": true
+    },
+    {
+      "check": "Relay: directory projection hides private channels",
+      "passed": true
+    },
+    {
+      "check": "Relay: assistant refuses restricted historical evidence",
+      "passed": true
+    },
+    {
+      "check": "Relay: activity permission denial",
+      "passed": true
+    },
+    {
+      "check": "Relay: administrator gets tenant activity",
+      "passed": true
+    },
+    {
+      "check": "Relay: loading state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Relay: empty state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Relay: denied state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Relay: unavailable state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Relay: uncertain acknowledgement never claims rollback",
+      "passed": true
+    },
+    {
+      "check": "Relay: uncertain outcome investigation retains intended draft",
+      "passed": true
+    },
+    {
+      "check": "Relay: one-person conflict simulation",
+      "passed": true
+    },
+    {
+      "check": "Relay: discard conflict retains latest Bruno state",
+      "passed": true
+    },
+    {
+      "check": "Relay: explicit dark preference survives reload",
+      "passed": true
+    },
+    {
+      "check": "Atelier: proposal discard saves nothing",
+      "passed": true
+    },
+    {
+      "check": "Atelier: unsupported assistant question gets bounded response",
+      "passed": true
+    },
+    {
+      "check": "Atelier: auditor has no edit control",
+      "passed": true
+    },
+    {
+      "check": "Atelier: assistant respects auditor write restriction",
+      "passed": true
+    },
+    {
+      "check": "Atelier: directory projection hides private channels",
+      "passed": true
+    },
+    {
+      "check": "Atelier: assistant refuses restricted historical evidence",
+      "passed": true
+    },
+    {
+      "check": "Atelier: activity permission denial",
+      "passed": true
+    },
+    {
+      "check": "Atelier: administrator gets tenant activity",
+      "passed": true
+    },
+    {
+      "check": "Atelier: loading state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Atelier: empty state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Atelier: denied state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Atelier: unavailable state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Atelier: uncertain acknowledgement never claims rollback",
+      "passed": true
+    },
+    {
+      "check": "Atelier: uncertain outcome investigation retains intended draft",
+      "passed": true
+    },
+    {
+      "check": "Atelier: one-person conflict simulation",
+      "passed": true
+    },
+    {
+      "check": "Atelier: discard conflict retains latest Bruno state",
+      "passed": true
+    },
+    {
+      "check": "Atelier: explicit dark preference survives reload",
+      "passed": true
+    },
+    {
+      "check": "Trace: proposal discard saves nothing",
+      "passed": true
+    },
+    {
+      "check": "Trace: unsupported assistant question gets bounded response",
+      "passed": true
+    },
+    {
+      "check": "Trace: auditor has no edit control",
+      "passed": true
+    },
+    {
+      "check": "Trace: assistant respects auditor write restriction",
+      "passed": true
+    },
+    {
+      "check": "Trace: directory projection hides private channels",
+      "passed": true
+    },
+    {
+      "check": "Trace: assistant refuses restricted historical evidence",
+      "passed": true
+    },
+    {
+      "check": "Trace: activity permission denial",
+      "passed": true
+    },
+    {
+      "check": "Trace: administrator gets tenant activity",
+      "passed": true
+    },
+    {
+      "check": "Trace: loading state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Trace: empty state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Trace: denied state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Trace: unavailable state reviewable",
+      "passed": true
+    },
+    {
+      "check": "Trace: uncertain acknowledgement never claims rollback",
+      "passed": true
+    },
+    {
+      "check": "Trace: uncertain outcome investigation retains intended draft",
+      "passed": true
+    },
+    {
+      "check": "Trace: one-person conflict simulation",
+      "passed": true
+    },
+    {
+      "check": "Trace: discard conflict retains latest Bruno state",
+      "passed": true
+    },
+    {
+      "check": "Trace: explicit dark preference survives reload",
+      "passed": true
+    },
+    {
+      "check": "Atelier: direct revision hash updates existing tab",
+      "passed": true
+    },
+    {
+      "check": "Trace: direct revision hash updates existing tab",
+      "passed": true
+    },
+    {
+      "check": "Relay: narrow contact has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "check": "Relay: narrow layout starts with sidekick dismissed",
+      "passed": true
+    },
+    {
+      "check": "Relay: keyboard Tab reaches labeled phone field",
+      "passed": true
+    },
+    {
+      "check": "Relay: keyboard focus has visible outline",
+      "passed": true
+    },
+    {
+      "check": "Relay: local phone interpretation visible at narrow width",
+      "passed": true
+    },
+    {
+      "check": "Relay: narrow assistant fits the viewport",
+      "passed": true
+    },
+    {
+      "check": "Relay: new email and label save",
+      "passed": true
+    },
+    {
+      "check": "Relay: new phone and extension save",
+      "passed": true
+    },
+    {
+      "check": "Relay: phone primary move saves once",
+      "passed": true
+    },
+    {
+      "check": "Relay: narrow revision comparison fits",
+      "passed": true
+    },
+    {
+      "check": "Atelier: narrow contact has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "check": "Atelier: keyboard Tab reaches labeled phone field",
+      "passed": true
+    },
+    {
+      "check": "Atelier: keyboard focus has visible outline",
+      "passed": true
+    },
+    {
+      "check": "Atelier: local phone interpretation visible at narrow width",
+      "passed": true
+    },
+    {
+      "check": "Atelier: narrow assistant fits the viewport",
+      "passed": true
+    },
+    {
+      "check": "Atelier: new email and label save",
+      "passed": true
+    },
+    {
+      "check": "Atelier: new phone and extension save",
+      "passed": true
+    },
+    {
+      "check": "Atelier: phone primary move saves once",
+      "passed": true
+    },
+    {
+      "check": "Atelier: narrow revision comparison fits",
+      "passed": true
+    },
+    {
+      "check": "Trace: narrow contact has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "check": "Trace: keyboard Tab reaches labeled phone field",
+      "passed": true
+    },
+    {
+      "check": "Trace: keyboard focus has visible outline",
+      "passed": true
+    },
+    {
+      "check": "Trace: local phone interpretation visible at narrow width",
+      "passed": true
+    },
+    {
+      "check": "Trace: narrow assistant fits the viewport",
+      "passed": true
+    },
+    {
+      "check": "Trace: new email and label save",
+      "passed": true
+    },
+    {
+      "check": "Trace: new phone and extension save",
+      "passed": true
+    },
+    {
+      "check": "Trace: phone primary move saves once",
+      "passed": true
+    },
+    {
+      "check": "Trace: narrow revision comparison fits",
+      "passed": true
+    }
+  ],
+  "captures": [
+    {
+      "file": "relay-contact-narrow.jpg",
+      "height": 844,
+      "scrollWidth": 375,
+      "width": 390,
+      "format": "JPEG"
+    },
+    {
+      "file": "relay-history-narrow.jpg",
+      "height": 844,
+      "scrollWidth": 375,
+      "width": 390,
+      "format": "JPEG"
+    },
+    {
+      "file": "atelier-contact-narrow.jpg",
+      "height": 844,
+      "scrollWidth": 375,
+      "width": 390,
+      "format": "JPEG"
+    },
+    {
+      "file": "atelier-history-narrow.jpg",
+      "height": 844,
+      "scrollWidth": 375,
+      "width": 390,
+      "format": "JPEG"
+    },
+    {
+      "file": "trace-contact-narrow.jpg",
+      "height": 844,
+      "scrollWidth": 375,
+      "width": 390,
+      "format": "JPEG"
+    },
+    {
+      "file": "trace-history-narrow.jpg",
+      "height": 844,
+      "scrollWidth": 375,
+      "width": 390,
+      "format": "JPEG"
+    },
+    {
+      "file": "relay-contact-light.jpg",
+      "height": 1000,
+      "scrollWidth": 1425,
+      "width": 1440,
+      "format": "JPEG"
+    },
+    {
+      "file": "relay-activity-light.jpg",
+      "height": 1000,
+      "scrollWidth": 1425,
+      "width": 1440,
+      "format": "JPEG"
+    },
+    {
+      "file": "relay-history-dark.jpg",
+      "height": 1000,
+      "scrollWidth": 1440,
+      "width": 1440,
+      "format": "JPEG"
+    },
+    {
+      "file": "atelier-contact-light.jpg",
+      "height": 1000,
+      "scrollWidth": 1425,
+      "width": 1440,
+      "format": "JPEG"
+    },
+    {
+      "file": "atelier-activity-light.jpg",
+      "height": 1000,
+      "scrollWidth": 1425,
+      "width": 1440,
+      "format": "JPEG"
+    },
+    {
+      "file": "atelier-history-dark.jpg",
+      "height": 1000,
+      "scrollWidth": 1425,
+      "width": 1440,
+      "format": "JPEG"
+    },
+    {
+      "file": "trace-contact-light.jpg",
+      "height": 1000,
+      "scrollWidth": 1425,
+      "width": 1440,
+      "format": "JPEG"
+    },
+    {
+      "file": "trace-activity-light.jpg",
+      "height": 1000,
+      "scrollWidth": 1425,
+      "width": 1440,
+      "format": "JPEG"
+    },
+    {
+      "file": "trace-history-dark.jpg",
+      "height": 1000,
+      "scrollWidth": 1425,
+      "width": 1440,
+      "format": "JPEG"
+    }
+  ]
+}

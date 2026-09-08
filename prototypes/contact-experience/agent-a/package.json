@@ -1,0 +1,13 @@
+{
+  "name": "overmind-contact-experience-agent-a",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "node --check server.mjs && node --check model.mjs && node --check shared.mjs && node --check app.js",
+    "test": "node --test model.test.mjs",
+    "test:browser": "node verify.mjs",
+    "test:controls": "node verify-controls.mjs"
+  },
+  "engines": { "node": ">=22" }
+}
